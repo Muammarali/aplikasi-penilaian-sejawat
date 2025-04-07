@@ -76,7 +76,7 @@ const Layout = ({ children }) => {
           />
 
           {/* Main content akan ditampilkan di bagian ini */}
-          <main className="flex-1 p-6 lg:ml-0">{children}</main>
+          <main className="flex p-6 w-full justify-center">{children}</main>
         </div>
       </div>
     )
