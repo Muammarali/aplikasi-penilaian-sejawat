@@ -8,9 +8,9 @@ const MataKuliah = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
-  const fetchMatkul = async () => {
+  const fetchKelas = async () => {
     try {
-      const response = await axios.get("/api/matakuliah/fetch");
+      const response = await axios.get("/api/daftarkelas/fetch");
       const data = response.data.data.rows;
       setDataMataKuliah(data);
     } catch (error) {

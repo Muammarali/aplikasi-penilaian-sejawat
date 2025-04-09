@@ -8,7 +8,8 @@ const Header = ({ toggleSidebar, toggleCollapse, isCollapsed = true }) => {
   const pathname = usePathname();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
-  const { data: session } = "";
+  const { data: session } = useSession();
+  console.log(session);
 
   // Get page title based on current path
   const getPageTitle = () => {
@@ -66,11 +67,11 @@ const Header = ({ toggleSidebar, toggleCollapse, isCollapsed = true }) => {
                 onClick={() => setShowDropdown(!showDropdown)}
               >
                 <span className="hidden md:block text-gray-700 font-medium">
-                  {session?.user.name || "User"}
+                  {session?.user.nama || "..."}
                 </span>
                 <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white shadow-sm">
                   <span className="font-medium">
-                    {session?.user.name ? session?.user.name.charAt(0) : "..."}
+                    {session?.user.nama ? session?.user.nama.charAt(0) : "..."}
                   </span>
                 </div>
               </div>
@@ -80,22 +81,22 @@ const Header = ({ toggleSidebar, toggleCollapse, isCollapsed = true }) => {
                 <div className="absolute right-0 mt-2 w-64 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none transition-all duration-200 ease-in-out">
                   <div className="px-4 py-3 border-b">
                     <div className="flex items-center space-x-3">
-                      <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-white">
+                      <div className="h-10 min-w-10 rounded-full bg-blue-500 flex items-center justify-center text-white">
                         <span className="text-lg font-medium">
-                          {session?.user.name
-                            ? session?.user.name.charAt(0)
+                          {session?.user.nama
+                            ? session?.user.nama.charAt(0)
                             : "..."}
                         </span>
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-gray-900">
-                          {session?.user.name || "User"}
+                      <div className="w-full overflow-hidden text-ellipsis">
+                        <p className="text-sm font-medium text-gray-900 truncate">
+                          {session?.user.nama || "..."}
                         </p>
                         <p className="text-xs text-gray-500 truncate">
                           {session?.user.email}
                         </p>
-                        <p className="text-xs font-medium text-blue-600 mt-1">
-                          {session?.user.role || "User"}
+                        <p className="text-xs font-medium text-blue-600 mt-1 truncate">
+                          {session?.user.role || "..."}
                         </p>
                       </div>
                     </div>

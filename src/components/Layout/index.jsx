@@ -2,6 +2,7 @@
 import React, { useState, useEffect, ReactNode } from "react";
 import Header from "../UI/Header";
 import Sidebar from "../UI/Sidebar";
+import LoadingLayout from "../LoadingContext";
 
 const Layout = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -76,7 +77,9 @@ const Layout = ({ children }) => {
           />
 
           {/* Main content akan ditampilkan di bagian ini */}
-          <main className="flex p-6 w-full justify-center">{children}</main>
+          <main className="flex p-6 w-full justify-center">
+            <LoadingLayout>{children}</LoadingLayout>
+          </main>
         </div>
       </div>
     )
