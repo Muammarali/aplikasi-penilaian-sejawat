@@ -7,26 +7,32 @@ export async function middleware(req) {
   const token = await getToken({ req, secret });
   const { pathname } = req.nextUrl;
 
-  // Jika tidak ada token dan bukan di halaman login, redirect ke login
+  // Redirect ke login kalau belum login dan buka halaman selain login
   if (!token && pathname !== "/login") {
     const loginUrl = new URL("/login", req.url);
     return NextResponse.redirect(loginUrl);
   }
 
+  // Redirect ke halaman utama kalau sudah login dan tetap buka login
   if (token && pathname === "/login") {
     return NextResponse.redirect(new URL("/", req.url));
   }
 
-  // Jika ada token, cek role
   if (token) {
     const userRole = token.role;
+
+    // Role-based access
     const roleAccess = {
       Mahasiswa: ["/", "/matakuliah", "/daftarkelas"],
       Dosen: ["/", "/matakuliah", "/daftarkelas"],
     };
 
     const allowedPaths = roleAccess[userRole] || [];
-    const isAllowed = allowedPaths.includes(pathname);
+
+    // Support untuk dynamic route seperti /daftarkelas/123
+    const isAllowed = allowedPaths.some(
+      (path) => pathname === path || pathname.startsWith(`${path}/`)
+    );
 
     const existingPaths = [
       "/",
@@ -36,7 +42,11 @@ export async function middleware(req) {
       "/forbidden",
     ];
 
-    if (!existingPaths.includes(pathname)) {
+    const isKnownPath = existingPaths.some(
+      (path) => pathname === path || pathname.startsWith(`${path}/`)
+    );
+
+    if (!isKnownPath) {
       return NextResponse.rewrite(new URL("/404", req.url));
     }
 

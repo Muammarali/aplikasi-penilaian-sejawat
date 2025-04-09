@@ -9,7 +9,6 @@ const Header = ({ toggleSidebar, toggleCollapse, isCollapsed = true }) => {
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef(null);
   const { data: session } = useSession();
-  console.log(session);
 
   // Get page title based on current path
   const getPageTitle = () => {

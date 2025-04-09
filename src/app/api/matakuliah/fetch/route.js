@@ -4,7 +4,7 @@ import handlerQuery from "../../../utils/db";
 export async function GET() {
   try {
     const query = `
-        SELECT * FROM mata_kuliah
+        SELECT id_mk, kode_mk, nama, kelas FROM mata_kuliah
       `;
 
     const values = [];

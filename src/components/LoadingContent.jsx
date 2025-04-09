@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 
-export default function LoadingLayout({ children }) {
+export default function LoadingContent({ children }) {
   const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
 
@@ -17,7 +17,11 @@ export default function LoadingLayout({ children }) {
   }, [pathname]);
 
   if (isLoading) {
-    return <div className="loading-bar"></div>;
+    return (
+      <div className="flex justify-center items-center">
+        <div className="flex justify-center items-center progress"></div>
+      </div>
+    );
   }
 
   return children;

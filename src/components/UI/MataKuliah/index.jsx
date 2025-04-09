@@ -45,7 +45,7 @@ const MataKuliah = () => {
   }, [searchTerm]);
 
   return (
-    <div className="w-5xl">
+    <div className="w-full lg:max-w-6xl">
       <div className="min-w-96 space-y-4">
         <div className="text-2xl font-bold">Daftar Mata Kuliah</div>
 
@@ -67,7 +67,7 @@ const MataKuliah = () => {
         </div>
 
         <div className="space-y-2 pt-2">
-          <div className="grid grid-cols-4 gap-4 px-4 py-3 bg-emerald-400 rounded-md font-semibold text-zinc-100 text-sm">
+          <div className="grid grid-cols-4 gap-4 px-4 py-3 bg-emerald-600 rounded-md font-semibold text-zinc-100 text-sm">
             <div>Kode Mata Kuliah</div>
             <div>Nama</div>
             <div>Kelas</div>
@@ -86,7 +86,7 @@ const MataKuliah = () => {
                   <div className="text-sm text-gray-800">{matkul?.kelas}</div>
                   <div>
                     {/* Ganti dengan aksi yang kamu inginkan, contoh: */}
-                    <button className="text-sm text-blue-600 hover:underline">
+                    <button className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-all text-sm">
                       Gabung
                     </button>
                   </div>
@@ -174,7 +174,7 @@ const Pagination = ({
               disabled={number === "..."}
               className={`text-center inline-flex items-center justify-center w-8 h-8 text-sm font-medium rounded-md ${
                 currentPage === number
-                  ? "z-10 bg-emerald-500 text-white border-emerald-500"
+                  ? "z-10 bg-emerald-600 text-white border-emerald-600"
                   : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
               } ${number === "..." ? "cursor-default" : ""}`}
             >
