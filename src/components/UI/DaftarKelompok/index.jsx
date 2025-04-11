@@ -2,9 +2,11 @@
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import axios from "axios";
+import { MdDelete } from "react-icons/md";
 
 const DaftarKelompok = () => {
   const [dataKelompok, setDataKelompok] = useState([]);
+  const [formPenilaian, setFormPenilaian] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
@@ -23,14 +25,27 @@ const DaftarKelompok = () => {
       });
 
       const data = response.data.rows;
-      console.log(response.data.rows);
       setDataKelompok(data);
     } catch (error) {
       console.error("Error fetching mata kuliah:", error);
     }
   };
 
+  const fetchFormPenilaian = async () => {
+    try {
+      const response = await axios.post("/api/formpenilaian/fetch", {
+        matkul: restoreSpace(params.matkul),
+      });
+
+      const data = response.data.data.rows;
+      setFormPenilaian(data);
+    } catch (error) {
+      router.push("/daftarkelas");
+    }
+  };
+
   useEffect(() => {
+    fetchFormPenilaian();
     fetchKelompok();
   }, []);
 
@@ -118,24 +133,19 @@ const DaftarKelompok = () => {
             </div>
 
             <ul className="space-y-2">
-              {currentDaftarKelompok.map((daftarKelompok) => (
+              {formPenilaian.map((form) => (
                 <li
-                  key={daftarKelompok?.id_kelompok}
+                  key={form?.id_form}
                   className="bg-white p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow group"
                 >
                   <div className="grid grid-cols-[2fr_3fr_2fr] gap-4 items-center">
-                    <div className="text-sm text-gray-800">
-                      {daftarKelompok?.nama_kelompok}
-                    </div>
-                    <div className="text-sm text-gray-800">
-                      {daftarKelompok?.jumlah_anggota} /{" "}
-                      {daftarKelompok?.kapasitas} anggota
-                    </div>
+                    <div className="text-sm text-gray-800">{form?.nama}</div>
+                    <div className="text-sm text-gray-800">{form?.jenis}</div>
                     <div className="space-x-2">
-                      <button className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-all text-sm">
-                        Edit
+                      <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm">
+                        Ubah
                       </button>
-                      <button className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-all text-sm">
+                      <button className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-all text-sm">
                         Hapus
                       </button>
                     </div>
@@ -253,9 +263,23 @@ const DaftarKelompok = () => {
         )} */}
 
         {/* Title based on active tab */}
-        <div className="text-xl font-bold p-0 m-0">
+        <div className={`text-xl font-bold p-0 m-0 flex justify-between`}>
           {activeTab === "daftar-kelompok" && "Daftar Kelompok"}
+          {activeTab === "daftar-kelompok" && (
+            <div className="">
+              <button className="px-4 py-2 border-1 border-emerald-600 text-emerald-600 rounded-md hover:bg-emerald-600 hover:text-white transition-all text-sm">
+                Buat Kelompok
+              </button>
+            </div>
+          )}
           {activeTab === "form-penilaian" && "Form Penilaian Sejawat"}
+          {activeTab === "form-penilaian" && (
+            <div className="">
+              <button className="px-4 py-2 border-1 border-emerald-600 text-emerald-600 rounded-md hover:bg-emerald-600 hover:text-white transition-all text-sm">
+                Buat Form
+              </button>
+            </div>
+          )}
           {activeTab === "rekap-nilai" && "Rekap Nilai"}
         </div>
 

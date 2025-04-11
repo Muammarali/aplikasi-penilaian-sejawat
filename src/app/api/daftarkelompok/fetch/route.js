@@ -7,36 +7,48 @@ export async function POST(req) {
 
   try {
     // Ambil id_mk berdasarkan nama matkul
-    let getIdMkQuery = `SELECT id_mk FROM mata_kuliah WHERE nama = $1 LIMIT 1`;
-    let result = await handlerQuery(getIdMkQuery, [matkul]);
+    const getIdMkQuery = `SELECT id_mk FROM mata_kuliah WHERE nama = $1 LIMIT 1`;
+    const result = await handlerQuery(getIdMkQuery, [matkul]);
 
-    if (result.length === 0) {
-      return NextResponse.json({ error: "Mata kuliah tidak ditemukan" });
+    if (!result || result.rows.length === 0) {
+      return NextResponse.json({
+        success: false,
+        message: "Mata kuliah tidak ditemukan",
+        rows: [], // kembalikan array kosong
+      });
     }
 
-    let id_mk = result.rows[0].id_mk;
+    const id_mk = result.rows[0].id_mk;
 
     // Query jumlah anggota per kelompok berdasarkan id_mk
-    let query = `
+    const query = `
       SELECT 
         k.id_kelompok,
-          k.nama_kelompok,
-          k.kapasitas,
-          COUNT(mk.id_user) AS jumlah_anggota
+        k.nama_kelompok,
+        k.kapasitas,
+        COUNT(mk.id_user) AS jumlah_anggota
       FROM 
-          kelompok k
+        kelompok k
       LEFT JOIN 
-          mahasiswa_kelompok mk ON k.id_kelompok = mk.id_kelompok
+        mahasiswa_kelompok mk ON k.id_kelompok = mk.id_kelompok
       WHERE 
-          k.id_mk = $1
+        k.id_mk = $1
       GROUP BY 
-          k.id_kelompok, k.nama_kelompok, k.kapasitas;
+        k.id_kelompok, k.nama_kelompok, k.kapasitas;
     `;
 
-    let data = await handlerQuery(query, [id_mk]);
-    return NextResponse.json(data);
+    const data = await handlerQuery(query, [id_mk]);
+
+    return NextResponse.json({
+      success: true,
+      rows: data.rows || [],
+    });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Error on route" });
+    return NextResponse.json({
+      success: false,
+      message: "Terjadi kesalahan pada server",
+      rows: [],
+    });
   }
 }

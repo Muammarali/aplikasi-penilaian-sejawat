@@ -113,9 +113,7 @@ const DaftarKelas = () => {
                     <button
                       onClick={() =>
                         router.push(
-                          `/daftarkelas/${replacePercent(
-                            daftarkelas?.nama
-                          )}/daftarkelompok`
+                          `/daftarkelas/${replacePercent(daftarkelas?.nama)}`
                         )
                       }
                       className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-all text-sm"
