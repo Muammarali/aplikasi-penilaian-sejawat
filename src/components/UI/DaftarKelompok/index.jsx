@@ -1,8 +1,8 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
+import { useSession } from "next-auth/react";
 import axios from "axios";
-import { MdDelete } from "react-icons/md";
 
 const DaftarKelompok = () => {
   const [dataKelompok, setDataKelompok] = useState([]);
@@ -13,33 +13,55 @@ const DaftarKelompok = () => {
   const [activeTab, setActiveTab] = useState("daftar-kelompok");
   const params = useParams();
   const router = useRouter();
+  const { data: session } = useSession();
 
-  function restoreSpace(text) {
-    return text.replace(/-/g, " ");
+  function parseMatkulParam(slug) {
+    const parts = slug.split("-");
+    const id_mk = parts.pop();
+    const kelas = parts.pop();
+    const nama_matkul = parts.join(" ");
+    return { nama_matkul, kelas, id_mk };
   }
 
   const fetchKelompok = async () => {
     try {
+      const { nama_matkul, kelas, id_mk } = parseMatkulParam(params.matkul);
+
       const response = await axios.post("/api/daftarkelompok/fetch", {
-        matkul: restoreSpace(params.matkul),
+        nama_matkul,
+        kelas,
+        id_mk,
+        id_user: session?.user?.id_user,
       });
+
+      if (!response.data.success) {
+        router.push("/daftarkelas");
+        return;
+      }
 
       const data = response.data.rows;
       setDataKelompok(data);
     } catch (error) {
-      console.error("Error fetching mata kuliah:", error);
+      console.error("Error on route", error);
+      router.push("/daftarkelas");
     }
   };
 
   const fetchFormPenilaian = async () => {
     try {
+      const { nama_matkul, kelas, id_mk } = parseMatkulParam(params.matkul);
+
       const response = await axios.post("/api/formpenilaian/fetch", {
-        matkul: restoreSpace(params.matkul),
+        nama_matkul,
+        kelas,
+        id_mk,
+        id_user: session?.user?.id_user,
       });
 
       const data = response.data.data.rows;
       setFormPenilaian(data);
     } catch (error) {
+      console.error("Error on route", error);
       router.push("/daftarkelas");
     }
   };
@@ -185,7 +207,8 @@ const DaftarKelompok = () => {
           <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
             <h2 className="text-lg font-semibold mb-4">Rekap Nilai</h2>
             <p className="text-gray-600">
-              Rekap nilai untuk mata kuliah {restoreSpace(params.matkul)}
+              Rekap nilai untuk mata kuliah{" "}
+              {parseMatkulParam(params.matkul).nama_matkul}
             </p>
             {/* Rekap nilai content would go here */}
             <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
@@ -203,7 +226,11 @@ const DaftarKelompok = () => {
   return (
     <div className="w-full lg:max-w-6xl">
       <div className="min-w-96 space-y-4">
-        <div className="text-2xl font-bold">{restoreSpace(params.matkul)}</div>
+        <div className="text-2xl font-bold">
+          {parseMatkulParam(params.matkul).nama_matkul +
+            " " +
+            parseMatkulParam(params.matkul).kelas}
+        </div>
 
         {/* Tab Bar */}
         <div className="border-b border-gray-200">

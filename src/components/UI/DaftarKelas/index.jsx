@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import axios from "axios";
 
 const DaftarKelas = () => {
@@ -10,6 +11,7 @@ const DaftarKelas = () => {
   const [itemsPerPage] = useState(10);
 
   const router = useRouter();
+  const { data: session } = useSession();
 
   function replacePercent(matkul) {
     return decodeURIComponent(matkul).replace(/\s+/g, "-");
@@ -17,7 +19,9 @@ const DaftarKelas = () => {
 
   const fetchKelas = async () => {
     try {
-      const response = await axios.get("/api/daftarkelas/fetch");
+      const response = await axios.post("/api/daftarkelas/fetch", {
+        id_user: session?.user?.id,
+      });
       const data = response.data.data.rows;
       setDataDaftarKelas(data);
     } catch (error) {
@@ -113,7 +117,13 @@ const DaftarKelas = () => {
                     <button
                       onClick={() =>
                         router.push(
-                          `/daftarkelas/${replacePercent(daftarkelas?.nama)}`
+                          `/daftarkelas/${
+                            replacePercent(daftarkelas?.nama) +
+                            "-" +
+                            daftarkelas?.kelas +
+                            "-" +
+                            daftarkelas?.id_mk
+                          }`
                         )
                       }
                       className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-all text-sm"

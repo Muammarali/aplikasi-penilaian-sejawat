@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import handlerQuery from "../../../utils/db";
 
-export async function GET() {
+export async function POST(req) {
+  const request = await req.json();
+  const id_user = request.id_user;
+
   try {
     const query = `
         SELECT 
             dk.id_daftar_kelas,
             dk.id_user,
+            dk.id_mk,
             mk.kode_mk,
             mk.nama,
             mk.kelas,
@@ -33,10 +37,12 @@ export async function GET() {
                 kelompok
             GROUP BY 
                 id_mk
-        ) jk ON mk.id_mk = jk.id_mk;
+        ) jk ON mk.id_mk = jk.id_mk
+        WHERE
+          id_user = $1;
       `;
 
-    const values = [];
+    const values = [id_user];
 
     const data = await handlerQuery(query, values);
     return NextResponse.json({ success: true, data });

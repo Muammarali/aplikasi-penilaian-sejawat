@@ -1,5 +1,6 @@
 "use client";
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import axios from "axios";
 
 const MataKuliah = () => {
@@ -7,6 +8,8 @@ const MataKuliah = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+
+  const { data: session } = useSession();
 
   const fetchMatkul = async () => {
     try {
@@ -21,6 +24,17 @@ const MataKuliah = () => {
   useEffect(() => {
     fetchMatkul();
   }, []);
+
+  const handleGabung = async (id) => {
+    try {
+      const response = await axios.post("/api/matakuliah/gabung", {
+        id_mk: id,
+        id_user: session?.user?.id,
+      });
+    } catch (error) {
+      console.error("Error fetching mata kuliah:", error);
+    }
+  };
 
   // Filtering logic
   const filteredMatkul = dataMataKuliah.filter((matkul) => {
@@ -86,7 +100,10 @@ const MataKuliah = () => {
                   <div className="text-sm text-gray-800">{matkul?.kelas}</div>
                   <div>
                     {/* Ganti dengan aksi yang kamu inginkan, contoh: */}
-                    <button className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-all text-sm">
+                    <button
+                      className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-all text-sm"
+                      onClick={() => handleGabung(matkul?.id_mk)}
+                    >
                       Gabung
                     </button>
                   </div>

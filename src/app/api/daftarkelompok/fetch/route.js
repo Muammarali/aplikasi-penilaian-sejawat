@@ -2,25 +2,31 @@ import { NextResponse } from "next/server";
 import handlerQuery from "../../../utils/db";
 
 export async function POST(req) {
-  const request = await req.json();
-  const matkul = request.matkul;
+  const { nama_matkul, kelas, id_mk, id_user } = await req.json();
 
   try {
-    // Ambil id_mk berdasarkan nama matkul
-    const getIdMkQuery = `SELECT id_mk FROM mata_kuliah WHERE nama = $1 LIMIT 1`;
-    const result = await handlerQuery(getIdMkQuery, [matkul]);
+    // Cari apakah matkul dengan id_mk, nama dan kelas benar-benar milik user tsb
+    const getMatkulQuery = `
+      SELECT id_mk FROM mata_kuliah 
+      WHERE id_mk = $1 AND nama = $2 AND kelas = $3
+      LIMIT 1
+    `;
+
+    const result = await handlerQuery(getMatkulQuery, [
+      id_mk,
+      nama_matkul,
+      kelas,
+    ]);
 
     if (!result || result.rows.length === 0) {
       return NextResponse.json({
         success: false,
-        message: "Mata kuliah tidak ditemukan",
-        rows: [], // kembalikan array kosong
+        message: "Mata kuliah tidak ditemukan atau tidak valid untuk user ini",
+        rows: [],
       });
     }
 
-    const id_mk = result.rows[0].id_mk;
-
-    // Query jumlah anggota per kelompok berdasarkan id_mk
+    // Lanjut ambil data kelompok
     const query = `
       SELECT 
         k.id_kelompok,
