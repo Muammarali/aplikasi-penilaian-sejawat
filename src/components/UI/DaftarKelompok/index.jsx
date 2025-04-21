@@ -11,6 +11,13 @@ const DaftarKelompok = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
   const [activeTab, setActiveTab] = useState("daftar-kelompok");
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [formData, setFormData] = useState({
+    nama_kelompok: "",
+    kapasitas: 5,
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState("");
   const params = useParams();
   const router = useRouter();
   const { data: session } = useSession();
@@ -122,9 +129,12 @@ const DaftarKelompok = () => {
                       {daftarKelompok?.jumlah_anggota} /{" "}
                       {daftarKelompok?.kapasitas} anggota
                     </div>
-                    <div>
+                    <div className="space-x-2 space-y-2 sm:space-y-0">
                       <button className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-all text-sm">
                         Lihat
+                      </button>
+                      <button className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-all text-sm">
+                        Ubah
                       </button>
                     </div>
                   </div>
@@ -163,14 +173,22 @@ const DaftarKelompok = () => {
                   <div className="grid grid-cols-[2fr_3fr_2fr] gap-4 items-center">
                     <div className="text-sm text-gray-800">{form?.nama}</div>
                     <div className="text-sm text-gray-800">{form?.jenis}</div>
-                    <div className="space-x-2">
-                      <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm">
-                        Ubah
-                      </button>
-                      <button className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-all text-sm">
-                        Hapus
-                      </button>
-                    </div>
+                    {session?.user?.role === "Dosen" ? (
+                      <div className="space-x-2">
+                        <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm">
+                          Ubah
+                        </button>
+                        <button className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-all text-sm">
+                          Hapus
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="space-x-2">
+                        <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm">
+                          Isi
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </li>
               ))}
@@ -223,6 +241,157 @@ const DaftarKelompok = () => {
     }
   };
 
+  const handleTambahKelompok = () => {
+    setIsModalOpen(true);
+  };
+
+  // Add these functions to handle form changes and submission
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!formData.nama_kelompok.trim()) {
+      setError("Nama kelompok tidak boleh kosong");
+      return;
+    }
+
+    const kapasitas = parseInt(formData.kapasitas);
+
+    if (isNaN(kapasitas) || kapasitas < 2 || kapasitas > 20) {
+      setError("Kapasitas harus berupa angka antara 2 hingga 20");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const { nama_matkul, kelas, id_mk } = parseMatkulParam(params.matkul);
+
+      const response = await axios.post("/api/daftarkelompok/tambah", {
+        nama_kelompok: formData.nama_kelompok,
+        kapasitas,
+        nama_matkul,
+        kelas,
+        id_mk,
+        id_user: session?.user?.id_user,
+      });
+
+      if (response.data.success) {
+        setIsModalOpen(false);
+        setFormData({
+          nama_kelompok: "",
+          kapasitas: "5", // default-nya string
+        });
+        fetchKelompok();
+      } else {
+        setError(response.data.message || "Gagal membuat kelompok");
+      }
+    } catch (error) {
+      console.error("Error creating group:", error);
+      setError("Terjadi kesalahan saat membuat kelompok");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Add this Modal component at the end of your DaftarKelompok component (before the return statement)
+  const Modal = () => {
+    if (!isModalOpen) return null;
+
+    return (
+      <div
+        className="fixed inset-0 flex items-center justify-center z-50"
+        style={{ backgroundColor: "rgba(75, 85, 99, 0.4)" }}
+      >
+        <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 relative">
+          <button
+            onClick={() => setIsModalOpen(false)}
+            className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+
+          <h2 className="text-xl font-semibold mb-4">Buat Kelompok Baru</h2>
+
+          {error && (
+            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+              {error}
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit}>
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-medium mb-1">
+                Nama Kelompok <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="nama_kelompok"
+                value={formData.nama_kelompok}
+                onChange={handleChange}
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                placeholder="Masukkan nama kelompok"
+              />
+            </div>
+
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-medium mb-1">
+                Kapasitas Anggota <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="number"
+                name="kapasitas"
+                value={formData.kapasitas}
+                onChange={handleChange}
+                min="2"
+                max="20"
+                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              />
+            </div>
+
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={() => setIsModalOpen(false)}
+                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-all disabled:bg-emerald-400 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? "Menyimpan..." : "Simpan"}
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <div className="w-full lg:max-w-6xl">
       <div className="min-w-96 space-y-4">
@@ -268,51 +437,40 @@ const DaftarKelompok = () => {
           </nav>
         </div>
 
-        {/* Show search box only for Daftar Kelompok tab */}
-        {/* {activeTab === "daftar-kelompok" && (
-          <div className="relative flex-grow">
-            <input
-              type="text"
-              placeholder="Cari nama kelompok"
-              className="w-full p-2 pl-3 pr-10 border border-gray-300 rounded-md focus:ring-1 focus:ring-emerald-400 focus:border-emerald-400 focus:outline-none"
-              onChange={(e) => setSearchTerm(e.target.value)}
-              value={searchTerm}
-            />
-            {searchTerm && (
-              <button
-                onClick={() => setSearchTerm("")}
-                className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
-              >
-                ✕
-              </button>
-            )}
-          </div>
-        )} */}
-
         {/* Title based on active tab */}
         <div className={`text-xl font-bold p-0 m-0 flex justify-between`}>
           {activeTab === "daftar-kelompok" && "Daftar Kelompok"}
-          {activeTab === "daftar-kelompok" && (
-            <div className="">
-              <button className="px-4 py-2 border-1 border-emerald-600 text-emerald-600 rounded-md hover:bg-emerald-600 hover:text-white transition-all text-sm">
-                Buat Kelompok
-              </button>
-            </div>
-          )}
+          {activeTab === "daftar-kelompok" &&
+            (session?.user?.role === "Dosen" ? (
+              <div className="">
+                <button
+                  className="px-4 py-2 border-1 border-emerald-600 text-emerald-600 rounded-md hover:bg-emerald-600 hover:text-white transition-all text-sm"
+                  onClick={() => handleTambahKelompok()}
+                >
+                  Buat Kelompok
+                </button>
+              </div>
+            ) : (
+              ""
+            ))}
           {activeTab === "form-penilaian" && "Form Penilaian Sejawat"}
-          {activeTab === "form-penilaian" && (
-            <div className="">
-              <button className="px-4 py-2 border-1 border-emerald-600 text-emerald-600 rounded-md hover:bg-emerald-600 hover:text-white transition-all text-sm">
-                Buat Form
-              </button>
-            </div>
-          )}
+          {activeTab === "form-penilaian" &&
+            (session?.user?.role === "Dosen" ? (
+              <div className="">
+                <button className="px-4 py-2 border-1 border-emerald-600 text-emerald-600 rounded-md hover:bg-emerald-600 hover:text-white transition-all text-sm">
+                  Buat Form
+                </button>
+              </div>
+            ) : (
+              ""
+            ))}
           {activeTab === "rekap-nilai" && "Rekap Nilai"}
         </div>
 
         {/* Tab Content */}
         {renderTabContent()}
       </div>
+      <Modal />
     </div>
   );
 };

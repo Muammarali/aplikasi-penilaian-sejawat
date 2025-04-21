@@ -39,6 +39,7 @@ const Login = () => {
 
         if (response?.error) {
           showNotification.error("Invalid email or password");
+          setIsLoading(false);
         } else {
           showNotification.success("Login successful!");
           router.push("/");
@@ -47,11 +48,11 @@ const Login = () => {
         showNotification.error(
           "Email and password must be at least 4 characters"
         );
+        setIsLoading(false);
       }
     } catch (error) {
       showNotification.error("An error occurred while logging in");
       console.error("Error on routes", error);
-    } finally {
       setIsLoading(false);
     }
   };

@@ -5,9 +5,11 @@ import { usePathname } from "next/navigation";
 import { RiDashboardLine } from "react-icons/ri";
 import { BiTask } from "react-icons/bi";
 import { LuUsers } from "react-icons/lu";
+import { useSession } from "next-auth/react";
 
 const Sidebar = ({ isOpen, toggleSidebar, isCollapsed = false }) => {
   const pathname = usePathname();
+  const { data: session } = useSession();
 
   const navigation = [
     {
@@ -23,6 +25,12 @@ const Sidebar = ({ isOpen, toggleSidebar, isCollapsed = false }) => {
       icon: <BiTask size={24} className="ml-1" />,
     },
   ];
+
+  // Tambahkan filter berdasarkan role
+  const filteredNavigation =
+    session?.user?.role === "Dosen"
+      ? navigation.filter((item) => item.name !== "Mata Kuliah")
+      : navigation;
 
   // Fungsi untuk menentukan apakah menu aktif berdasarkan path
   const isMenuActive = (item) => {
@@ -77,7 +85,7 @@ const Sidebar = ({ isOpen, toggleSidebar, isCollapsed = false }) => {
           </button>
         </div>
         <nav className="mt-5 px-2 space-y-1 max-h-screen overflow-y-auto pb-8">
-          {navigation.map((item) => {
+          {filteredNavigation.map((item) => {
             const isActive = isMenuActive(item);
             return (
               <Link
@@ -130,7 +138,7 @@ const Sidebar = ({ isOpen, toggleSidebar, isCollapsed = false }) => {
                     </div> */}
           <div className="flex flex-col flex-grow overflow-y-auto">
             <nav className="mt-5 flex-1 px-2 space-y-1">
-              {navigation.map((item) => {
+              {filteredNavigation.map((item) => {
                 const isActive = isMenuActive(item);
                 return (
                   <Link
