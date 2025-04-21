@@ -109,37 +109,45 @@ const DaftarKelompok = () => {
       case "daftar-kelompok":
         return (
           <div className="space-y-2 pt-2">
-            <div className="grid grid-cols-[2fr_3fr_2fr] gap-4 px-4 py-3 bg-emerald-600 rounded-md font-semibold text-zinc-100 text-sm">
+            <div className="grid grid-cols-[2fr_3fr_2fr] gap-4 px-4 py-3 bg-blue-600 rounded-md font-semibold text-zinc-100 text-sm">
               <div className="truncate whitespace-nowrap">Kelompok</div>
               <div className="truncate whitespace-nowrap">Jumlah Anggota</div>
               <div className="truncate whitespace-nowrap">Aksi</div>
             </div>
 
             <ul className="space-y-2">
-              {currentDaftarKelompok.map((daftarKelompok) => (
-                <li
-                  key={daftarKelompok?.id_kelompok}
-                  className="bg-white p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow group"
-                >
-                  <div className="grid grid-cols-[2fr_3fr_2fr] gap-4 items-center">
-                    <div className="text-sm text-gray-800">
-                      {daftarKelompok?.nama_kelompok}
+              {currentDaftarKelompok.length === 0 ? (
+                <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+                  <p className="text-sm text-gray-500">
+                    Mata kuliah ini belum memiliki kelompok
+                  </p>
+                </div>
+              ) : (
+                currentDaftarKelompok.map((daftarKelompok) => (
+                  <li
+                    key={daftarKelompok?.id_kelompok}
+                    className="bg-white p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow group"
+                  >
+                    <div className="grid grid-cols-[2fr_3fr_2fr] gap-4 items-center">
+                      <div className="text-sm text-gray-800">
+                        {daftarKelompok?.nama_kelompok}
+                      </div>
+                      <div className="text-sm text-gray-800">
+                        {daftarKelompok?.jumlah_anggota} /{" "}
+                        {daftarKelompok?.kapasitas} anggota
+                      </div>
+                      <div className="space-x-2 space-y-2 sm:space-y-0">
+                        <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all text-sm">
+                          Lihat
+                        </button>
+                        <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all text-sm">
+                          Ubah
+                        </button>
+                      </div>
                     </div>
-                    <div className="text-sm text-gray-800">
-                      {daftarKelompok?.jumlah_anggota} /{" "}
-                      {daftarKelompok?.kapasitas} anggota
-                    </div>
-                    <div className="space-x-2 space-y-2 sm:space-y-0">
-                      <button className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-all text-sm">
-                        Lihat
-                      </button>
-                      <button className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-all text-sm">
-                        Ubah
-                      </button>
-                    </div>
-                  </div>
-                </li>
-              ))}
+                  </li>
+                ))
+              )}
             </ul>
 
             {/* Pagination Component */}
@@ -158,40 +166,48 @@ const DaftarKelompok = () => {
       case "form-penilaian":
         return (
           <div className="space-y-2 pt-2">
-            <div className="grid grid-cols-[2fr_3fr_2fr] gap-4 px-4 py-3 bg-emerald-600 rounded-md font-semibold text-zinc-100 text-sm">
+            <div className="grid grid-cols-[2fr_3fr_2fr] gap-4 px-4 py-3 bg-blue-600 rounded-md font-semibold text-zinc-100 text-sm">
               <div className="truncate whitespace-nowrap">Nama Form</div>
               <div className="truncate whitespace-nowrap">Jenis Form</div>
               <div className="truncate whitespace-nowrap">Aksi</div>
             </div>
 
             <ul className="space-y-2">
-              {formPenilaian.map((form) => (
-                <li
-                  key={form?.id_form}
-                  className="bg-white p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow group"
-                >
-                  <div className="grid grid-cols-[2fr_3fr_2fr] gap-4 items-center">
-                    <div className="text-sm text-gray-800">{form?.nama}</div>
-                    <div className="text-sm text-gray-800">{form?.jenis}</div>
-                    {session?.user?.role === "Dosen" ? (
-                      <div className="space-x-2">
-                        <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm">
-                          Ubah
-                        </button>
-                        <button className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-all text-sm">
-                          Hapus
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="space-x-2">
-                        <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm">
-                          Isi
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </li>
-              ))}
+              {formPenilaian.length === 0 ? (
+                <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+                  <p className="text-sm text-gray-500">
+                    Mata kuliah ini belum memiliki form penilaian
+                  </p>
+                </div>
+              ) : (
+                formPenilaian.map((form) => (
+                  <li
+                    key={form?.id_form}
+                    className="bg-white p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow group"
+                  >
+                    <div className="grid grid-cols-[2fr_3fr_2fr] gap-4 items-center">
+                      <div className="text-sm text-gray-800">{form?.nama}</div>
+                      <div className="text-sm text-gray-800">{form?.jenis}</div>
+                      {session?.user?.role === "Dosen" ? (
+                        <div className="space-x-2">
+                          <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm">
+                            Ubah
+                          </button>
+                          <button className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-all text-sm">
+                            Hapus
+                          </button>
+                        </div>
+                      ) : (
+                        <div className="space-x-2">
+                          <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm">
+                            Isi
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </li>
+                ))
+              )}
             </ul>
 
             {/* Pagination Component */}
@@ -302,96 +318,6 @@ const DaftarKelompok = () => {
     }
   };
 
-  // Add this Modal component at the end of your DaftarKelompok component (before the return statement)
-  const Modal = () => {
-    if (!isModalOpen) return null;
-
-    return (
-      <div
-        className="fixed inset-0 flex items-center justify-center z-50"
-        style={{ backgroundColor: "rgba(75, 85, 99, 0.4)" }}
-      >
-        <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 relative">
-          <button
-            onClick={() => setIsModalOpen(false)}
-            className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              className="h-6 w-6"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M6 18L18 6M6 6l12 12"
-              />
-            </svg>
-          </button>
-
-          <h2 className="text-xl font-semibold mb-4">Buat Kelompok Baru</h2>
-
-          {error && (
-            <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-              {error}
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit}>
-            <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-medium mb-1">
-                Nama Kelompok <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="text"
-                name="nama_kelompok"
-                value={formData.nama_kelompok}
-                onChange={handleChange}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                placeholder="Masukkan nama kelompok"
-              />
-            </div>
-
-            <div className="mb-4">
-              <label className="block text-gray-700 text-sm font-medium mb-1">
-                Kapasitas Anggota <span className="text-red-500">*</span>
-              </label>
-              <input
-                type="number"
-                name="kapasitas"
-                value={formData.kapasitas}
-                onChange={handleChange}
-                min="2"
-                max="20"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
-              />
-            </div>
-
-            <div className="flex justify-end space-x-3">
-              <button
-                type="button"
-                onClick={() => setIsModalOpen(false)}
-                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
-              >
-                Batal
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmitting}
-                className="px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-all disabled:bg-emerald-400 disabled:cursor-not-allowed"
-              >
-                {isSubmitting ? "Menyimpan..." : "Simpan"}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div className="w-full lg:max-w-6xl">
       <div className="min-w-96 space-y-4">
@@ -408,7 +334,7 @@ const DaftarKelompok = () => {
               onClick={() => setActiveTab("daftar-kelompok")}
               className={`py-3 px-4 text-sm transition-colors border-b-2 ${
                 activeTab === "daftar-kelompok"
-                  ? "border-emerald-600 font-bold text-emerald-600"
+                  ? "border-blue-600 font-bold text-blue-600"
                   : "border-transparent font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
@@ -418,7 +344,7 @@ const DaftarKelompok = () => {
               onClick={() => setActiveTab("form-penilaian")}
               className={`py-3 px-4 text-sm transition-colors border-b-2 ${
                 activeTab === "form-penilaian"
-                  ? "border-emerald-600 font-bold text-emerald-600"
+                  ? "border-blue-600 font-bold text-blue-600"
                   : "border-transparent font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
@@ -428,7 +354,7 @@ const DaftarKelompok = () => {
               onClick={() => setActiveTab("rekap-nilai")}
               className={`py-3 px-4 text-sm transition-colors border-b-2 ${
                 activeTab === "rekap-nilai"
-                  ? "border-emerald-600 font-bold text-emerald-600"
+                  ? "border-blue-600 font-bold text-blue-600"
                   : "border-transparent font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
@@ -444,7 +370,7 @@ const DaftarKelompok = () => {
             (session?.user?.role === "Dosen" ? (
               <div className="">
                 <button
-                  className="px-4 py-2 border-1 border-emerald-600 text-emerald-600 rounded-md hover:bg-emerald-600 hover:text-white transition-all text-sm"
+                  className="px-4 py-2 border-1 border-blue-600 text-blue-600 rounded-md hover:bg-blue-600 hover:text-white transition-all text-sm"
                   onClick={() => handleTambahKelompok()}
                 >
                   Buat Kelompok
@@ -457,7 +383,7 @@ const DaftarKelompok = () => {
           {activeTab === "form-penilaian" &&
             (session?.user?.role === "Dosen" ? (
               <div className="">
-                <button className="px-4 py-2 border-1 border-emerald-600 text-emerald-600 rounded-md hover:bg-emerald-600 hover:text-white transition-all text-sm">
+                <button className="px-4 py-2 border-1 border-blue-600 text-blue-600 rounded-md hover:bg-blue-600 hover:text-white transition-all text-sm">
                   Buat Form
                 </button>
               </div>
@@ -470,7 +396,112 @@ const DaftarKelompok = () => {
         {/* Tab Content */}
         {renderTabContent()}
       </div>
-      <Modal />
+      <TambahKelompokModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        formData={formData}
+        error={error}
+        isSubmitting={isSubmitting}
+        handleChange={handleChange}
+        handleSubmit={handleSubmit}
+      />
+    </div>
+  );
+};
+
+const TambahKelompokModal = ({
+  isOpen,
+  onClose,
+  formData,
+  error,
+  isSubmitting,
+  handleChange,
+  handleSubmit,
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 flex items-center justify-center z-50"
+      style={{ backgroundColor: "rgba(75, 85, 99, 0.4)" }}
+    >
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 relative">
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+
+        <h2 className="text-xl font-semibold mb-4">Buat Kelompok Baru</h2>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-medium mb-1">
+              Nama Kelompok <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="nama_kelompok"
+              value={formData.nama_kelompok}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Masukkan nama kelompok"
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-medium mb-1">
+              Kapasitas Anggota <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              name="kapasitas"
+              value={formData.kapasitas}
+              onChange={handleChange}
+              min="2"
+              max="20"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="flex justify-end space-x-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+            >
+              Batal
+            </button>
+            <button
+              type="submit"
+              disabled={isSubmitting}
+              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all disabled:bg-blue-400 disabled:cursor-not-allowed"
+            >
+              {isSubmitting ? "Menyimpan..." : "Simpan"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };
@@ -537,7 +568,7 @@ const Pagination = ({
               disabled={number === "..."}
               className={`text-center inline-flex items-center justify-center w-8 h-8 text-sm font-medium rounded-md ${
                 currentPage === number
-                  ? "z-10 bg-emerald-600 text-white border-emerald-600"
+                  ? "z-10 bg-blue-600 text-white border-blue-600"
                   : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
               } ${number === "..." ? "cursor-default" : ""}`}
             >

@@ -84,7 +84,7 @@ const Login = () => {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg overflow-hidden grid">
         <div className="px-8 sm:px-10 md:px-8 py-12">
           <div className="text-center mb-6">
-            <div className="text-3xl font-bold text-emerald-700">
+            <div className="text-3xl font-bold text-blue-700">
               Aplikasi Penilaian Sejawat Informatika UNPAR
             </div>
             <h1 className="text-gray-500 pt-2">Please enter your details</h1>
@@ -97,7 +97,7 @@ const Login = () => {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <MdOutlineAlternateEmail className="text-emerald-400 text-lg" />
+                  <MdOutlineAlternateEmail className="text-blue-400 text-lg" />
                 </div>
                 <input
                   autoComplete="off"
@@ -106,7 +106,7 @@ const Login = () => {
                   placeholder="Enter your email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-md border border-gray-200 p-2.5 pl-10 shadow-sm text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                  className="w-full rounded-md border border-gray-200 p-2.5 pl-10 shadow-sm text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
                   style={{ minHeight: "40px" }}
                 />
               </div>
@@ -118,7 +118,7 @@ const Login = () => {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <CgLock className="text-emerald-400 text-lg" />
+                  <CgLock className="text-blue-400 text-lg" />
                 </div>
                 <input
                   autoComplete="off"
@@ -127,7 +127,7 @@ const Login = () => {
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-md border border-gray-200 p-2.5 pl-10 pr-10 shadow-sm text-sm focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
+                  className="w-full rounded-md border border-gray-200 p-2.5 pl-10 pr-10 shadow-sm text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
                   style={{ minHeight: "40px" }}
                 />
                 <div
@@ -135,9 +135,9 @@ const Login = () => {
                   onClick={togglePasswordVisibility}
                 >
                   {showPassword ? (
-                    <FiEye className="text-lg text-emerald-400" />
+                    <FiEye className="text-lg text-blue-400" />
                   ) : (
-                    <FiEyeOff className="text-gray-400 text-lg hover:text-emerald-400" />
+                    <FiEyeOff className="text-gray-400 text-lg hover:text-blue-400" />
                   )}
                 </div>
               </div>
@@ -146,7 +146,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full h-10 bg-emerald-700 text-white py-2 rounded-md text-sm hover:bg-emerald-800 transition-all flex items-center justify-center cursor-pointer ${
+              className={`w-full h-10 bg-blue-700 text-white py-2 rounded-md text-sm hover:bg-blue-800 transition-all flex items-center justify-center cursor-pointer ${
                 isLoading ? "opacity-70 cursor-not-allowed" : ""
               }`}
             >
