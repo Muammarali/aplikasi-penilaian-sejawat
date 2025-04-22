@@ -94,7 +94,7 @@ const Header = ({ toggleSidebar, toggleCollapse, isCollapsed = true }) => {
                         <p className="text-xs text-gray-500 truncate">
                           {session?.user.email}
                         </p>
-                        <p className="text-xs font-medium text-blue-600 mt-1 truncate">
+                        <p className="text-xs font-medium text-blue-500 mt-1 truncate">
                           {session?.user.role || "..."}
                         </p>
                       </div>

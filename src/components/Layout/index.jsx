@@ -42,7 +42,7 @@ const Layout = ({ children }) => {
           }`}
         >
           <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
-            <div className="text-xl font-semibold text-blue-600">
+            <div className="text-xl font-semibold text-blue-500">
               Penilaian Sejawat
             </div>
             <button

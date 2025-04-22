@@ -84,7 +84,7 @@ const Login = () => {
       <div className="w-full max-w-md bg-white rounded-2xl shadow-lg overflow-hidden grid">
         <div className="px-8 sm:px-10 md:px-8 py-12">
           <div className="text-center mb-6">
-            <div className="text-3xl font-bold text-blue-700">
+            <div className="text-3xl font-bold text-blue-600">
               Aplikasi Penilaian Sejawat Informatika UNPAR
             </div>
             <h1 className="text-gray-500 pt-2">Please enter your details</h1>
@@ -146,7 +146,7 @@ const Login = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className={`w-full h-10 bg-blue-700 text-white py-2 rounded-md text-sm hover:bg-blue-800 transition-all flex items-center justify-center cursor-pointer ${
+              className={`w-full h-10 bg-blue-600 text-white py-2 rounded-md text-sm hover:bg-blue-800 transition-all flex items-center justify-center cursor-pointer ${
                 isLoading ? "opacity-70 cursor-not-allowed" : ""
               }`}
             >

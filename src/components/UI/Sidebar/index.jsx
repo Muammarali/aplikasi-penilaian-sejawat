@@ -60,7 +60,7 @@ const Sidebar = ({ isOpen, toggleSidebar, isCollapsed = false }) => {
         }`}
       >
         <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
-          <div className="text-xl font-semibold text-blue-600">
+          <div className="text-xl font-semibold text-blue-500">
             Penilaian Sejawat
           </div>
           <button
@@ -93,7 +93,7 @@ const Sidebar = ({ isOpen, toggleSidebar, isCollapsed = false }) => {
                 href={item.href}
                 className={`group flex items-center px-2 py-2 text-md font-medium rounded-md ${
                   isActive
-                    ? "bg-blue-50 text-blue-600"
+                    ? "bg-blue-50 text-blue-500"
                     : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                 }`}
                 onClick={() => {
@@ -105,7 +105,7 @@ const Sidebar = ({ isOpen, toggleSidebar, isCollapsed = false }) => {
                 <div
                   className={`mr-3 ${
                     isActive
-                      ? "text-blue-600"
+                      ? "text-blue-500"
                       : "text-gray-400 group-hover:text-gray-500"
                   }`}
                 >
@@ -129,7 +129,7 @@ const Sidebar = ({ isOpen, toggleSidebar, isCollapsed = false }) => {
         >
           {/* <div className="flex items-center h-16 px-4 border-b border-gray-200">
                         {!isCollapsed && (
-                            <div className="text-xl font-semibold text-blue-600">Todo App</div>
+                            <div className="text-xl font-semibold text-blue-500">Todo App</div>
                         )}
                         {isCollapsed && (
                             <div className="w-full flex justify-center">
@@ -148,7 +148,7 @@ const Sidebar = ({ isOpen, toggleSidebar, isCollapsed = false }) => {
                       isCollapsed ? "justify-center" : ""
                     } px-2 py-2 text-lg font-medium rounded-md ${
                       isActive
-                        ? "bg-blue-50 text-blue-600"
+                        ? "bg-blue-50 text-blue-500"
                         : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
                     }`}
                     title={isCollapsed ? item.name : ""}
@@ -156,7 +156,7 @@ const Sidebar = ({ isOpen, toggleSidebar, isCollapsed = false }) => {
                     <div
                       className={`${isCollapsed ? "" : "mr-3"} ${
                         isActive
-                          ? "text-blue-600"
+                          ? "text-blue-500"
                           : "text-gray-400 group-hover:text-gray-500"
                       }`}
                     >

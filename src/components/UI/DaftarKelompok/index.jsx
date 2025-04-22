@@ -16,6 +16,9 @@ const DaftarKelompok = () => {
     nama_kelompok: "",
     kapasitas: 5,
   });
+  const [isAnggotaModalOpen, setIsAnggotaModalOpen] = useState(false);
+  const [selectedKelompok, setSelectedKelompok] = useState(null);
+  const [anggotaKelompok, setAnggotaKelompok] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const params = useParams();
@@ -38,7 +41,7 @@ const DaftarKelompok = () => {
         nama_matkul,
         kelas,
         id_mk,
-        id_user: session?.user?.id_user,
+        id_user: session?.user?.id,
       });
 
       if (!response.data.success) {
@@ -62,7 +65,7 @@ const DaftarKelompok = () => {
         nama_matkul,
         kelas,
         id_mk,
-        id_user: session?.user?.id_user,
+        id_user: session?.user?.id,
       });
 
       const data = response.data.data.rows;
@@ -109,7 +112,7 @@ const DaftarKelompok = () => {
       case "daftar-kelompok":
         return (
           <div className="space-y-2 pt-2">
-            <div className="grid grid-cols-[2fr_3fr_2fr] gap-4 px-4 py-3 bg-blue-600 rounded-md font-semibold text-zinc-100 text-sm">
+            <div className="grid grid-cols-[2fr_3fr_2fr] gap-4 px-4 py-3 bg-blue-500 rounded-md font-semibold text-zinc-100 text-sm">
               <div className="truncate whitespace-nowrap">Kelompok</div>
               <div className="truncate whitespace-nowrap">Jumlah Anggota</div>
               <div className="truncate whitespace-nowrap">Aksi</div>
@@ -136,13 +139,19 @@ const DaftarKelompok = () => {
                         {daftarKelompok?.jumlah_anggota} /{" "}
                         {daftarKelompok?.kapasitas} anggota
                       </div>
+                      {}
                       <div className="space-x-2 space-y-2 sm:space-y-0">
-                        <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all text-sm">
+                        <button
+                          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm"
+                          onClick={() => handleViewAnggota(daftarKelompok)}
+                        >
                           Lihat
                         </button>
-                        <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all text-sm">
-                          Ubah
-                        </button>
+                        {session?.user?.role === "Dosen" && (
+                          <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm">
+                            Ubah
+                          </button>
+                        )}
                       </div>
                     </div>
                   </li>
@@ -166,7 +175,7 @@ const DaftarKelompok = () => {
       case "form-penilaian":
         return (
           <div className="space-y-2 pt-2">
-            <div className="grid grid-cols-[2fr_3fr_2fr] gap-4 px-4 py-3 bg-blue-600 rounded-md font-semibold text-zinc-100 text-sm">
+            <div className="grid grid-cols-[2fr_3fr_2fr] gap-4 px-4 py-3 bg-blue-500 rounded-md font-semibold text-zinc-100 text-sm">
               <div className="truncate whitespace-nowrap">Nama Form</div>
               <div className="truncate whitespace-nowrap">Jenis Form</div>
               <div className="truncate whitespace-nowrap">Aksi</div>
@@ -190,7 +199,7 @@ const DaftarKelompok = () => {
                       <div className="text-sm text-gray-800">{form?.jenis}</div>
                       {session?.user?.role === "Dosen" ? (
                         <div className="space-x-2">
-                          <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm">
+                          <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-500 transition-all text-sm">
                             Ubah
                           </button>
                           <button className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-all text-sm">
@@ -297,7 +306,7 @@ const DaftarKelompok = () => {
         nama_matkul,
         kelas,
         id_mk,
-        id_user: session?.user?.id_user,
+        id_user: session?.user?.id,
       });
 
       if (response.data.success) {
@@ -318,6 +327,154 @@ const DaftarKelompok = () => {
     }
   };
 
+  const fetchAnggotaKelompok = async (kelompokId) => {
+    try {
+      const response = await axios.post("/api/daftarkelompok/fetchanggota", {
+        id_kelompok: kelompokId,
+      });
+
+      // console.log(response.data.rows);
+
+      if (response.data.success) {
+        setAnggotaKelompok(response.data.rows || []);
+      } else {
+        setAnggotaKelompok([]);
+        console.error("Failed to fetch anggota:", response.data.message);
+      }
+    } catch (error) {
+      setAnggotaKelompok([]);
+      console.error("Error fetching anggota kelompok:", error);
+    }
+  };
+
+  // Add this handler for the view button
+  const handleViewAnggota = (kelompok) => {
+    setSelectedKelompok(kelompok);
+    fetchAnggotaKelompok(kelompok.id_kelompok);
+    setIsAnggotaModalOpen(true);
+  };
+
+  const handleKeluarKelompok = async (kelompokId) => {
+    try {
+      // Confirm before leaving the group
+      if (
+        !window.confirm("Apakah Anda yakin ingin keluar dari kelompok ini?")
+      ) {
+        return;
+      }
+
+      // Call the API to leave the group
+      const response = await axios.post("/api/daftarkelompok/keluar", {
+        id_kelompok: kelompokId,
+        id_user: session?.user?.id,
+      });
+
+      if (response.data.success) {
+        // Refresh the anggota list
+        fetchAnggotaKelompok(kelompokId);
+
+        // Refresh the main kelompok list to update counts
+        fetchKelompok();
+
+        // Show success message (optional)
+        alert("Berhasil keluar dari kelompok");
+      } else {
+        alert(response.data.message || "Gagal keluar dari kelompok");
+      }
+    } catch (error) {
+      console.error("Error leaving group:", error);
+      alert("Terjadi kesalahan saat keluar dari kelompok");
+    }
+  };
+
+  const handleGabungKelompok = async (kelompokId) => {
+    try {
+      // Konfirmasi sebelum bergabung
+      if (
+        !window.confirm("Apakah Anda yakin ingin bergabung ke kelompok ini?")
+      ) {
+        return;
+      }
+
+      // Panggil API untuk bergabung ke kelompok
+      const response = await axios.post("/api/daftarkelompok/gabung", {
+        id_kelompok: kelompokId,
+        id_user: session?.user?.id,
+        peran: "Anggota", // default peran
+      });
+
+      if (response.data.success) {
+        // Refresh daftar anggota kelompok
+        fetchAnggotaKelompok(kelompokId);
+
+        // Refresh daftar kelompok utama (untuk update jumlah anggota)
+        fetchKelompok();
+
+        // Tampilkan pesan sukses
+        alert("Berhasil bergabung ke kelompok");
+      } else {
+        alert(response.data.message || "Gagal bergabung ke kelompok");
+      }
+    } catch (error) {
+      console.error("Error joining group:", error);
+      alert("Terjadi kesalahan saat bergabung ke kelompok");
+    }
+  };
+
+  const handleJadiKetua = async (kelompokId) => {
+    if (
+      !window.confirm("Apakah Anda yakin ingin menjadi ketua di kelompok ini?")
+    ) {
+      return;
+    }
+
+    try {
+      const response = await axios.post(
+        "/api/daftarkelompok/jadiketuakelompok",
+        {
+          id_kelompok: kelompokId,
+          id_user: session?.user?.id,
+        }
+      );
+
+      if (response.data.success) {
+        alert("Berhasil menjadi ketua!");
+        fetchAnggotaKelompok(kelompokId); // refresh data
+      } else {
+        alert(response.data.message || "Gagal menjadi ketua");
+      }
+    } catch (error) {
+      console.error("Gagal menjadikan ketua:", error);
+      alert("Terjadi kesalahan saat mencoba jadi ketua");
+    }
+  };
+
+  const handleUndurKetua = async (kelompokId) => {
+    if (
+      !window.confirm(
+        "Apakah Anda yakin ingin mengudurkan diri dari ketua di kelompok ini?"
+      )
+    ) {
+      return;
+    }
+    try {
+      const response = await axios.post("/api/daftarkelompok/ketuaundurdiri", {
+        id_kelompok: kelompokId,
+        id_user: session?.user?.id,
+      });
+
+      if (response.data.success) {
+        alert("Berhasil mengudurkan diri!");
+        fetchAnggotaKelompok(kelompokId); // refresh data
+      } else {
+        alert(response.data.message || "Gagal mengudurkan diri!");
+      }
+    } catch (error) {
+      console.error("Gagal mengudurkan diri:", error);
+      alert("Terjadi kesalahan saat mencoba mengudurkan diri dari ketua");
+    }
+  };
+
   return (
     <div className="w-full lg:max-w-6xl">
       <div className="min-w-96 space-y-4">
@@ -334,7 +491,7 @@ const DaftarKelompok = () => {
               onClick={() => setActiveTab("daftar-kelompok")}
               className={`py-3 px-4 text-sm transition-colors border-b-2 ${
                 activeTab === "daftar-kelompok"
-                  ? "border-blue-600 font-bold text-blue-600"
+                  ? "border-blue-500 font-bold text-blue-500"
                   : "border-transparent font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
@@ -344,7 +501,7 @@ const DaftarKelompok = () => {
               onClick={() => setActiveTab("form-penilaian")}
               className={`py-3 px-4 text-sm transition-colors border-b-2 ${
                 activeTab === "form-penilaian"
-                  ? "border-blue-600 font-bold text-blue-600"
+                  ? "border-blue-500 font-bold text-blue-500"
                   : "border-transparent font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
@@ -354,7 +511,7 @@ const DaftarKelompok = () => {
               onClick={() => setActiveTab("rekap-nilai")}
               className={`py-3 px-4 text-sm transition-colors border-b-2 ${
                 activeTab === "rekap-nilai"
-                  ? "border-blue-600 font-bold text-blue-600"
+                  ? "border-blue-500 font-bold text-blue-500"
                   : "border-transparent font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
               }`}
             >
@@ -370,7 +527,7 @@ const DaftarKelompok = () => {
             (session?.user?.role === "Dosen" ? (
               <div className="">
                 <button
-                  className="px-4 py-2 border-1 border-blue-600 text-blue-600 rounded-md hover:bg-blue-600 hover:text-white transition-all text-sm"
+                  className="px-4 py-2 border-1 border-blue-500 text-blue-500 rounded-md hover:bg-blue-500 hover:text-white transition-all text-sm"
                   onClick={() => handleTambahKelompok()}
                 >
                   Buat Kelompok
@@ -383,7 +540,7 @@ const DaftarKelompok = () => {
           {activeTab === "form-penilaian" &&
             (session?.user?.role === "Dosen" ? (
               <div className="">
-                <button className="px-4 py-2 border-1 border-blue-600 text-blue-600 rounded-md hover:bg-blue-600 hover:text-white transition-all text-sm">
+                <button className="px-4 py-2 border-1 border-blue-500 text-blue-500 rounded-md hover:bg-blue-500 hover:text-white transition-all text-sm">
                   Buat Form
                 </button>
               </div>
@@ -396,6 +553,19 @@ const DaftarKelompok = () => {
         {/* Tab Content */}
         {renderTabContent()}
       </div>
+
+      <AnggotaKelompokModal
+        isOpen={isAnggotaModalOpen}
+        onClose={() => setIsAnggotaModalOpen(false)}
+        kelompok={selectedKelompok}
+        anggotaList={anggotaKelompok}
+        currentIdUser={session?.user?.id}
+        onKeluarKelompok={handleKeluarKelompok}
+        onGabungKelompok={handleGabungKelompok}
+        onJadiKetua={handleJadiKetua}
+        onUndurKetua={handleUndurKetua}
+      />
+
       <TambahKelompokModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
@@ -495,12 +665,179 @@ const TambahKelompokModal = ({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-all disabled:bg-blue-400 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all disabled:bg-blue-400 disabled:cursor-not-allowed"
             >
               {isSubmitting ? "Menyimpan..." : "Simpan"}
             </button>
           </div>
         </form>
+      </div>
+    </div>
+  );
+};
+
+const AnggotaKelompokModal = ({
+  isOpen,
+  onClose,
+  kelompok,
+  anggotaList = [],
+  currentIdUser,
+  onKeluarKelompok,
+  onGabungKelompok,
+  onJadiKetua,
+  onUndurKetua,
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 flex items-center justify-center z-50"
+      style={{ backgroundColor: "rgba(75, 85, 99, 0.4)" }}
+    >
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 relative">
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+
+        <h2 className="text-xl font-semibold mb-4">
+          Anggota {kelompok?.nama_kelompok || "Kelompok"}
+        </h2>
+
+        <div className="mb-2 text-sm text-gray-600">
+          {anggotaList.length} / {kelompok?.kapasitas} anggota
+        </div>
+
+        {anggotaList.length === 0 ? (
+          <div className="p-4 bg-gray-50 rounded-md border border-gray-200 text-center">
+            <p className="text-gray-500">
+              Belum ada anggota dalam kelompok ini
+            </p>
+          </div>
+        ) : (
+          <div className="max-h-96 overflow-y-auto">
+            <ul className="divide-y divide-gray-200">
+              {anggotaList.map((anggota, index) => (
+                <li key={anggota.id_user || index} className="py-3 px-2">
+                  <div className="flex items-center space-x-3">
+                    <div className="h-10 min-w-10 rounded-full bg-blue-500 flex items-center justify-center text-white">
+                      <span className="text-lg font-medium">
+                        {anggota.nama_user?.charAt(0) || "User"}
+                      </span>
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-sm font-medium text-gray-900">
+                        {anggota.nama_user || "Nama tidak tersedia"}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {anggota.npm || anggota.nip || "ID tidak tersedia"}
+                      </p>
+                    </div>
+                    {anggota.peran === "Ketua" && (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
+                        Ketua
+                      </span>
+                    )}
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {anggotaList.some((anggota) => anggota.id_user == currentIdUser) ? (
+          <div className="mt-6 space-y-3">
+            {/* If I'm already ketua, show undur ketua button */}
+            {anggotaList.find(
+              (anggota) =>
+                anggota.id_user == currentIdUser && anggota.peran === "Ketua"
+            ) ? (
+              <button
+                onClick={() => onUndurKetua(kelompok?.id_kelompok)}
+                className="w-full mb-4 px-4 py-2 text-white bg-yellow-500 hover:bg-yellow-600 rounded-md"
+              >
+                Undur diri dari ketua
+              </button>
+            ) : (
+              /* If there's no ketua yet, show jadi ketua button */
+              !anggotaList.some((anggota) => anggota.peran === "Ketua") && (
+                <button
+                  type="button"
+                  onClick={() => onJadiKetua(kelompok?.id_kelompok)}
+                  className="w-full px-4 py-2 text-white border rounded-md bg-emerald-600 hover:bg-emerald-700"
+                >
+                  Jadikan saya ketua
+                </button>
+              )
+            )}
+
+            {/* Tombol keluar dan batal */}
+            <div className="flex justify-between space-x-4">
+              <button
+                type="button"
+                onClick={() => onKeluarKelompok(kelompok?.id_kelompok)}
+                className="w-full px-4 py-2 text-white border rounded-md bg-red-500 hover:bg-red-600"
+              >
+                Keluar
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-gray-700 border border-gray-300 hover:bg-gray-50 rounded-md "
+              >
+                Batal
+              </button>
+            </div>
+          </div>
+        ) : anggotaList.length < kelompok?.kapasitas ? (
+          <div className="mt-6 flex justify-between space-x-4">
+            <button
+              type="button"
+              onClick={() => onGabungKelompok(kelompok?.id_kelompok)}
+              className="w-full px-4 py-2 text-white border rounded-md bg-blue-500 hover:bg-blue-500"
+            >
+              Gabung
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-gray-700 border border-gray-300 hover:bg-gray-50 rounded-md "
+            >
+              Batal
+            </button>
+          </div>
+        ) : (
+          <div className="mt-6 flex justify-between space-x-4">
+            <button
+              type="button"
+              className="w-full px-4 py-2 text-gray-700 border bg-gray-200 border-gray-300 rounded-md disabled"
+            >
+              Penuh
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-gray-700 border border-gray-300 hover:bg-gray-50 rounded-md "
+            >
+              Batal
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -568,7 +905,7 @@ const Pagination = ({
               disabled={number === "..."}
               className={`text-center inline-flex items-center justify-center w-8 h-8 text-sm font-medium rounded-md ${
                 currentPage === number
-                  ? "z-10 bg-blue-600 text-white border-blue-600"
+                  ? "z-10 bg-blue-500 text-white border-blue-500"
                   : "text-gray-700 bg-white border border-gray-300 hover:bg-gray-50"
               } ${number === "..." ? "cursor-default" : ""}`}
             >

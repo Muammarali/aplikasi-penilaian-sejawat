@@ -25,6 +25,7 @@ export async function middleware(req) {
     const roleAccess = {
       Mahasiswa: ["/", "/matakuliah", "/daftarkelas"],
       Dosen: ["/", "/matakuliah", "/daftarkelas"],
+      Admin: ["/", "/matakuliah", "/daftarkelas"],
     };
 
     const allowedPaths = roleAccess[userRole] || [];
