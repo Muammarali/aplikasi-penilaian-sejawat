@@ -148,7 +148,7 @@ const DaftarKelompok = () => {
                           Lihat
                         </button>
                         {session?.user?.role === "Dosen" && (
-                          <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm">
+                          <button className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-all text-sm">
                             Ubah
                           </button>
                         )}
@@ -199,7 +199,7 @@ const DaftarKelompok = () => {
                       <div className="text-sm text-gray-800">{form?.jenis}</div>
                       {session?.user?.role === "Dosen" ? (
                         <div className="space-x-2">
-                          <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-500 transition-all text-sm">
+                          <button className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-all text-sm">
                             Ubah
                           </button>
                           <button className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-all text-sm">
@@ -564,6 +564,7 @@ const DaftarKelompok = () => {
         onGabungKelompok={handleGabungKelompok}
         onJadiKetua={handleJadiKetua}
         onUndurKetua={handleUndurKetua}
+        userRole={session?.user?.role}
       />
 
       <TambahKelompokModal
@@ -686,6 +687,7 @@ const AnggotaKelompokModal = ({
   onGabungKelompok,
   onJadiKetua,
   onUndurKetua,
+  userRole,
 }) => {
   if (!isOpen) return null;
 
@@ -748,9 +750,13 @@ const AnggotaKelompokModal = ({
                         {anggota.npm || anggota.nip || "ID tidak tersedia"}
                       </p>
                     </div>
-                    {anggota.peran === "Ketua" && (
+                    {anggota.peran === "Ketua" ? (
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700">
                         Ketua
+                      </span>
+                    ) : (
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                        Anggota
                       </span>
                     )}
                   </div>
@@ -769,7 +775,7 @@ const AnggotaKelompokModal = ({
             ) ? (
               <button
                 onClick={() => onUndurKetua(kelompok?.id_kelompok)}
-                className="w-full mb-4 px-4 py-2 text-white bg-yellow-500 hover:bg-yellow-600 rounded-md"
+                className="w-full px-4 py-2 text-white bg-yellow-500 hover:bg-yellow-600 rounded-md"
               >
                 Undur diri dari ketua
               </button>
@@ -779,7 +785,7 @@ const AnggotaKelompokModal = ({
                 <button
                   type="button"
                   onClick={() => onJadiKetua(kelompok?.id_kelompok)}
-                  className="w-full px-4 py-2 text-white border rounded-md bg-emerald-600 hover:bg-emerald-700"
+                  className="w-full px-4 py-2 text-white bg-emerald-600 hover:bg-emerald-700 rounded-md"
                 >
                   Jadikan saya ketua
                 </button>
@@ -805,22 +811,24 @@ const AnggotaKelompokModal = ({
             </div>
           </div>
         ) : anggotaList.length < kelompok?.kapasitas ? (
-          <div className="mt-6 flex justify-between space-x-4">
-            <button
-              type="button"
-              onClick={() => onGabungKelompok(kelompok?.id_kelompok)}
-              className="w-full px-4 py-2 text-white border rounded-md bg-blue-500 hover:bg-blue-500"
-            >
-              Gabung
-            </button>
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-gray-700 border border-gray-300 hover:bg-gray-50 rounded-md "
-            >
-              Batal
-            </button>
-          </div>
+          userRole === "Mahasiswa" && (
+            <div className="mt-6 flex justify-between space-x-4">
+              <button
+                type="button"
+                onClick={() => onGabungKelompok(kelompok?.id_kelompok)}
+                className="w-full px-4 py-2 text-white border rounded-md bg-blue-500 hover:bg-blue-500"
+              >
+                Gabung
+              </button>
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-gray-700 border border-gray-300 hover:bg-gray-50 rounded-md "
+              >
+                Batal
+              </button>
+            </div>
+          )
         ) : (
           <div className="mt-6 flex justify-between space-x-4">
             <button
