@@ -12,10 +12,16 @@ const DaftarKelompok = () => {
   const [itemsPerPage] = useState(10);
   const [activeTab, setActiveTab] = useState("daftar-kelompok");
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalUbahOpen, setIsModalUbahOpen] = useState(false);
   const [formData, setFormData] = useState({
     nama_kelompok: "",
-    kapasitas: 5,
+    kapasitas: 4,
   });
+  const [formUbahData, setFormUbahData] = useState({
+    nama_kelompok: "",
+    kapasitas: 4,
+  });
+  const [isUbahKelompokId, setIsUbahKelompokId] = useState("");
   const [isAnggotaModalOpen, setIsAnggotaModalOpen] = useState(false);
   const [selectedKelompok, setSelectedKelompok] = useState(null);
   const [anggotaKelompok, setAnggotaKelompok] = useState([]);
@@ -148,7 +154,12 @@ const DaftarKelompok = () => {
                           Lihat
                         </button>
                         {session?.user?.role === "Dosen" && (
-                          <button className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-all text-sm">
+                          <button
+                            className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-all text-sm"
+                            onClick={() =>
+                              handleUbahKelompok(daftarKelompok?.id_kelompok)
+                            }
+                          >
                             Ubah
                           </button>
                         )}
@@ -270,11 +281,48 @@ const DaftarKelompok = () => {
     setIsModalOpen(true);
   };
 
+  const handleUbahKelompok = async (kelompokId) => {
+    setIsModalUbahOpen(true);
+    setIsUbahKelompokId(kelompokId);
+    try {
+      const response = await axios.post(
+        "/api/daftarkelompok/fetchubahkelompok",
+        {
+          id_kelompok: kelompokId,
+        }
+      );
+
+      const namaKelompok = response?.data?.data?.nama_kelompok;
+      const kapasitas = response?.data?.data?.kapasitas;
+
+      if (response.data.success) {
+        setFormUbahData({
+          nama_kelompok: namaKelompok,
+          kapasitas: kapasitas,
+        });
+      } else {
+        setError(response.data.message || "Gagal mengambil data kelompok");
+      }
+    } catch (error) {
+      console.error("Error fetching data:", error);
+      setError("Terjadi kesalahan saat mengambil data kelompok");
+    }
+  };
+
   // Add these functions to handle form changes and submission
   const handleChange = (e) => {
     const { name, value } = e.target;
 
     setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleUbahChange = (e) => {
+    const { name, value } = e.target;
+
+    setFormUbahData((prev) => ({
       ...prev,
       [name]: value,
     }));
@@ -316,6 +364,53 @@ const DaftarKelompok = () => {
           kapasitas: "5", // default-nya string
         });
         fetchKelompok();
+      } else {
+        setError(response.data.message || "Gagal membuat kelompok");
+      }
+    } catch (error) {
+      console.error("Error creating group:", error);
+      setError("Terjadi kesalahan saat membuat kelompok");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleUbah = async (e) => {
+    e.preventDefault();
+    setError("");
+
+    if (!formUbahData.nama_kelompok.trim()) {
+      setError("Nama kelompok tidak boleh kosong");
+      return;
+    }
+
+    const kapasitas = parseInt(formUbahData.kapasitas);
+
+    if (isNaN(kapasitas) || kapasitas < 2 || kapasitas > 20) {
+      setError("Kapasitas harus berupa angka antara 2 hingga 20");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const { id_mk } = parseMatkulParam(params.matkul);
+
+      const response = await axios.put("/api/daftarkelompok/ubah", {
+        nama_kelompok: formUbahData.nama_kelompok,
+        kapasitas,
+        id_kelompok: isUbahKelompokId,
+        id_mk,
+        id_user: session?.user?.id,
+      });
+
+      if (response.data.success) {
+        setIsModalOpen(false);
+        setFormUbahData({
+          nama_kelompok: "",
+          kapasitas: "4", // default-nya string
+        });
+        fetchKelompok();
+        setIsModalUbahOpen(false);
       } else {
         setError(response.data.message || "Gagal membuat kelompok");
       }
@@ -576,6 +671,16 @@ const DaftarKelompok = () => {
         handleChange={handleChange}
         handleSubmit={handleSubmit}
       />
+
+      <UbahKelompokModal
+        isOpen={isModalUbahOpen}
+        onClose={() => setIsModalUbahOpen(false)}
+        formData={formUbahData}
+        error={error}
+        isSubmitting={isSubmitting}
+        handleChange={handleUbahChange}
+        handleSubmit={handleUbah}
+      />
     </div>
   );
 };
@@ -670,6 +775,112 @@ const TambahKelompokModal = ({
             >
               {isSubmitting ? "Menyimpan..." : "Simpan"}
             </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+const UbahKelompokModal = ({
+  isOpen,
+  onClose,
+  formData,
+  error,
+  isSubmitting,
+  handleChange,
+  handleSubmit,
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 flex items-center justify-center z-50"
+      style={{ backgroundColor: "rgba(75, 85, 99, 0.4)" }}
+    >
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 relative">
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+
+        <h2 className="text-xl font-semibold mb-4">Ubah Kelompok</h2>
+
+        {error && (
+          <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-medium mb-1">
+              Nama Kelompok <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="text"
+              name="nama_kelompok"
+              value={formData.nama_kelompok}
+              onChange={handleChange}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="Masukkan nama kelompok"
+            />
+          </div>
+
+          <div className="mb-4">
+            <label className="block text-gray-700 text-sm font-medium mb-1">
+              Kapasitas Anggota <span className="text-red-500">*</span>
+            </label>
+            <input
+              type="number"
+              name="kapasitas"
+              value={formData.kapasitas}
+              onChange={handleChange}
+              min="2"
+              max="20"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
+
+          <div className="flex justify-between">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2 text-white bg-red-500 hover:bg-red-600 rounded-md"
+            >
+              Hapus
+            </button>
+            <div className="flex justify-end space-x-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all disabled:bg-blue-400 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? "Menyimpan..." : "Perbarui"}
+              </button>
+            </div>
           </div>
         </form>
       </div>
