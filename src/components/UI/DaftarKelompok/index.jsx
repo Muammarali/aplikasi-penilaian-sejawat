@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import axios from "axios";
@@ -21,6 +21,8 @@ const DaftarKelompok = () => {
     nama_kelompok: "",
     kapasitas: 4,
   });
+  const { isOpen, openModal, closeModal, initialData } =
+    usePeerEvaluationModal();
   const [isUbahKelompokId, setIsUbahKelompokId] = useState("");
   const [isAnggotaModalOpen, setIsAnggotaModalOpen] = useState(false);
   const [selectedKelompok, setSelectedKelompok] = useState(null);
@@ -145,7 +147,6 @@ const DaftarKelompok = () => {
                         {daftarKelompok?.jumlah_anggota} /{" "}
                         {daftarKelompok?.kapasitas} anggota
                       </div>
-                      {}
                       <div className="space-x-2 space-y-2 sm:space-y-0">
                         <button
                           className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm"
@@ -186,9 +187,10 @@ const DaftarKelompok = () => {
       case "form-penilaian":
         return (
           <div className="space-y-2 pt-2">
-            <div className="grid grid-cols-[2fr_3fr_2fr] gap-4 px-4 py-3 bg-blue-500 rounded-md font-semibold text-zinc-100 text-sm">
+            <div className="grid grid-cols-[2.5fr_1fr_1fr_2fr] gap-4 px-4 py-3 bg-blue-500 rounded-md font-semibold text-zinc-100 text-sm">
               <div className="truncate whitespace-nowrap">Nama Form</div>
               <div className="truncate whitespace-nowrap">Jenis Form</div>
+              <div className="truncate whitespace-nowrap">Status</div>
               <div className="truncate whitespace-nowrap">Aksi</div>
             </div>
 
@@ -205,17 +207,35 @@ const DaftarKelompok = () => {
                     key={form?.id_form}
                     className="bg-white p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow group"
                   >
-                    <div className="grid grid-cols-[2fr_3fr_2fr] gap-4 items-center">
+                    <div className="grid grid-cols-[2.5fr_1fr_1fr_2fr] gap-4 items-center">
                       <div className="text-sm text-gray-800">{form?.nama}</div>
                       <div className="text-sm text-gray-800">{form?.jenis}</div>
+                      <div className="text-sm text-gray-800">
+                        {form?.status ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                            Aktif
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                            Nonaktif
+                          </span>
+                        )}
+                      </div>
                       {session?.user?.role === "Dosen" ? (
-                        <div className="space-x-2">
+                        <div className="space-x-2 space-y-2 lg:space-y-0">
                           <button className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-all text-sm">
                             Ubah
                           </button>
-                          <button className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-all text-sm">
-                            Hapus
-                          </button>
+
+                          {form?.status ? (
+                            <button className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-all text-sm">
+                              Nonaktifkan
+                            </button>
+                          ) : (
+                            <button className="px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-all text-sm">
+                              Aktifkan
+                            </button>
+                          )}
                         </div>
                       ) : (
                         <div className="space-x-2">
@@ -570,6 +590,10 @@ const DaftarKelompok = () => {
     }
   };
 
+  const handleSubmitForm = (formData) => {
+    console.log("Form data submitted:", formData);
+  };
+
   return (
     <div className="w-full lg:max-w-6xl">
       <div className="min-w-96 space-y-4">
@@ -635,7 +659,10 @@ const DaftarKelompok = () => {
           {activeTab === "form-penilaian" &&
             (session?.user?.role === "Dosen" ? (
               <div className="">
-                <button className="px-4 py-2 border-1 border-blue-500 text-blue-500 rounded-md hover:bg-blue-500 hover:text-white transition-all text-sm">
+                <button
+                  className="px-4 py-2 border-1 border-blue-500 text-blue-500 rounded-md hover:bg-blue-500 hover:text-white transition-all text-sm"
+                  onClick={() => openModal()}
+                >
                   Buat Form
                 </button>
               </div>
@@ -680,6 +707,13 @@ const DaftarKelompok = () => {
         isSubmitting={isSubmitting}
         handleChange={handleUbahChange}
         handleSubmit={handleUbah}
+      />
+
+      <PeerEvaluationModal
+        isOpen={isOpen}
+        onClose={closeModal}
+        onSubmit={handleSubmitForm}
+        initialData={initialData}
       />
     </div>
   );
@@ -760,11 +794,11 @@ const TambahKelompokModal = ({
             />
           </div>
 
-          <div className="flex justify-end space-x-3">
+          <div className="flex justify-end space-x-2">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
             >
               Batal
             </button>
@@ -865,11 +899,11 @@ const UbahKelompokModal = ({
             >
               Hapus
             </button>
-            <div className="flex justify-end space-x-3">
+            <div className="flex justify-end space-x-2">
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-gray-700 border border-gray-300 rounded-md hover:bg-gray-50"
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
               >
                 Batal
               </button>
@@ -1010,12 +1044,12 @@ const AnggotaKelompokModal = ({
                 onClick={() => onKeluarKelompok(kelompok?.id_kelompok)}
                 className="w-full px-4 py-2 text-white border rounded-md bg-red-500 hover:bg-red-600"
               >
-                Keluar
+                Keluar dari kelompok
               </button>
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-gray-700 border border-gray-300 hover:bg-gray-50 rounded-md "
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
               >
                 Batal
               </button>
@@ -1034,7 +1068,7 @@ const AnggotaKelompokModal = ({
               <button
                 type="button"
                 onClick={onClose}
-                className="px-4 py-2 text-gray-700 border border-gray-300 hover:bg-gray-50 rounded-md "
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
               >
                 Batal
               </button>
@@ -1051,7 +1085,7 @@ const AnggotaKelompokModal = ({
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-700 border border-gray-300 hover:bg-gray-50 rounded-md "
+              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
             >
               Batal
             </button>
@@ -1059,6 +1093,607 @@ const AnggotaKelompokModal = ({
         )}
       </div>
     </div>
+  );
+};
+
+export const usePeerEvaluationModal = () => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [initialData, setInitialData] = useState(null);
+
+  const openModal = (data = null) => {
+    setInitialData(data);
+    setIsOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsOpen(false);
+    setInitialData(null);
+  };
+
+  return {
+    isOpen,
+    openModal,
+    closeModal,
+    initialData,
+  };
+};
+
+const ModalBackdrop = ({ children, isOpen, onClose }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 overflow-y-auto">
+      <div className="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+        <div
+          className="fixed inset-0 transition-opacity z-0"
+          style={{ backgroundColor: "rgba(75,85,99,0.4" }}
+          // onClick={onClose}
+          aria-hidden="true"
+        ></div>
+        <span
+          className="hidden sm:inline-block sm:align-middle sm:h-screen"
+          aria-hidden="true"
+        >
+          &#8203;
+        </span>
+        <div className="inline-block overflow-hidden text-left align-bottom transition-all transform bg-white rounded-lg shadow-xl sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
+          {children}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Form Penilaian Sejawat Component
+const PeerEvaluationForm = ({ onSubmit, onCancel, initialData = null }) => {
+  const [formData, setFormData] = useState({
+    nama_form: initialData?.nama_form || "",
+    jenis_form: initialData?.jenis_form || "1",
+    komponen_anggota_ke_anggota: initialData?.komponen_anggota_ke_anggota || [
+      { nama_komponen: "", bobot: "", deskripsi: "" },
+    ],
+    komponen_anggota_ke_ketua: initialData?.komponen_anggota_ke_ketua || [
+      { nama_komponen: "", bobot: "", deskripsi: "" },
+    ],
+    komponen_ketua_ke_anggota: initialData?.komponen_ketua_ke_anggota || [
+      { nama_komponen: "", bobot: "", deskripsi: "" },
+    ],
+    jenis3_option: initialData?.jenis3_option || "anggota_ke_anggota",
+  });
+
+  const [errors, setErrors] = useState({});
+  const [isKetua, setIsKetua] = useState(true); // Asumsi: nilai ini akan diambil dari konteks autentikasi
+
+  // Reset form berdasarkan jenis yang dipilih
+  useEffect(() => {
+    if (formData.jenis_form === "2") {
+      setFormData((prev) => ({
+        ...prev,
+        komponen_anggota_ke_ketua: [],
+        komponen_ketua_ke_anggota: [],
+      }));
+    } else if (formData.jenis_form === "1") {
+      if (formData.komponen_anggota_ke_ketua.length === 0) {
+        setFormData((prev) => ({
+          ...prev,
+          komponen_anggota_ke_ketua: [
+            { nama_komponen: "", bobot: "", deskripsi: "" },
+          ],
+          komponen_ketua_ke_anggota: [],
+        }));
+      }
+    } else if (formData.jenis_form === "3") {
+      if (formData.komponen_ketua_ke_anggota.length === 0) {
+        setFormData((prev) => ({
+          ...prev,
+          komponen_anggota_ke_ketua: [],
+          komponen_ketua_ke_anggota: [
+            { nama_komponen: "", bobot: "", deskripsi: "" },
+          ],
+        }));
+      }
+    }
+  }, [formData.jenis_form]);
+
+  // Reset form saat initialData berubah
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        nama_form: initialData.nama_form || "",
+        jenis_form: initialData.jenis_form || "1",
+        komponen_anggota_ke_anggota:
+          initialData.komponen_anggota_ke_anggota || [
+            { nama_komponen: "", bobot: "", deskripsi: "" },
+          ],
+        komponen_anggota_ke_ketua: initialData.komponen_anggota_ke_ketua || [
+          { nama_komponen: "", bobot: "", deskripsi: "" },
+        ],
+        komponen_ketua_ke_anggota: initialData.komponen_ketua_ke_anggota || [
+          { nama_komponen: "", bobot: "", deskripsi: "" },
+        ],
+        jenis3_option: initialData.jenis3_option || "anggota_ke_anggota",
+      });
+    }
+  }, [initialData]);
+
+  const handleFormChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleKomponenChange = (index, field, value, type) => {
+    let komponenKey;
+
+    if (type === "anggota_ke_anggota") {
+      komponenKey = "komponen_anggota_ke_anggota";
+    } else if (type === "anggota_ke_ketua") {
+      komponenKey = "komponen_anggota_ke_ketua";
+    } else if (type === "ketua_ke_anggota") {
+      komponenKey = "komponen_ketua_ke_anggota";
+    }
+
+    // Jika field adalah bobot, pastikan hanya bilangan bulat dan maksimal 3 digit
+    if (field === "bobot") {
+      // Hapus semua karakter non-digit
+      value = value.replace(/[^\d]/g, "");
+
+      // Batasi maksimal 3 digit
+      if (value.length > 3) {
+        value = value.slice(0, 3);
+      }
+
+      // Jika value bukan string kosong, konversi ke integer string lagi
+      if (value !== "") {
+        value = parseInt(value, 10).toString();
+      }
+    }
+
+    const updatedKomponen = [...formData[komponenKey]];
+    updatedKomponen[index] = {
+      ...updatedKomponen[index],
+      [field]: value,
+    };
+
+    setFormData((prev) => ({
+      ...prev,
+      [komponenKey]: updatedKomponen,
+    }));
+  };
+
+  const addKomponen = (type) => {
+    let komponenKey;
+
+    if (type === "anggota_ke_anggota") {
+      komponenKey = "komponen_anggota_ke_anggota";
+    } else if (type === "anggota_ke_ketua") {
+      komponenKey = "komponen_anggota_ke_ketua";
+    } else if (type === "ketua_ke_anggota") {
+      komponenKey = "komponen_ketua_ke_anggota";
+    }
+
+    setFormData((prev) => ({
+      ...prev,
+      [komponenKey]: [
+        ...prev[komponenKey],
+        { nama_komponen: "", bobot: "", deskripsi: "" },
+      ],
+    }));
+  };
+
+  const removeKomponen = (index, type) => {
+    let komponenKey;
+
+    if (type === "anggota_ke_anggota") {
+      komponenKey = "komponen_anggota_ke_anggota";
+    } else if (type === "anggota_ke_ketua") {
+      komponenKey = "komponen_anggota_ke_ketua";
+    } else if (type === "ketua_ke_anggota") {
+      komponenKey = "komponen_ketua_ke_anggota";
+    }
+
+    if (formData[komponenKey].length > 1) {
+      const updatedKomponen = [...formData[komponenKey]];
+      updatedKomponen.splice(index, 1);
+
+      setFormData((prev) => ({
+        ...prev,
+        [komponenKey]: updatedKomponen,
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.nama_form.trim()) {
+      newErrors.nama_form = "Nama form harus diisi";
+    }
+
+    // Validasi komponen_anggota_ke_anggota untuk jenis 1 & 2
+    if (formData.jenis_form === "1" || formData.jenis_form === "2") {
+      let totalBobotAnggota = 0;
+      formData.komponen_anggota_ke_anggota.forEach((item, index) => {
+        if (!item.nama_komponen.trim()) {
+          newErrors[`anggota_ke_anggota_${index}_nama`] =
+            "Nama komponen harus diisi";
+        }
+        if (!item.bobot) {
+          newErrors[`anggota_ke_anggota_${index}_bobot`] = "Bobot harus diisi";
+        } else {
+          const bobot = parseInt(item.bobot);
+          if (isNaN(bobot) || bobot <= 0) {
+            newErrors[`anggota_ke_anggota_${index}_bobot`] =
+              "Bobot harus berupa angka positif";
+          } else {
+            totalBobotAnggota += bobot;
+          }
+        }
+        if (!item.deskripsi || !item.deskripsi.trim()) {
+          newErrors[`anggota_ke_anggota_${index}_deskripsi`] =
+            "Deskripsi komponen harus diisi";
+        }
+      });
+      if (totalBobotAnggota !== 100) {
+        newErrors.total_bobot_anggota = "Total bobot harus 100%";
+      }
+    }
+
+    // Validasi komponen_anggota_ke_ketua khusus jenis 1
+    if (formData.jenis_form === "1") {
+      let totalBobotKetua = 0;
+      formData.komponen_anggota_ke_ketua.forEach((item, index) => {
+        if (!item.nama_komponen.trim()) {
+          newErrors[`anggota_ke_ketua_${index}_nama`] =
+            "Nama komponen harus diisi";
+        }
+        if (!item.bobot) {
+          newErrors[`anggota_ke_ketua_${index}_bobot`] = "Bobot harus diisi";
+        } else {
+          const bobot = parseInt(item.bobot);
+          if (isNaN(bobot) || bobot <= 0) {
+            newErrors[`anggota_ke_ketua_${index}_bobot`] =
+              "Bobot harus berupa angka positif";
+          } else {
+            totalBobotKetua += bobot;
+          }
+        }
+        if (!item.deskripsi || !item.deskripsi.trim()) {
+          newErrors[`anggota_ke_ketua_${index}_deskripsi`] =
+            "Deskripsi komponen harus diisi";
+        }
+      });
+      if (totalBobotKetua !== 100) {
+        newErrors.total_bobot_ketua = "Total bobot harus 100%";
+      }
+    }
+
+    // Validasi komponen_ketua_ke_anggota khusus jenis 3
+    if (formData.jenis_form === "3") {
+      let totalBobotKetuaAnggota = 0;
+      formData.komponen_ketua_ke_anggota.forEach((item, index) => {
+        if (!item.nama_komponen.trim()) {
+          newErrors[`ketua_ke_anggota_${index}_nama`] =
+            "Nama komponen harus diisi";
+        }
+        if (!item.bobot) {
+          newErrors[`ketua_ke_anggota_${index}_bobot`] = "Bobot harus diisi";
+        } else {
+          const bobot = parseInt(item.bobot);
+          if (isNaN(bobot) || bobot <= 0) {
+            newErrors[`ketua_ke_anggota_${index}_bobot`] =
+              "Bobot harus berupa angka positif";
+          } else {
+            totalBobotKetuaAnggota += bobot;
+          }
+        }
+        if (!item.deskripsi || !item.deskripsi.trim()) {
+          newErrors[`ketua_ke_anggota_${index}_deskripsi`] =
+            "Deskripsi komponen harus diisi";
+        }
+      });
+      if (totalBobotKetuaAnggota !== 100) {
+        newErrors.total_bobot_ketua_anggota = "Total bobot harus 100%";
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (validateForm()) {
+      onSubmit(formData);
+    }
+  };
+
+  const renderKomponenTable = (type) => {
+    let komponenKey, title, errorKey;
+
+    if (type === "anggota_ke_anggota") {
+      komponenKey = "komponen_anggota_ke_anggota";
+      title = "KOMPONEN PENILAIAN ANGGOTA KE ANGGOTA";
+      errorKey = "total_bobot_anggota";
+    } else if (type === "anggota_ke_ketua") {
+      komponenKey = "komponen_anggota_ke_ketua";
+      title = "KOMPONEN PENILAIAN ANGGOTA KE KETUA";
+      errorKey = "total_bobot_ketua";
+    } else if (type === "ketua_ke_anggota") {
+      komponenKey = "komponen_ketua_ke_anggota";
+      title = "KOMPONEN PENILAIAN KETUA KE ANGGOTA";
+      errorKey = "total_bobot_ketua_anggota";
+    }
+
+    return (
+      <div className="mt-6">
+        <h3 className="text-lg font-medium text-gray-800">{title}</h3>
+        <div className="overflow-x-auto mt-2">
+          <table className="min-w-full bg-white border border-gray-200">
+            <thead>
+              <tr>
+                <th className="py-2 px-4 border-b border-gray-200 text-left text-sm font-medium text-gray-700">
+                  Nama Komponen
+                </th>
+                <th className="py-2 px-4 border-b border-gray-200 text-left text-sm font-medium text-gray-700">
+                  Bobot
+                </th>
+                <th className="py-2 px-4 border-b border-gray-200 text-left text-sm font-medium text-gray-700">
+                  Deskripsi Komponen
+                </th>
+                <th className="py-2 px-4 border-b border-gray-200 text-left text-sm font-medium text-gray-700">
+                  Aksi
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {formData[komponenKey].map((komponen, index) => (
+                <tr key={index}>
+                  <td className="py-2 px-4 border-b border-gray-200">
+                    <input
+                      type="text"
+                      className={`w-full p-2 border ${
+                        errors[`${type}_${index}_nama`]
+                          ? "border-red-500"
+                          : "border-gray-300"
+                      } rounded`}
+                      value={komponen.nama_komponen}
+                      onChange={(e) =>
+                        handleKomponenChange(
+                          index,
+                          "nama_komponen",
+                          e.target.value,
+                          type
+                        )
+                      }
+                      placeholder="Nama Komponen"
+                    />
+                    {errors[`${type}_${index}_nama`] && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors[`${type}_${index}_nama`]}
+                      </p>
+                    )}
+                  </td>
+                  <td className="py-2 px-4 border-b border-gray-200">
+                    <div className="flex items-center">
+                      <input
+                        type="number"
+                        className={`w-16 p-2 border ${
+                          errors[`${type}_${index}_bobot`]
+                            ? "border-red-500"
+                            : "border-gray-300"
+                        } rounded`}
+                        value={komponen.bobot}
+                        onKeyDown={(e) => {
+                          if (
+                            e.key === "-" ||
+                            e.key === "e" ||
+                            e.key === "+" ||
+                            e.key === "." ||
+                            e.key === ","
+                          ) {
+                            e.preventDefault();
+                          }
+                        }}
+                        onChange={(e) =>
+                          handleKomponenChange(
+                            index,
+                            "bobot",
+                            e.target.value,
+                            type
+                          )
+                        }
+                        placeholder="0"
+                      />
+                      <span className="ml-1">%</span>
+                    </div>
+                    {errors[`${type}_${index}_bobot`] && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors[`${type}_${index}_bobot`]}
+                      </p>
+                    )}
+                  </td>
+                  <td className="py-2 px-4 border-b border-gray-200">
+                    <input
+                      type="text"
+                      className="w-full p-2 border border-gray-300 rounded"
+                      value={komponen.deskripsi}
+                      onChange={(e) =>
+                        handleKomponenChange(
+                          index,
+                          "deskripsi",
+                          e.target.value,
+                          type
+                        )
+                      }
+                      placeholder="Deskripsi"
+                    />
+                    {errors[`${type}_${index}_deskripsi`] && (
+                      <p className="text-red-500 text-xs mt-1">
+                        {errors[`${type}_${index}_deskripsi`]}
+                      </p>
+                    )}
+                  </td>
+                  <td className="py-2 px-4 border-b border-gray-200">
+                    <button
+                      type="button"
+                      onClick={() => removeKomponen(index, type)}
+                      className="text-red-600 hover:text-red-800"
+                      disabled={formData[komponenKey].length <= 1}
+                    >
+                      Hapus
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {errors[errorKey] && (
+            <p className="text-red-500 text-sm mt-1">{errors[errorKey]}</p>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => addKomponen(type)}
+          className="mt-2 flex items-center text-blue-600 hover:text-blue-800"
+        >
+          <svg
+            className="w-4 h-4 mr-1"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M12 4v16m8-8H4"
+            ></path>
+          </svg>
+          Tambah Komponen
+        </button>
+      </div>
+    );
+  };
+
+  return (
+    <div className="p-8">
+      <div className="flex justify-between items-center mb-6">
+        <h2 className="text-2xl font-bold text-gray-800">
+          FORM PENILAIAN SEJAWAT
+        </h2>
+        <button
+          type="button"
+          onClick={onCancel}
+          className="text-gray-400 hover:text-gray-500"
+        >
+          <svg
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+      </div>
+
+      <form onSubmit={handleSubmit}>
+        <div className="mb-4">
+          <label className="block text-gray-700 font-medium mb-2">
+            Nama Form
+          </label>
+          <input
+            type="text"
+            name="nama_form"
+            value={formData.nama_form}
+            onChange={handleFormChange}
+            className={`w-full p-2 border ${
+              errors.nama_form ? "border-red-500" : "border-gray-300"
+            } rounded`}
+            placeholder="Masukkan nama form"
+          />
+          {errors.nama_form && (
+            <p className="text-red-500 text-sm mt-1">{errors.nama_form}</p>
+          )}
+        </div>
+
+        <div className="mb-6">
+          <label className="block text-gray-700 font-medium mb-2">
+            Jenis Form
+          </label>
+          <select
+            name="jenis_form"
+            value={formData.jenis_form}
+            onChange={handleFormChange}
+            className="w-full p-2 border border-gray-300 rounded bg-white"
+          >
+            <option value="1">
+              Jenis 1 - Anggota ke Anggota & Anggota ke Ketua
+            </option>
+            <option value="2">Jenis 2 - Hanya Anggota ke Anggota</option>
+            <option value="3">Jenis 3 - Hanya Ketua ke Anggota</option>
+          </select>
+        </div>
+
+        {/* Render komponen anggota ke anggota untuk jenis 1 dan 2 */}
+        {(formData.jenis_form === "1" || formData.jenis_form === "2") &&
+          renderKomponenTable("anggota_ke_anggota")}
+
+        {/* Render komponen anggota ke ketua untuk jenis 1 */}
+        {formData.jenis_form === "1" && renderKomponenTable("anggota_ke_ketua")}
+
+        {/* Render komponen ketua ke anggota untuk jenis 3 */}
+        {formData.jenis_form === "3" &&
+          isKetua &&
+          renderKomponenTable("ketua_ke_anggota")}
+
+        <div className="mt-8 flex justify-end gap-4">
+          <button
+            type="button"
+            onClick={onCancel}
+            className="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
+          >
+            Batal
+          </button>
+          <button
+            type="submit"
+            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+          >
+            Simpan Form
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+};
+
+// Modal Komponen Utama
+export const PeerEvaluationModal = ({
+  isOpen,
+  onClose,
+  onSubmit,
+  initialData = null,
+}) => {
+  return (
+    <ModalBackdrop isOpen={isOpen} onClose={onClose}>
+      <PeerEvaluationForm
+        onSubmit={(formData) => {
+          onSubmit(formData);
+          onClose();
+        }}
+        onCancel={onClose}
+        initialData={initialData}
+      />
+    </ModalBackdrop>
   );
 };
 
