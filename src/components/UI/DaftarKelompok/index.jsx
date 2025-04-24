@@ -590,8 +590,50 @@ const DaftarKelompok = () => {
     }
   };
 
+  const getKomponenByJenisForm = (formData) => {
+    const result = {
+      anggota_ke_anggota: [],
+      anggota_ke_ketua: [],
+      ketua_ke_anggota: [],
+    };
+
+    if (formData.jenis_form === "1") {
+      result.anggota_ke_anggota = formData.komponen_anggota_ke_anggota.map(
+        (item) => ({
+          ...item,
+          tipe_penilaian: "Anggota ke Anggota",
+        })
+      );
+
+      result.anggota_ke_ketua = formData.komponen_anggota_ke_ketua.map(
+        (item) => ({
+          ...item,
+          tipe_penilaian: "Anggota ke Ketua",
+        })
+      );
+    } else if (formData.jenis_form === "2") {
+      result.anggota_ke_anggota = formData.komponen_anggota_ke_anggota.map(
+        (item) => ({
+          ...item,
+          tipe_penilaian: "Anggota ke Anggota",
+        })
+      );
+    } else if (formData.jenis_form === "3") {
+      result.ketua_ke_anggota = formData.komponen_ketua_ke_anggota.map(
+        (item) => ({
+          ...item,
+          tipe_penilaian: "Ketua ke Anggota",
+        })
+      );
+    }
+
+    return result;
+  };
+
   const handleSubmitForm = (formData) => {
-    console.log("Form data submitted:", formData);
+    const komponenYangDipakai = getKomponenByJenisForm(formData);
+    console.log(formData.jenis_form);
+    console.log(komponenYangDipakai);
   };
 
   return (
@@ -1626,22 +1668,40 @@ const PeerEvaluationForm = ({ onSubmit, onCancel, initialData = null }) => {
           )}
         </div>
 
-        <div className="mb-6">
+        <div className="mb-6 relative">
           <label className="block text-gray-700 font-medium mb-2">
             Jenis Form
           </label>
-          <select
-            name="jenis_form"
-            value={formData.jenis_form}
-            onChange={handleFormChange}
-            className="w-full p-2 border border-gray-300 rounded bg-white"
-          >
-            <option value="1">
-              Jenis 1 - Anggota ke Anggota & Anggota ke Ketua
-            </option>
-            <option value="2">Jenis 2 - Hanya Anggota ke Anggota</option>
-            <option value="3">Jenis 3 - Hanya Ketua ke Anggota</option>
-          </select>
+          <div className="relative">
+            <select
+              name="jenis_form"
+              value={formData.jenis_form}
+              onChange={handleFormChange}
+              className="appearance-none w-full p-2 border border-gray-300 rounded bg-white pr-10"
+            >
+              <option value="1">
+                Jenis 1 - Anggota ke Anggota & Anggota ke Ketua
+              </option>
+              <option value="2">Jenis 2 - Hanya Anggota ke Anggota</option>
+              <option value="3">Jenis 3 - Hanya Ketua ke Anggota</option>
+            </select>
+            {/* Custom arrow */}
+            <div className="pointer-events-none absolute inset-y-0 right-1 flex items-center px-2 text-gray-600">
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 9l-7 7-7-7"
+                />
+              </svg>
+            </div>
+          </div>
         </div>
 
         {/* Render komponen anggota ke anggota untuk jenis 1 dan 2 */}
@@ -1656,7 +1716,7 @@ const PeerEvaluationForm = ({ onSubmit, onCancel, initialData = null }) => {
           isKetua &&
           renderKomponenTable("ketua_ke_anggota")}
 
-        <div className="mt-8 flex justify-end gap-4">
+        <div className="mt-8 flex justify-end space-x-2">
           <button
             type="button"
             onClick={onCancel}
@@ -1668,7 +1728,7 @@ const PeerEvaluationForm = ({ onSubmit, onCancel, initialData = null }) => {
             type="submit"
             className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
           >
-            Simpan Form
+            Simpan
           </button>
         </div>
       </form>
