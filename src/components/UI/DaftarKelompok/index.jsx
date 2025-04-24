@@ -3,6 +3,7 @@ import { useState, useEffect, Fragment } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import axios from "axios";
+import { FiLogOut } from "react-icons/fi";
 
 const DaftarKelompok = () => {
   const [dataKelompok, setDataKelompok] = useState([]);
@@ -1045,6 +1046,18 @@ const AnggotaKelompokModal = ({
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
                         Anggota
                       </span>
+                    )}
+
+                    {userRole === "Dosen" && (
+                      <div>
+                        <button
+                          type="button"
+                          className="flex items-center gap-1 px-2 py-1.5 text-xs text-white bg-red-600 hover:bg-red-700 rounded-md"
+                        >
+                          <FiLogOut size={18} />
+                          Keluarkan
+                        </button>
+                      </div>
                     )}
                   </div>
                 </li>
