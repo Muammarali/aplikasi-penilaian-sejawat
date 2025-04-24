@@ -503,6 +503,43 @@ const DaftarKelompok = () => {
     }
   };
 
+  const handleKeluarkanKelompok = async (userId, kelompokId) => {
+    try {
+      // Confirm before leaving the group
+      if (
+        !window.confirm(
+          "Apakah Anda yakin ingin mengeluarkannya dari kelompok?"
+        )
+      ) {
+        return;
+      }
+
+      // Call the API to leave the group
+      const response = await axios.post("/api/daftarkelompok/keluar", {
+        id_kelompok: kelompokId,
+        id_user: userId,
+      });
+
+      if (response.data.success) {
+        // Refresh the anggota list
+        fetchAnggotaKelompok(kelompokId);
+
+        // Refresh the main kelompok list to update counts
+        fetchKelompok();
+
+        // Show success message (optional)
+        alert("Berhasil mengeluarkan mahasiswa dari kelompok");
+      } else {
+        alert(
+          response.data.message || "Gagal mengeluarkan mahasiswa dari kelompok"
+        );
+      }
+    } catch (error) {
+      console.error("Error leaving group:", error);
+      alert("Terjadi kesalahan saat mengeluarkan mahasiswa dari kelompok");
+    }
+  };
+
   const handleGabungKelompok = async (kelompokId) => {
     try {
       // Konfirmasi sebelum bergabung
@@ -726,6 +763,7 @@ const DaftarKelompok = () => {
         anggotaList={anggotaKelompok}
         currentIdUser={session?.user?.id}
         onKeluarKelompok={handleKeluarKelompok}
+        onKeluarkanKelompok={handleKeluarkanKelompok}
         onGabungKelompok={handleGabungKelompok}
         onJadiKetua={handleJadiKetua}
         onUndurKetua={handleUndurKetua}
@@ -972,6 +1010,7 @@ const AnggotaKelompokModal = ({
   anggotaList = [],
   currentIdUser,
   onKeluarKelompok,
+  onKeluarkanKelompok,
   onGabungKelompok,
   onJadiKetua,
   onUndurKetua,
@@ -1053,6 +1092,12 @@ const AnggotaKelompokModal = ({
                         <button
                           type="button"
                           className="flex items-center gap-1 px-2 py-1.5 text-xs text-white bg-red-600 hover:bg-red-700 rounded-md"
+                          onClick={() =>
+                            onKeluarkanKelompok(
+                              anggota?.id_user,
+                              kelompok?.id_kelompok
+                            )
+                          }
                         >
                           <FiLogOut size={18} />
                           Keluarkan
