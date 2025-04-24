@@ -115,6 +115,28 @@ const DaftarKelompok = () => {
     setCurrentPage(1);
   }, [searchTerm]);
 
+  const handleChangeStatusForm = async (formId, status) => {
+    try {
+      const response = await axios.put("/api/formpenilaian/ubahstatus", {
+        id_form: formId,
+        status: status,
+      });
+
+      if (response.data.success) {
+        setIsModalOpen(false);
+        setFormData({
+          nama_kelompok: "",
+          kapasitas: "5", // default-nya string
+        });
+        fetchFormPenilaian();
+      } else {
+        setError(response.data.message || "Gagal membuat kelompok");
+      }
+    } catch (error) {
+      console.error("Error saat mengubah status form", error);
+    }
+  };
+
   // Tab rendering logic
   const renderTabContent = () => {
     switch (activeTab) {
@@ -196,14 +218,24 @@ const DaftarKelompok = () => {
             </div>
 
             <ul className="space-y-2">
-              {formPenilaian.length === 0 ? (
-                <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
-                  <p className="text-sm text-gray-500">
-                    Mata kuliah ini belum memiliki form penilaian
-                  </p>
-                </div>
-              ) : (
-                formPenilaian.map((form) => (
+              {(() => {
+                // Filter dulu sesuai role
+                const visibleForms =
+                  session?.user?.role === "Mahasiswa"
+                    ? formPenilaian.filter((form) => form.status)
+                    : formPenilaian;
+
+                if (visibleForms.length === 0) {
+                  return (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+                      <p className="text-sm text-gray-500">
+                        Form penilaian belum tersedia
+                      </p>
+                    </div>
+                  );
+                }
+
+                return visibleForms.map((form) => (
                   <li
                     key={form?.id_form}
                     className="bg-white p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow group"
@@ -227,13 +259,22 @@ const DaftarKelompok = () => {
                           <button className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-all text-sm">
                             Ubah
                           </button>
-
                           {form?.status ? (
-                            <button className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-all text-sm">
+                            <button
+                              className="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-all text-sm"
+                              onClick={() =>
+                                handleChangeStatusForm(form?.id_form, false)
+                              }
+                            >
                               Nonaktifkan
                             </button>
                           ) : (
-                            <button className="px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-all text-sm">
+                            <button
+                              className="px-4 py-2 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 transition-all text-sm"
+                              onClick={() =>
+                                handleChangeStatusForm(form?.id_form, true)
+                              }
+                            >
                               Aktifkan
                             </button>
                           )}
@@ -247,8 +288,8 @@ const DaftarKelompok = () => {
                       )}
                     </div>
                   </li>
-                ))
-              )}
+                ));
+              })()}
             </ul>
 
             {/* Pagination Component */}
