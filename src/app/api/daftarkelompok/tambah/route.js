@@ -5,12 +5,6 @@ export async function POST(req) {
   const { nama_kelompok, kapasitas, id_mk, kelas, nama_matkul } =
     await req.json();
 
-  //   console.log(id_mk);
-  //   console.log(nama_kelompok);
-  //   console.log(kapasitas);
-  //   console.log(nama_matkul);
-  //   console.log(kelas);
-
   try {
     // Validasi dulu apakah id_mk + nama + kelas itu valid
     const validateMatkulQuery = `

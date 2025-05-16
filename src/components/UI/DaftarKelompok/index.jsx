@@ -4,6 +4,7 @@ import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import axios from "axios";
 import { FiLogOut } from "react-icons/fi";
+import toast from "react-hot-toast";
 
 const DaftarKelompok = () => {
   const [dataKelompok, setDataKelompok] = useState([]);
@@ -14,6 +15,12 @@ const DaftarKelompok = () => {
   const [activeTab, setActiveTab] = useState("daftar-kelompok");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalUbahOpen, setIsModalUbahOpen] = useState(false);
+  const [isModalDaftarMahasiswaOpen, setIsModalDaftarMahasiswaOpen] =
+    useState(false);
+  const [mahasiswaList, setMahasiswaList] = useState([]);
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false);
+  const [kelompokList, setKelompokList] = useState([]);
+  const [selectedMahasiswa, setSelectedMahasiswa] = useState(null);
   const [formData, setFormData] = useState({
     nama_kelompok: "",
     kapasitas: 4,
@@ -63,6 +70,89 @@ const DaftarKelompok = () => {
     } catch (error) {
       console.error("Error on route", error);
       router.push("/daftarkelas");
+    }
+  };
+
+  const handleOpenModalDaftarMahasiswa = async () => {
+    const { nama_matkul, kelas, id_mk } = parseMatkulParam(params.matkul);
+
+    const response = await axios.post("/api/daftarkelompok/daftarmahasiswa", {
+      nama_matkul,
+      kelas,
+      id_mk,
+      id_user: session?.user?.id,
+    });
+
+    if (!response.data.success) {
+      router.refresh();
+      return;
+    }
+
+    const data = response.data.data;
+    setMahasiswaList(data);
+    setIsModalDaftarMahasiswaOpen(true);
+  };
+
+  const handleAddToGroup = async (kelompokId) => {
+    // Your logic to add the student to a group
+    console.log("Adding student with ID:", kelompokId);
+    console.log("User ID:", selectedMahasiswa.id_user);
+
+    if (!selectedMahasiswa) return;
+
+    try {
+      // Konfirmasi sebelum bergabung
+      if (
+        !window.confirm(
+          "Apakah Anda yakin ingin memasukkan mahasiswa ini ke dalam kelompok tersebut?"
+        )
+      ) {
+        return;
+      }
+
+      // Panggil API untuk bergabung ke kelompok
+      const response = await axios.post("/api/daftarkelompok/gabung", {
+        id_kelompok: kelompokId,
+        id_user: selectedMahasiswa.id_user,
+        peran: "Anggota", // default peran
+      });
+
+      if (response.data.success) {
+        // Refresh daftar anggota kelompok
+        fetchAnggotaKelompok(kelompokId);
+
+        setIsGroupModalOpen(false);
+        setIsModalDaftarMahasiswaOpen(false);
+
+        setSelectedMahasiswa(null);
+
+        // Refresh daftar kelompok utama (untuk update jumlah anggota)
+        fetchKelompok();
+
+        // Tampilkan pesan sukses
+        alert("Mahasiswa berhasil bergabung ke kelompok");
+      } else {
+        alert(response.data.message || "Gagal bergabung ke kelompok");
+      }
+    } catch (error) {
+      console.error("Error joining group:", error);
+      alert("Terjadi kesalahan saat bergabung ke kelompok");
+    }
+  };
+
+  const handleSelectStudent = async (mahasiswa) => {
+    setSelectedMahasiswa(mahasiswa);
+
+    try {
+      // Fetch available groups
+      // const response = await axios.get(
+      //   `/api/kelompok/available?id_mk=${id_mk}`
+      // );
+      // setKelompokList(response.data.data || []);
+      setIsGroupModalOpen(true);
+    } catch (error) {
+      console.error("Error fetching available groups:", error);
+      toast.error("Gagal mengambil data kelompok");
     }
   };
 
@@ -401,8 +491,8 @@ const DaftarKelompok = () => {
 
     const kapasitas = parseInt(formData.kapasitas);
 
-    if (isNaN(kapasitas) || kapasitas < 2 || kapasitas > 20) {
-      setError("Kapasitas harus berupa angka antara 2 hingga 20");
+    if (isNaN(kapasitas) || kapasitas < 1) {
+      setError("Kapasitas harus berupa angka setidaknya 1 atau lebih");
       return;
     }
 
@@ -437,6 +527,31 @@ const DaftarKelompok = () => {
     }
   };
 
+  const handleAutoCreate = async () => {
+    setError("");
+    try {
+      const { nama_matkul, kelas, id_mk } = parseMatkulParam(params.matkul);
+
+      const response = await axios.post("/api/daftarkelompok/tambahotomatis", {
+        id_mk,
+        kelas,
+        nama_matkul,
+        id_user: session?.user?.id,
+        anggota_per_kelompok: 4,
+      });
+
+      if (response.data.success) {
+        setIsModalOpen(false);
+        fetchKelompok();
+      } else {
+        setError(response.data.message || "Gagal membuat kelompok otomatis");
+      }
+    } catch (error) {
+      console.error("Error creating automatic groups:", error);
+      setError("Terjadi kesalahan saat membuat kelompok otomatis");
+    }
+  };
+
   const handleUbah = async (e) => {
     e.preventDefault();
     setError("");
@@ -448,8 +563,8 @@ const DaftarKelompok = () => {
 
     const kapasitas = parseInt(formUbahData.kapasitas);
 
-    if (isNaN(kapasitas) || kapasitas < 2 || kapasitas > 20) {
-      setError("Kapasitas harus berupa angka antara 2 hingga 20");
+    if (isNaN(kapasitas) || kapasitas < 1) {
+      setError("Kapasitas harus berupa angka setidaknya 1 atau lebih");
       return;
     }
 
@@ -709,10 +824,29 @@ const DaftarKelompok = () => {
     return result;
   };
 
-  const handleSubmitForm = (formData) => {
-    const komponenYangDipakai = getKomponenByJenisForm(formData);
-    console.log(formData.jenis_form);
-    console.log(komponenYangDipakai);
+  const handleSubmitForm = async (formData) => {
+    try {
+      const komponenYangDipakai = getKomponenByJenisForm(formData);
+      const mkId = parseMatkulParam(params.matkul);
+
+      console.log(mkId?.id_mk);
+      console.log(formData.nama_form);
+      console.log(formData.jenis_form);
+      console.log(komponenYangDipakai);
+
+      const response = await axios.post("/api/formpenilaian/tambah", {
+        nama_form: formData?.nama_form,
+        id_mk: mkId?.id_mk,
+        id_jenis: formData?.jenis_form,
+      });
+
+      if (response.data.success) {
+        alert("Berhasil mengudurkan diri!");
+        fetchAnggotaKelompok(kelompokId); // refresh data
+      } else {
+        alert(response.data.message || "Gagal mengudurkan diri!");
+      }
+    } catch (error) {}
   };
 
   return (
@@ -765,7 +899,13 @@ const DaftarKelompok = () => {
           {activeTab === "daftar-kelompok" && "Daftar Kelompok"}
           {activeTab === "daftar-kelompok" &&
             (session?.user?.role === "Dosen" ? (
-              <div className="">
+              <div className="flex justify-between gap-2">
+                <button
+                  className="px-4 py-2 border-1 border-blue-500 text-blue-500 rounded-md hover:bg-blue-500 hover:text-white transition-all text-sm"
+                  onClick={() => handleOpenModalDaftarMahasiswa()}
+                >
+                  Lihat Daftar Mahasiswa
+                </button>
                 <button
                   className="px-4 py-2 border-1 border-blue-500 text-blue-500 rounded-md hover:bg-blue-500 hover:text-white transition-all text-sm"
                   onClick={() => handleTambahKelompok()}
@@ -819,6 +959,23 @@ const DaftarKelompok = () => {
         isSubmitting={isSubmitting}
         handleChange={handleChange}
         handleSubmit={handleSubmit}
+        handleAutoCreate={handleAutoCreate}
+        isActive={dataKelompok.length}
+      />
+
+      <ModalDaftarMahasiswa
+        isOpen={isModalDaftarMahasiswaOpen}
+        onClose={() => setIsModalDaftarMahasiswaOpen(false)}
+        mahasiswaList={mahasiswaList}
+        onSelectStudent={handleSelectStudent}
+      />
+
+      <ModalPilihKelompok
+        isOpen={isGroupModalOpen}
+        onClose={() => setIsGroupModalOpen(false)}
+        kelompokList={dataKelompok}
+        selectedMahasiswa={selectedMahasiswa}
+        onAddToGroup={handleAddToGroup}
       />
 
       <UbahKelompokModal
@@ -849,6 +1006,8 @@ const TambahKelompokModal = ({
   isSubmitting,
   handleChange,
   handleSubmit,
+  handleAutoCreate,
+  isActive,
 }) => {
   if (!isOpen) return null;
 
@@ -910,29 +1069,314 @@ const TambahKelompokModal = ({
               name="kapasitas"
               value={formData.kapasitas}
               onChange={handleChange}
-              min="2"
-              max="20"
+              min="1"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
 
-          <div className="flex justify-end space-x-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
-            >
-              Batal
-            </button>
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all disabled:bg-blue-400 disabled:cursor-not-allowed"
-            >
-              {isSubmitting ? "Menyimpan..." : "Simpan"}
-            </button>
+          <div className="flex justify-between space-x-2">
+            {isActive == 0 ? (
+              <button
+                type="button"
+                onClick={handleAutoCreate}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+              >
+                Buat Otomatis
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="px-4 py-2 bg-gray-300 text-gray-500 rounded-md cursor-no-drop"
+              >
+                Buat Otomatis
+              </button>
+            )}
+
+            <div className="flex justify-end space-x-2">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+              >
+                Batal
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all disabled:bg-blue-400 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? "Menyimpan..." : "Simpan"}
+              </button>
+            </div>
           </div>
         </form>
+
+        <div className="flex flex-col gap-1 mt-4">
+          <h1 className="italic text-sm text-gray-700">
+            *) Buat Otomatis yaitu membuat kelompok dengan membagi jumlah
+            mahasiswa untuk masing-masing kelompok terdiri dari 4 mahasiswa
+          </h1>
+          <h1 className="italic text-sm text-gray-700">
+            *) Ketika mata kuliah memiliki kelompok, maka tidak dapat membuat
+            kelompok secara otomatis
+          </h1>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ModalDaftarMahasiswa = ({
+  isOpen,
+  onClose,
+  mahasiswaList,
+  onSelectStudent,
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 flex items-center justify-center z-50"
+      style={{ backgroundColor: "rgba(75, 85, 99, 0.4)" }}
+    >
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 relative">
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 transition-colors duration-200"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+
+        <h2 className="text-xl font-semibold mb-4 pb-2">
+          Daftar Mahasiswa Belum Masuk Kelompok
+        </h2>
+
+        {mahasiswaList.length === 0 ? (
+          <div className="text-center py-10 text-gray-600 bg-gray-50 rounded-lg border border-gray-200">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-12 w-12 mx-auto text-gray-400 mb-2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <p className="font-medium">Semua mahasiswa sudah masuk kelompok</p>
+          </div>
+        ) : (
+          <div className="max-h-80 overflow-y-auto rounded-lg border border-gray-200 shadow">
+            <table className="w-full table-auto text-sm">
+              <thead>
+                <tr className="bg-gradient-to-r from-blue-500 to-blue-600 text-white">
+                  <th className="px-4 py-3 w-16 font-semibold rounded-tl-lg">
+                    No
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold">
+                    Nama Mahasiswa
+                  </th>
+                  <th className="px-4 py-3 text-center font-semibold rounded-tr-lg w-28">
+                    Aksi
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {mahasiswaList.map((mhs, index) => (
+                  <tr
+                    key={mhs.id_user}
+                    className={`hover:bg-blue-50 transition-colors duration-150 ${
+                      index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                    }`}
+                  >
+                    <td className="px-4 py-3 text-center font-medium text-gray-700">
+                      {index + 1}
+                    </td>
+                    <td className="px-4 py-3 text-gray-800">
+                      <div className="flex items-center">
+                        {/* <div className="h-8 w-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold mr-3">
+                          {mhs.nama.charAt(0).toUpperCase()}
+                        </div> */}
+                        {mhs.nama}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        className="px-3 py-2 bg-green-500 text-white text-sm rounded-md hover:bg-green-600 transition-colors duration-200 shadow-sm font-medium"
+                        onClick={() => onSelectStudent(mhs)}
+                      >
+                        Masukkan
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200 shadow-md font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+          >
+            Tutup
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const ModalPilihKelompok = ({
+  isOpen,
+  onClose,
+  kelompokList,
+  selectedMahasiswa,
+  onAddToGroup,
+}) => {
+  if (!isOpen) return null;
+
+  return (
+    <div
+      className="fixed inset-0 flex items-center justify-center z-[60]" // Higher z-index than first modal
+      style={{ backgroundColor: "rgba(75, 85, 99, 0.4)" }}
+    >
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-lg p-6 relative">
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 transition-colors duration-200"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+
+        <h2 className="text-xl font-semibold mb-2">Pilih Kelompok</h2>
+
+        <div className="bg-blue-50 p-3 rounded-lg mb-4 border border-blue-200">
+          <p className="text-sm text-blue-800">
+            Mahasiswa:{" "}
+            <span className="font-semibold">{selectedMahasiswa?.nama}</span>
+          </p>
+        </div>
+
+        {kelompokList.length === 0 ? (
+          <div className="text-center py-10 text-gray-600 bg-gray-50 rounded-lg border border-gray-200">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-12 w-12 mx-auto text-gray-400 mb-2"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            <p className="font-medium">Tidak ada kelompok yang tersedia</p>
+          </div>
+        ) : (
+          <div className="max-h-80 overflow-y-auto rounded-lg border border-gray-200 shadow">
+            <table className="w-full table-auto text-sm">
+              <thead>
+                <tr className="bg-gradient-to-r from-purple-500 to-purple-600 text-white">
+                  <th className="px-4 py-3 w-16 font-semibold rounded-tl-lg">
+                    No
+                  </th>
+                  <th className="px-4 py-3 text-left font-semibold">
+                    Nama Kelompok
+                  </th>
+                  <th className="px-4 py-3 w-24 text-center font-semibold">
+                    Kapasitas
+                  </th>
+                  <th className="px-4 py-3 text-center font-semibold rounded-tr-lg w-28">
+                    Aksi
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {kelompokList.map((kelompok, index) => (
+                  <tr
+                    key={kelompok.id_kelompok}
+                    className={`hover:bg-purple-50 transition-colors duration-150 ${
+                      index % 2 === 0 ? "bg-white" : "bg-gray-50"
+                    }`}
+                  >
+                    <td className="px-4 py-3 text-center font-medium text-gray-700">
+                      {index + 1}
+                    </td>
+                    <td className="px-4 py-3 text-gray-800">
+                      <div className="flex items-center">
+                        {kelompok.nama_kelompok}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="inline-block bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs font-medium">
+                        {kelompok.jumlah_anggota}/{kelompok.kapasitas}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        className={`px-3 py-1 ${
+                          kelompok.jumlah_anggota >= kelompok.kapasitas
+                            ? `bg-gray-500`
+                            : `bg-purple-500 hover:bg-purple-600`
+                        } text-white text-sm rounded transition-colors duration-200 shadow-sm font-medium`}
+                        onClick={() => onAddToGroup(kelompok.id_kelompok)}
+                        disabled={kelompok.jumlah_anggota >= kelompok.kapasitas}
+                      >
+                        {kelompok.jumlah_anggota >= kelompok.kapasitas
+                          ? "Penuh"
+                          : "Pilih"}
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors duration-200 shadow-md font-medium focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50 mr-2"
+          >
+            Batal
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -1007,8 +1451,7 @@ const UbahKelompokModal = ({
               name="kapasitas"
               value={formData.kapasitas}
               onChange={handleChange}
-              min="2"
-              max="20"
+              min="1"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
