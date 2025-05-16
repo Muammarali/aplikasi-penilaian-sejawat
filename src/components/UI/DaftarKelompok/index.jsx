@@ -94,10 +94,6 @@ const DaftarKelompok = () => {
   };
 
   const handleAddToGroup = async (kelompokId) => {
-    // Your logic to add the student to a group
-    console.log("Adding student with ID:", kelompokId);
-    console.log("User ID:", selectedMahasiswa.id_user);
-
     if (!selectedMahasiswa) return;
 
     try {
@@ -838,15 +834,19 @@ const DaftarKelompok = () => {
         nama_form: formData?.nama_form,
         id_mk: mkId?.id_mk,
         id_jenis: formData?.jenis_form,
+        formData: komponenYangDipakai,
       });
 
       if (response.data.success) {
-        alert("Berhasil mengudurkan diri!");
-        fetchAnggotaKelompok(kelompokId); // refresh data
+        alert("Berhasil membuat form!");
       } else {
-        alert(response.data.message || "Gagal mengudurkan diri!");
+        alert(response.data.message || "Gagal mmembuat form!");
       }
-    } catch (error) {}
+    } catch (error) {
+      alert(response.data.message || "Gagal mmembuat form! Server Error!");
+    } finally {
+      fetchFormPenilaian();
+    }
   };
 
   return (
