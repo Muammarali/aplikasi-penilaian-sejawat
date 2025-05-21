@@ -28,7 +28,7 @@ export async function POST(req) {
 
     // Ambil form penilaian jika valid
     const query = `
-      SELECT 
+      SELECT DISTINCT
         fp.id_form, fp.nama, jf.nama as jenis, fp.status
       FROM 
         form_penilaian fp
