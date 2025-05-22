@@ -121,6 +121,16 @@ const ModalFormPenilaian = ({
     }
   };
 
+  // Fungsi untuk menentukan grade berdasarkan nilai
+  const getGrade = (nilai) => {
+    if (nilai < 50) return "E (Sangat Buruk)";
+    if (nilai >= 50 && nilai <= 59) return "D (Buruk)";
+    if (nilai >= 60 && nilai <= 69) return "C (Cukup)";
+    if (nilai >= 70 && nilai <= 79) return "B (Baik)";
+    if (nilai >= 80) return "A (Sangat Baik)";
+    return "";
+  };
+
   // Fungsi untuk menghitung total nilai (berdasarkan bobot)
   const hitungTotal = (nilai, komponenList) => {
     if (!nilai) return 0;
@@ -319,7 +329,7 @@ const ModalFormPenilaian = ({
       className="fixed inset-0 flex items-center justify-center z-50"
       style={{ backgroundColor: "rgba(75, 85, 99, 0.4)" }}
     >
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl p-6 relative overflow-y-auto max-h-[90vh]">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl p-6 relative overflow-y-auto max-h-[90vh]">
         <button
           onClick={() => handleClose()}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
@@ -345,9 +355,67 @@ const ModalFormPenilaian = ({
           {dataForm?.nama || "Form Penilaian"}
         </h2>
 
+        {/* Rubrik Penilaian */}
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <h3 className="font-semibold text-blue-800 mb-3 flex items-center">
+            <svg
+              className="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            Rubrik Penilaian
+          </h3>
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-2 text-sm">
+            <div className="flex items-center">
+              <span className="inline-block w-6 h-6 bg-red-500 text-white text-xs font-bold rounded text-center leading-6 mr-2">
+                E
+              </span>
+              <span className="text-gray-700">&lt;50 Sangat Buruk</span>
+            </div>
+            <div className="flex items-center">
+              <span className="inline-block w-6 h-6 bg-orange-500 text-white text-xs font-bold rounded text-center leading-6 mr-2">
+                D
+              </span>
+              <span className="text-gray-700">50-59 Buruk</span>
+            </div>
+            <div className="flex items-center">
+              <span className="inline-block w-6 h-6 bg-yellow-500 text-white text-xs font-bold rounded text-center leading-6 mr-2">
+                C
+              </span>
+              <span className="text-gray-700">60-69 Cukup</span>
+            </div>
+            <div className="flex items-center">
+              <span className="inline-block w-6 h-6 bg-blue-500 text-white text-xs font-bold rounded text-center leading-6 mr-2">
+                B
+              </span>
+              <span className="text-gray-700">70-79 Baik</span>
+            </div>
+            <div className="flex items-center">
+              <span className="inline-block w-6 h-6 bg-green-500 text-white text-xs font-bold rounded text-center leading-6 mr-2">
+                A
+              </span>
+              <span className="text-gray-700">≥80 Sangat Baik</span>
+            </div>
+          </div>
+        </div>
+
         {validasiError && (
           <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md">
             Mohon isi semua nilai sebelum menyimpan form penilaian.
+          </div>
+        )}
+
+        {submitError && (
+          <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md">
+            {submitError}
           </div>
         )}
 
@@ -391,6 +459,9 @@ const ModalFormPenilaian = ({
                       ))}
                       <th className="px-3 py-2 text-center text-gray-600 font-medium border-b">
                         Hasil
+                      </th>
+                      <th className="px-3 py-2 text-center text-gray-600 font-medium border-b">
+                        Grade
                       </th>
                     </tr>
                   </thead>
@@ -443,6 +514,19 @@ const ModalFormPenilaian = ({
                             komponenAnggotaAnggota
                           )}
                         </td>
+                        <td className="px-3 py-2 text-center border-b border-gray-100 font-medium text-xs">
+                          {hitungTotal(
+                            nilaiAnggotaAnggota[idx],
+                            komponenAnggotaAnggota
+                          ) > 0
+                            ? getGrade(
+                                hitungTotal(
+                                  nilaiAnggotaAnggota[idx],
+                                  komponenAnggotaAnggota
+                                )
+                              )
+                            : ""}
+                        </td>
                       </tr>
                     ))}
                   </tbody>
@@ -487,6 +571,9 @@ const ModalFormPenilaian = ({
                     ))}
                     <th className="px-3 py-2 text-center text-gray-600 font-medium border-b">
                       Hasil
+                    </th>
+                    <th className="px-3 py-2 text-center text-gray-600 font-medium border-b">
+                      Grade
                     </th>
                   </tr>
                 </thead>
@@ -534,6 +621,16 @@ const ModalFormPenilaian = ({
                       <td className="px-3 py-2 text-center border-b border-gray-100 font-medium">
                         {hitungTotal(nilaiAnggotaPM[idx], komponenAnggotaPM)}
                       </td>
+                      <td className="px-3 py-2 text-center border-b border-gray-100 font-medium text-xs">
+                        {hitungTotal(nilaiAnggotaPM[idx], komponenAnggotaPM) > 0
+                          ? getGrade(
+                              hitungTotal(
+                                nilaiAnggotaPM[idx],
+                                komponenAnggotaPM
+                              )
+                            )
+                          : ""}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -578,6 +675,9 @@ const ModalFormPenilaian = ({
                     ))}
                     <th className="px-3 py-2 text-center text-gray-600 font-medium border-b">
                       Hasil
+                    </th>
+                    <th className="px-3 py-2 text-center text-gray-600 font-medium border-b">
+                      Grade
                     </th>
                   </tr>
                 </thead>
