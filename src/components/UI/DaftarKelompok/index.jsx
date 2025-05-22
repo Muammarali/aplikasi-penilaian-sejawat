@@ -18,6 +18,7 @@ const DaftarKelompok = () => {
   const [activeTab, setActiveTab] = useState("daftar-kelompok");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalUbahOpen, setIsModalUbahOpen] = useState(false);
+  const [isModalDetailRekapOpen, setIsModalDetailRekapOpen] = useState(false);
   const [isOpenModalFormPenilaian, setIsOpenModalFormPenilaian] =
     useState(false);
   const [isModalDaftarMahasiswaOpen, setIsModalDaftarMahasiswaOpen] =
@@ -58,6 +59,37 @@ const DaftarKelompok = () => {
     const nama_matkul = parts.join(" ");
     return { nama_matkul, kelas, id_mk };
   }
+
+  const dataRekap = {
+    nama: "Faisal Surya Pratama",
+    penilai: [
+      {
+        npm: "6181901090",
+        nama: "Irsyad Hanif Sjahbandi",
+        komponen1: 88,
+        komponen2: 88,
+        komponen3: 88,
+        hasil: 88,
+      },
+      {
+        npm: "6181901090",
+        nama: "Irsad Fadlurohman",
+        komponen1: 88,
+        komponen2: 88,
+        komponen3: 88,
+        hasil: 88,
+      },
+      {
+        npm: "6181901090",
+        nama: "Alexander Jose",
+        komponen1: 88,
+        komponen2: 88,
+        komponen3: 88,
+        hasil: 88,
+      },
+    ],
+    hasil_akhir: 88,
+  };
 
   const fetchAnggotaKelompokIsiForm = async () => {
     try {
@@ -652,7 +684,10 @@ const DaftarKelompok = () => {
                               </span>
                             </div>
                             <div>
-                              <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm">
+                              <button
+                                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm"
+                                onClick={() => setIsModalDetailRekapOpen(true)}
+                              >
                                 Detail
                               </button>
                             </div>
@@ -1278,6 +1313,12 @@ const DaftarKelompok = () => {
         dataForm={detailFormPenilaian}
         formData={formDataDetail}
         session={session}
+      />
+
+      <DetailRekapModal
+        isOpen={isModalDetailRekapOpen}
+        onClose={() => setIsModalDetailRekapOpen(false)}
+        data={dataRekap}
       />
     </div>
   );
@@ -1965,316 +2006,112 @@ const AnggotaKelompokModal = ({
   );
 };
 
-// const ModalFormPenilaian = ({
-//   isOpen,
-//   onClose,
-//   dataAnggota = [],
-//   dataPM,
-//   dataForm,
-//   komponen = [],
-// }) => {
-//   // Default komponen jika tidak ada yang diberikan
-//   const komponenPenilaian =
-//     komponen.length > 0
-//       ? komponen
-//       : [
-//           {
-//             id: "komponen1",
-//             label: "Komponen 1",
-//             deskripsi: "Deskripsi komponen 1",
-//           },
-//           {
-//             id: "komponen2",
-//             label: "Komponen 2",
-//             deskripsi: "Deskripsi komponen 2",
-//           },
-//           {
-//             id: "komponen3",
-//             label: "Komponen 3",
-//             deskripsi: "Deskripsi komponen 3",
-//           },
-//         ];
+const DetailRekapModal = ({ isOpen, onClose, data }) => {
+  if (!isOpen) return null;
 
-//   // Inisialisasi nilai langsung saat render tanpa useEffect
-//   const initialNilaiAnggota = dataAnggota
-//     ? dataAnggota.map(() => {
-//         const initialValues = {};
-//         komponenPenilaian.forEach((komp) => {
-//           initialValues[komp.id] = "";
-//         });
-//         return initialValues;
-//       })
-//     : [];
+  return (
+    <div
+      className="fixed inset-0 flex items-center justify-center z-50"
+      style={{ backgroundColor: "rgba(75, 85, 99, 0.4)" }}
+    >
+      <div className="bg-white rounded-md shadow-2xl w-full max-w-3xl p-6 relative">
+        {/* Tombol Close */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
 
-//   const initialNilaiPM = dataPM
-//     ? dataPM.map(() => {
-//         const initialValues = {};
-//         komponenPenilaian.forEach((komp) => {
-//           initialValues[komp.id] = "";
-//         });
-//         return initialValues;
-//       })
-//     : [];
+        <h2 className="text-2xl font-bold mb-5 text-gray-800">
+          Detail Rekap {data.nama}
+        </h2>
 
-//   const [nilaiAnggota, setNilaiAnggota] = useState(initialNilaiAnggota);
-//   const [nilaiPM, setNilaiPM] = useState(initialNilaiPM);
+        <p className="text-gray-700 font-medium mb-4">
+          Diperoleh penilaian dari :
+        </p>
 
-//   if (!isOpen) return null;
+        {/* Tabel */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead>
+              <tr className="bg-blue-500 text-white">
+                <th className="px-4 py-3">NPM</th>
+                <th className="px-4 py-3">Nama</th>
+                <th className="px-4 py-3 text-center">Komponen 1</th>
+                <th className="px-4 py-3 text-center">Komponen 2</th>
+                <th className="px-4 py-3 text-center">Komponen 3</th>
+                <th className="px-4 py-3 text-center">Hasil</th>
+              </tr>
+            </thead>
+            <tbody>
+              {data.penilai.map((item, idx) => (
+                <tr
+                  key={idx}
+                  className={
+                    idx % 2 === 0
+                      ? "bg-gray-50 hover:bg-blue-50"
+                      : "hover:bg-blue-50"
+                  }
+                >
+                  <td className="px-4 py-2">{item.npm}</td>
+                  <td className="px-4 py-2">{item.nama}</td>
+                  <td className="px-4 py-2 text-center">{item.komponen1}</td>
+                  <td className="px-4 py-2 text-center">{item.komponen2}</td>
+                  <td className="px-4 py-2 text-center">{item.komponen3}</td>
+                  <td className="px-4 py-2 text-center font-semibold">
+                    {item.hasil}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
 
-//   // Fungsi untuk mengubah nilai input
-//   const handleAnggotaChange = (index, field, value) => {
-//     // Validasi input tidak lebih dari 100
-//     if (value === "" || (parseInt(value) >= 0 && parseInt(value) <= 100)) {
-//       const newNilai = [...nilaiAnggota];
-//       newNilai[index] = { ...newNilai[index], [field]: value };
-//       setNilaiAnggota(newNilai);
-//     }
-//   };
+        {/* Hasil Akhir */}
+        <div className="flex justify-end items-center mt-6 space-x-4">
+          <span className="text-gray-600 text-sm">Hasil Akhir :</span>
+          <div className="flex items-center space-x-3">
+            <span
+              className={`text-lg font-semibold px-4 py-1 rounded-md text-white ${
+                data.hasil_akhir >= 80
+                  ? "bg-green-500"
+                  : data.hasil_akhir >= 60
+                  ? "bg-yellow-500"
+                  : "bg-red-500"
+              }`}
+            >
+              {data.hasil_akhir}
+            </span>
+          </div>
+        </div>
 
-//   const handlePMChange = (index, field, value) => {
-//     // Validasi input tidak lebih dari 100
-//     if (value === "" || (parseInt(value) >= 0 && parseInt(value) <= 100)) {
-//       const newNilai = [...nilaiPM];
-//       newNilai[index] = { ...newNilai[index], [field]: value };
-//       setNilaiPM(newNilai);
-//     }
-//   };
-
-//   // Fungsi untuk menghitung total nilai (penjumlahan)
-//   const hitungTotal = (nilai) => {
-//     if (!nilai) return "-";
-
-//     // Cek apakah semua komponen telah diisi
-//     let totalNilai = 0;
-//     let adaKosong = false;
-
-//     komponenPenilaian.forEach((komp) => {
-//       if (nilai[komp.id] === "") {
-//         adaKosong = true;
-//       } else {
-//         totalNilai += parseInt(nilai[komp.id]);
-//       }
-//     });
-
-//     // Hanya tampilkan total jika semua komponen memiliki nilai
-//     if (adaKosong) {
-//       return "-";
-//     }
-
-//     return totalNilai;
-//   };
-
-//   const handleSubmit = () => {
-//     // Implementasi penyimpanan data
-//     console.log("Data Anggota:", nilaiAnggota);
-//     console.log("Data PM:", nilaiPM);
-//     onClose();
-//   };
-
-//   return (
-//     <div
-//       className="fixed inset-0 flex items-center justify-center z-50"
-//       style={{ backgroundColor: "rgba(75, 85, 99, 0.4)" }}
-//     >
-//       <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl p-6 relative overflow-y-auto max-h-[90vh]">
-//         <button
-//           onClick={onClose}
-//           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
-//           aria-label="Tutup"
-//         >
-//           <svg
-//             xmlns="http://www.w3.org/2000/svg"
-//             width="24"
-//             height="24"
-//             viewBox="0 0 24 24"
-//             fill="none"
-//             stroke="currentColor"
-//             strokeWidth="2"
-//             strokeLinecap="round"
-//             strokeLinejoin="round"
-//           >
-//             <line x1="18" y1="6" x2="6" y2="18"></line>
-//             <line x1="6" y1="6" x2="18" y2="18"></line>
-//           </svg>
-//         </button>
-
-//         <h2 className="text-2xl font-semibold mb-6 text-gray-800">
-//           {dataForm?.nama}
-//         </h2>
-//         {/* <p className="text-gray-600 mb-6 pb-2 border-b">Kelompok 1</p> */}
-
-//         {/* Penilaian Anggota-Anggota */}
-//         <div className="mb-8">
-//           <div className="flex items-center mb-3">
-//             <div className="w-1 h-6 bg-blue-500 rounded mr-2"></div>
-//             <h4 className="font-medium text-lg">Penilaian Anggota-Anggota</h4>
-//           </div>
-
-//           <div className="flex flex-col gap-2 mb-3 text-sm text-gray-600 bg-gray-50 p-3 rounded">
-//             {komponenPenilaian.map((komp, idx) => (
-//               <div key={idx}>
-//                 {komp.label}: {komp.deskripsi}
-//               </div>
-//             ))}
-//           </div>
-
-//           <div className="overflow-x-auto rounded-lg border border-gray-200">
-//             <table className="w-full text-sm">
-//               <thead className="bg-gray-100">
-//                 <tr>
-//                   <th className="px-3 py-2 text-left text-gray-600 font-medium border-b">
-//                     NPM
-//                   </th>
-//                   <th className="px-3 py-2 text-left text-gray-600 font-medium border-b">
-//                     Nama
-//                   </th>
-//                   {komponenPenilaian.map((komp, idx) => (
-//                     <th
-//                       key={idx}
-//                       className="px-3 py-2 text-center text-gray-600 font-medium border-b"
-//                     >
-//                       {komp.label}
-//                     </th>
-//                   ))}
-//                   <th className="px-3 py-2 text-center text-gray-600 font-medium border-b">
-//                     Hasil
-//                   </th>
-//                 </tr>
-//               </thead>
-//               <tbody>
-//                 {dataAnggota.map((mhs, idx) => (
-//                   <tr
-//                     key={idx}
-//                     className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
-//                   >
-//                     <td className="px-3 py-2 border-b border-gray-100">
-//                       {mhs.npm}
-//                     </td>
-//                     <td className="px-3 py-2 border-b border-gray-100">
-//                       {mhs.nama}
-//                     </td>
-//                     {komponenPenilaian.map((komp, kompIdx) => (
-//                       <td
-//                         key={kompIdx}
-//                         className="px-3 py-2 text-center border-b border-gray-100"
-//                       >
-//                         <input
-//                           type="number"
-//                           min={0}
-//                           max={100}
-//                           value={nilaiAnggota[idx]?.[komp.id] || ""}
-//                           onChange={(e) =>
-//                             handleAnggotaChange(idx, komp.id, e.target.value)
-//                           }
-//                           className="w-14 border border-gray-300 rounded py-1 px-2 text-center focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-//                         />
-//                       </td>
-//                     ))}
-//                     <td className="px-3 py-2 text-center border-b border-gray-100 font-medium">
-//                       {hitungTotal(nilaiAnggota[idx])}
-//                     </td>
-//                   </tr>
-//                 ))}
-//               </tbody>
-//             </table>
-//           </div>
-//         </div>
-
-//         {/* Penilaian Anggota-PM */}
-//         <div className="mb-8">
-//           <div className="flex items-center mb-3">
-//             <div className="w-1 h-6 bg-green-500 rounded mr-2"></div>
-//             <h4 className="font-medium text-lg">Penilaian Anggota-PM</h4>
-//           </div>
-
-//           <div className="flex flex-col gap-2 mb-3 text-sm text-gray-600 bg-gray-50 p-3 rounded">
-//             {komponenPenilaian.map((komp, idx) => (
-//               <div key={idx}>
-//                 {komp.label}: {komp.deskripsi}
-//               </div>
-//             ))}
-//           </div>
-
-//           <div className="overflow-x-auto rounded-lg border border-gray-200">
-//             <table className="w-full text-sm">
-//               <thead className="bg-gray-100">
-//                 <tr>
-//                   <th className="px-3 py-2 text-left text-gray-600 font-medium border-b">
-//                     NPM
-//                   </th>
-//                   <th className="px-3 py-2 text-left text-gray-600 font-medium border-b">
-//                     Nama
-//                   </th>
-//                   {komponenPenilaian.map((komp, idx) => (
-//                     <th
-//                       key={idx}
-//                       className="px-3 py-2 text-center text-gray-600 font-medium border-b"
-//                     >
-//                       {komp.label}
-//                     </th>
-//                   ))}
-//                   <th className="px-3 py-2 text-center text-gray-600 font-medium border-b">
-//                     Hasil
-//                   </th>
-//                 </tr>
-//               </thead>
-//               <tbody>
-//                 {dataPM.map((mhs, idx) => (
-//                   <tr
-//                     key={idx}
-//                     className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
-//                   >
-//                     <td className="px-3 py-2 border-b border-gray-100">
-//                       {mhs.npm}
-//                     </td>
-//                     <td className="px-3 py-2 border-b border-gray-100">
-//                       {mhs.nama}
-//                     </td>
-//                     {komponenPenilaian.map((komp, kompIdx) => (
-//                       <td
-//                         key={kompIdx}
-//                         className="px-3 py-2 text-center border-b border-gray-100"
-//                       >
-//                         <input
-//                           type="number"
-//                           min={0}
-//                           max={100}
-//                           value={nilaiPM[idx]?.[komp.id] || ""}
-//                           onChange={(e) =>
-//                             handlePMChange(idx, komp.id, e.target.value)
-//                           }
-//                           className="w-14 border border-gray-300 rounded py-1 px-2 text-center focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500"
-//                         />
-//                       </td>
-//                     ))}
-//                     <td className="px-3 py-2 text-center border-b border-gray-100 font-medium">
-//                       {hitungTotal(nilaiPM[idx])}
-//                     </td>
-//                   </tr>
-//                 ))}
-//               </tbody>
-//             </table>
-//           </div>
-//         </div>
-
-//         <div className="flex justify-end gap-3">
-//           <button
-//             onClick={onClose}
-//             className="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-400"
-//           >
-//             Batal
-//           </button>
-//           <button
-//             onClick={handleSubmit}
-//             className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400"
-//           >
-//             Simpan
-//           </button>
-//         </div>
-//       </div>
-//     </div>
-//   );
-// };
+        {/* Tombol Tutup */}
+        <div className="flex justify-end mt-6">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+          >
+            Tutup
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 export const usePeerEvaluationModal = () => {
   const [isOpen, setIsOpen] = useState(false);
