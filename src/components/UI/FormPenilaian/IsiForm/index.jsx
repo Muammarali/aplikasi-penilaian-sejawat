@@ -121,38 +121,26 @@ const ModalFormPenilaian = ({
     }
   };
 
-  // Fungsi untuk menentukan grade berdasarkan nilai
-  const getGrade = (nilai) => {
-    if (nilai < 50) return "E (Sangat Buruk)";
-    if (nilai >= 50 && nilai <= 59) return "D (Buruk)";
-    if (nilai >= 60 && nilai <= 69) return "C (Cukup)";
-    if (nilai >= 70 && nilai <= 79) return "B (Baik)";
-    if (nilai >= 80) return "A (Sangat Baik)";
-    return "";
-  };
-
   // Fungsi untuk menghitung total nilai (berdasarkan bobot)
   const hitungTotal = (nilai, komponenList) => {
     if (!nilai) return 0;
 
-    // Cek apakah semua komponen telah diisi
     let totalNilai = 0;
     let adaKosong = false;
 
     komponenList.forEach((komp) => {
-      if (nilai[komp.id_komponen] === "") {
+      const nilaiKomponenStr = nilai[komp.id_komponen];
+      if (nilaiKomponenStr === "") {
         adaKosong = true;
       } else {
-        // Menghitung nilai berdasarkan bobot
-        const nilaiKomponen = isNaN(parseInt(nilai[komp.id_komponen]))
+        const nilaiKomponen = isNaN(parseFloat(nilaiKomponenStr))
           ? 0
-          : parseInt(nilai[komp.id_komponen]);
-        const bobot = komp.bobot || 1; // Default bobot 1 jika tidak ada
-        totalNilai += nilaiKomponen;
+          : parseFloat(nilaiKomponenStr);
+        const bobot = komp.bobot || 0;
+        totalNilai += nilaiKomponen * (bobot / 100);
       }
     });
 
-    // Hanya tampilkan total jika semua komponen memiliki nilai
     if (adaKosong) {
       return 0;
     }
@@ -329,7 +317,7 @@ const ModalFormPenilaian = ({
       className="fixed inset-0 flex items-center justify-center z-50"
       style={{ backgroundColor: "rgba(75, 85, 99, 0.4)" }}
     >
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-6xl p-6 relative overflow-y-auto max-h-[90vh]">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl p-6 relative overflow-y-auto max-h-[90vh]">
         <button
           onClick={() => handleClose()}
           className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
@@ -393,7 +381,7 @@ const ModalFormPenilaian = ({
               <span className="text-gray-700">60-69 Cukup</span>
             </div>
             <div className="flex items-center">
-              <span className="inline-block w-6 h-6 bg-blue-500 text-white text-xs font-bold rounded text-center leading-6 mr-2">
+              <span className="inline-block w-6 h-6 bg-lime-500 text-white text-xs font-bold rounded text-center leading-6 mr-2">
                 B
               </span>
               <span className="text-gray-700">70-79 Baik</span>
@@ -405,6 +393,39 @@ const ModalFormPenilaian = ({
               <span className="text-gray-700">≥80 Sangat Baik</span>
             </div>
           </div>
+        </div>
+
+        <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+          <h3 className="font-semibold text-blue-800 mb-3 flex items-center">
+            <svg
+              className="w-5 h-5 mr-2"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+            Range Penilaian
+          </h3>
+
+          <div className="mb-2 flex justify-between text-xs font-medium text-blue-700">
+            <span>0</span>
+            <span>100</span>
+          </div>
+
+          <div className="w-full bg-blue-100 rounded-full h-3 mb-2">
+            <div className="bg-gradient-to-r from-red-500 via-yellow-500 to-green-500 h-3 rounded-full w-full"></div>
+          </div>
+
+          <p className="text-xs text-gray-600">
+            Nilai diberikan dalam rentang <strong>0</strong> (terendah) sampai{" "}
+            <strong>100</strong> (tertinggi).
+          </p>
         </div>
 
         {validasiError && (
@@ -460,9 +481,6 @@ const ModalFormPenilaian = ({
                       <th className="px-3 py-2 text-center text-gray-600 font-medium border-b">
                         Hasil
                       </th>
-                      <th className="px-3 py-2 text-center text-gray-600 font-medium border-b">
-                        Grade
-                      </th>
                     </tr>
                   </thead>
                   <tbody>
@@ -483,20 +501,56 @@ const ModalFormPenilaian = ({
                             className="px-3 py-2 text-center border-b border-gray-100"
                           >
                             <input
-                              type="number"
-                              min={0}
-                              max={100}
+                              type="text"
                               value={
                                 nilaiAnggotaAnggota[idx]?.[komp.id_komponen] ||
                                 ""
                               }
-                              onChange={(e) =>
-                                handleAnggotaAnggotaChange(
-                                  idx,
-                                  komp.id_komponen,
-                                  e.target.value
-                                )
-                              }
+                              onChange={(e) => {
+                                let value = e.target.value;
+
+                                // Validasi format: angka atau angka.koma maksimal 2 angka
+                                if (
+                                  value === "" ||
+                                  /^\d{0,3}(\.\d{0,2})?$/.test(value)
+                                ) {
+                                  // Cek nilai jika bukan kosong
+                                  if (value !== "") {
+                                    const numValue = parseFloat(value);
+
+                                    // Validasi nilai maksimal 100
+                                    if (numValue > 100) {
+                                      value = "100";
+                                    }
+                                  }
+
+                                  handleAnggotaAnggotaChange(
+                                    idx,
+                                    komp.id_komponen,
+                                    value
+                                  );
+                                }
+                              }}
+                              onBlur={(e) => {
+                                let value = e.target.value;
+
+                                // Kalau kosong, nggak usah diformat
+                                if (value !== "") {
+                                  let numValue = parseFloat(value);
+
+                                  // Kalau lebih dari 100 tetap dipaksa 100
+                                  if (numValue > 100) numValue = 100;
+
+                                  // Format jadi 2 angka di belakang koma
+                                  value = numValue.toFixed(2);
+
+                                  handleAnggotaAnggotaChange(
+                                    idx,
+                                    komp.id_komponen,
+                                    value
+                                  );
+                                }
+                              }}
                               className={`w-14 border rounded py-1 px-2 text-center focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
                                 validasiError &&
                                 (!nilaiAnggotaAnggota[idx] ||
@@ -513,19 +567,6 @@ const ModalFormPenilaian = ({
                             nilaiAnggotaAnggota[idx],
                             komponenAnggotaAnggota
                           )}
-                        </td>
-                        <td className="px-3 py-2 text-center border-b border-gray-100 font-medium text-xs">
-                          {hitungTotal(
-                            nilaiAnggotaAnggota[idx],
-                            komponenAnggotaAnggota
-                          ) > 0
-                            ? getGrade(
-                                hitungTotal(
-                                  nilaiAnggotaAnggota[idx],
-                                  komponenAnggotaAnggota
-                                )
-                              )
-                            : ""}
                         </td>
                       </tr>
                     ))}
@@ -572,9 +613,6 @@ const ModalFormPenilaian = ({
                     <th className="px-3 py-2 text-center text-gray-600 font-medium border-b">
                       Hasil
                     </th>
-                    <th className="px-3 py-2 text-center text-gray-600 font-medium border-b">
-                      Grade
-                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -595,19 +633,55 @@ const ModalFormPenilaian = ({
                           className="px-3 py-2 text-center border-b border-gray-100"
                         >
                           <input
-                            type="number"
-                            min={0}
-                            max={100}
+                            type="text"
                             value={
                               nilaiAnggotaPM[idx]?.[komp.id_komponen] || ""
                             }
-                            onChange={(e) =>
-                              handleAnggotaPMChange(
-                                idx,
-                                komp.id_komponen,
-                                e.target.value
-                              )
-                            }
+                            onChange={(e) => {
+                              let value = e.target.value;
+
+                              // Validasi format: angka atau angka.koma maksimal 2 angka
+                              if (
+                                value === "" ||
+                                /^\d{0,3}(\.\d{0,2})?$/.test(value)
+                              ) {
+                                // Cek nilai jika bukan kosong
+                                if (value !== "") {
+                                  const numValue = parseFloat(value);
+
+                                  // Validasi nilai maksimal 100
+                                  if (numValue > 100) {
+                                    value = "100";
+                                  }
+                                }
+
+                                handleAnggotaPMChange(
+                                  idx,
+                                  komp.id_komponen,
+                                  value
+                                );
+                              }
+                            }}
+                            onBlur={(e) => {
+                              let value = e.target.value;
+
+                              // Kalau kosong, nggak usah diformat
+                              if (value !== "") {
+                                let numValue = parseFloat(value);
+
+                                // Kalau lebih dari 100 tetap dipaksa 100
+                                if (numValue > 100) numValue = 100;
+
+                                // Format jadi 2 angka di belakang koma
+                                value = numValue.toFixed(2);
+
+                                handleAnggotaPMChange(
+                                  idx,
+                                  komp.id_komponen,
+                                  value
+                                );
+                              }
+                            }}
                             className={`w-14 border rounded py-1 px-2 text-center focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
                               validasiError &&
                               (!nilaiAnggotaPM[idx] ||
@@ -618,19 +692,6 @@ const ModalFormPenilaian = ({
                           />
                         </td>
                       ))}
-                      <td className="px-3 py-2 text-center border-b border-gray-100 font-medium">
-                        {hitungTotal(nilaiAnggotaPM[idx], komponenAnggotaPM)}
-                      </td>
-                      <td className="px-3 py-2 text-center border-b border-gray-100 font-medium text-xs">
-                        {hitungTotal(nilaiAnggotaPM[idx], komponenAnggotaPM) > 0
-                          ? getGrade(
-                              hitungTotal(
-                                nilaiAnggotaPM[idx],
-                                komponenAnggotaPM
-                              )
-                            )
-                          : ""}
-                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -676,9 +737,6 @@ const ModalFormPenilaian = ({
                     <th className="px-3 py-2 text-center text-gray-600 font-medium border-b">
                       Hasil
                     </th>
-                    <th className="px-3 py-2 text-center text-gray-600 font-medium border-b">
-                      Grade
-                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -699,19 +757,55 @@ const ModalFormPenilaian = ({
                           className="px-3 py-2 text-center border-b border-gray-100"
                         >
                           <input
-                            type="number"
-                            min={0}
-                            max={100}
+                            type="text"
                             value={
                               nilaiKetuaAnggota[idx]?.[komp.id_komponen] || ""
                             }
-                            onChange={(e) =>
-                              handleKetuaAnggotaChange(
-                                idx,
-                                komp.id_komponen,
-                                e.target.value
-                              )
-                            }
+                            onChange={(e) => {
+                              let value = e.target.value;
+
+                              // Validasi format: angka atau angka.koma maksimal 2 angka
+                              if (
+                                value === "" ||
+                                /^\d{0,3}(\.\d{0,2})?$/.test(value)
+                              ) {
+                                // Cek nilai jika bukan kosong
+                                if (value !== "") {
+                                  const numValue = parseFloat(value);
+
+                                  // Validasi nilai maksimal 100
+                                  if (numValue > 100) {
+                                    value = "100";
+                                  }
+                                }
+
+                                handleAnggotaPMChange(
+                                  idx,
+                                  komp.id_komponen,
+                                  value
+                                );
+                              }
+                            }}
+                            onBlur={(e) => {
+                              let value = e.target.value;
+
+                              // Kalau kosong, nggak usah diformat
+                              if (value !== "") {
+                                let numValue = parseFloat(value);
+
+                                // Kalau lebih dari 100 tetap dipaksa 100
+                                if (numValue > 100) numValue = 100;
+
+                                // Format jadi 2 angka di belakang koma
+                                value = numValue.toFixed(2);
+
+                                handleKetuaAnggotaChange(
+                                  idx,
+                                  komp.id_komponen,
+                                  value
+                                );
+                              }
+                            }}
                             className={`w-14 border rounded py-1 px-2 text-center focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
                               validasiError &&
                               (!nilaiKetuaAnggota[idx] ||
