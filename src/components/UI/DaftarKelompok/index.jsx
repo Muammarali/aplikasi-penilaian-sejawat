@@ -4,8 +4,10 @@ import { useRouter, useParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import axios from "axios";
 import { FiLogOut } from "react-icons/fi";
+import { PiMicrosoftExcelLogoFill } from "react-icons/pi";
 import toast from "react-hot-toast";
 import ModalFormPenilaian from "../FormPenilaian/IsiForm";
+import { IoSearch } from "react-icons/io5";
 
 const DaftarKelompok = () => {
   const [dataKelompok, setDataKelompok] = useState([]);
@@ -275,6 +277,40 @@ const DaftarKelompok = () => {
     fetchFormPenilaian();
     fetchKelompok();
   }, []);
+
+  const students = [
+    { npm: "6181901090", nama: "Faisal Surya Pratama", hasil: 88 },
+    { npm: "6181901091", nama: "Irysad Hanif Sjahbandi", hasil: 86 },
+    { npm: "6181901091", nama: "Irsad Fadlurohman", hasil: 86 },
+    { npm: "6181901091", nama: "Alexander Jose", hasil: 86 },
+    { npm: "6181901091", nama: "Michael Yoga", hasil: 86 },
+    { npm: "6181901091", nama: "Yoga Ananta", hasil: 86 },
+  ];
+
+  const [currentPageStudents, setCurrentPageStudents] = useState(1);
+  const [currentPageKelompok, setCurrentPageKelompok] = useState(1);
+
+  const filteredStudents = students.filter(
+    (student) =>
+      student.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.npm.includes(searchTerm)
+  );
+
+  const indexOfLastStudent = currentPageStudents * itemsPerPage;
+  const indexOfFirstStudent = indexOfLastStudent - itemsPerPage;
+  const currentStudents = filteredStudents.slice(
+    indexOfFirstStudent,
+    indexOfLastStudent
+  );
+  const totalPagesStudents = Math.ceil(filteredStudents.length / itemsPerPage);
+
+  const paginateStudents = (pageNumber) => {
+    setCurrentPageStudents(pageNumber);
+  };
+
+  useEffect(() => {
+    setCurrentPageStudents(1);
+  }, [searchTerm]);
 
   // Filtering logic
   const filteredDaftarKelompok = dataKelompok.filter((daftarKelompok) => {
@@ -546,18 +582,115 @@ const DaftarKelompok = () => {
         );
       case "rekap-nilai":
         return (
-          <div className="p-4 bg-white border border-gray-200 rounded-lg shadow-sm">
-            <h2 className="text-lg font-semibold mb-4">Rekap Nilai</h2>
-            <p className="text-gray-600">
+          <div className="bg-white">
+            {/* <p className="text-gray-600 mb-2">
               Rekap nilai untuk mata kuliah{" "}
-              {parseMatkulParam(params.matkul).nama_matkul}
-            </p>
-            {/* Rekap nilai content would go here */}
-            <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
-              <p className="text-sm text-gray-500">
-                Data rekap nilai belum tersedia
-              </p>
-            </div>
+              {parseMatkulParam(params?.matkul).nama_matkul} kelas{" "}
+              {parseMatkulParam(params?.matkul).kelas}
+            </p> */}
+
+            {/* Check if there are students */}
+            {students.length > 0 ? (
+              <div>
+                {/* Search Bar */}
+                <div className="mb-2 mt-2 flex justify-between space-x-2">
+                  <div className="relative w-1/2">
+                    <IoSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <input
+                      type="text"
+                      placeholder="Cari mahasiswa"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md"
+                    />
+                  </div>
+                  <button className="flex items-center gap-1 w-fit p-2 text-white text-sm bg-green-600 hover:bg-green-700 text-nowrap text-center rounded-md transition-colors">
+                    <PiMicrosoftExcelLogoFill
+                      size={24}
+                      className="text-white text-lg"
+                    />
+                    Unduh Excel
+                  </button>
+                </div>
+
+                {/* Table */}
+                <div className="space-y-2 pt-2">
+                  {/* Header */}
+                  <div className="grid grid-cols-[2fr_3fr_2fr_1fr] gap-4 px-4 py-3 bg-blue-500 rounded-md font-semibold text-zinc-100 text-sm">
+                    <div className="truncate whitespace-nowrap">NPM</div>
+                    <div className="truncate whitespace-nowrap">Nama</div>
+                    <div className="truncate whitespace-nowrap">
+                      Hasil Penilaian
+                    </div>
+                    <div className="truncate whitespace-nowrap">Detail</div>
+                  </div>
+
+                  {/* Content */}
+                  <ul className="space-y-2">
+                    {currentStudents.length === 0 ? (
+                      <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+                        <p className="text-sm text-gray-500">
+                          Belum ada data mahasiswa
+                        </p>
+                      </div>
+                    ) : (
+                      currentStudents.map((student, index) => (
+                        <li
+                          key={index}
+                          className="bg-white p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow group"
+                        >
+                          <div className="grid grid-cols-[2fr_3fr_2fr_1fr] gap-4 items-center">
+                            <div className="text-sm text-gray-800">
+                              {student.npm}
+                            </div>
+                            <div className="text-sm text-gray-800">
+                              {student.nama}
+                            </div>
+                            <div className="text-sm text-gray-800">
+                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                {student.hasil}
+                              </span>
+                            </div>
+                            <div>
+                              <button className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm">
+                                Detail
+                              </button>
+                            </div>
+                          </div>
+                        </li>
+                      ))
+                    )}
+                  </ul>
+
+                  {filteredStudents.length > 0 && (
+                    <Pagination
+                      currentPage={currentPageStudents}
+                      totalPages={totalPagesStudents}
+                      paginate={paginateStudents}
+                      indexOfFirstItem={indexOfFirstStudent}
+                      indexOfLastItem={indexOfLastStudent}
+                      data={filteredStudents}
+                    />
+                  )}
+                </div>
+
+                {/* Empty Search State */}
+                {filteredStudents.length === 0 && searchTerm && (
+                  <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+                    <p className="text-sm text-gray-500 text-center">
+                      Tidak ada data yang ditemukan untuk pencarian "
+                      {searchTerm}"
+                    </p>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+                <p className="text-sm text-gray-500">
+                  Data rekap nilai belum tersedia
+                </p>
+              </div>
+            )}
           </div>
         );
       default:
@@ -1021,16 +1154,18 @@ const DaftarKelompok = () => {
             >
               Form Penilaian
             </button>
-            <button
-              onClick={() => setActiveTab("rekap-nilai")}
-              className={`py-3 px-4 text-sm transition-colors border-b-2 ${
-                activeTab === "rekap-nilai"
-                  ? "border-blue-500 font-bold text-blue-500"
-                  : "border-transparent font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              }`}
-            >
-              Rekap Nilai
-            </button>
+            {session?.user?.role === "Dosen" && (
+              <button
+                onClick={() => setActiveTab("rekap-nilai")}
+                className={`py-3 px-4 text-sm transition-colors border-b-2 ${
+                  activeTab === "rekap-nilai"
+                    ? "border-blue-500 font-bold text-blue-500"
+                    : "border-transparent font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
+                }`}
+              >
+                Rekap Nilai
+              </button>
+            )}
           </nav>
         </div>
 

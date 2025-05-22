@@ -60,7 +60,7 @@ const MataKuliah = () => {
 
   return (
     <div className="w-full lg:max-w-6xl">
-      <div className="min-w-96 space-y-4">
+      <div className="min-w-96 space-y-2">
         <div className="text-2xl font-bold">Daftar Mata Kuliah</div>
 
         <div className="relative flex-grow">
