@@ -14,11 +14,13 @@ const DaftarKelompok = () => {
   const [formPenilaian, setFormPenilaian] = useState([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [currentPageStudents, setCurrentPageStudents] = useState(1);
   const [itemsPerPage] = useState(10);
   const [activeTab, setActiveTab] = useState("daftar-kelompok");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isModalUbahOpen, setIsModalUbahOpen] = useState(false);
   const [isModalDetailRekapOpen, setIsModalDetailRekapOpen] = useState(false);
+  const [isModalRekapFormList, setIsModalRekapFormList] = useState(false);
   const [isOpenModalFormPenilaian, setIsOpenModalFormPenilaian] =
     useState(false);
   const [isModalDaftarMahasiswaOpen, setIsModalDaftarMahasiswaOpen] =
@@ -45,7 +47,13 @@ const DaftarKelompok = () => {
   const [dataAnggota, setDataAnggota] = useState([]);
   const [dataPM, setDataPM] = useState([]);
   const [peranUser, setPeranUser] = useState("");
+  const [dataStudentsRekap, setDataStudentsRekap] = useState([]);
+  const [dataDetailRekapMahasiswa, setDataDetailRekapMahasiswa] = useState([]);
   const [detailFormPenilaian, setDetailFormPenilaian] = useState({});
+  const [peranUserKelompok, setPeranUserKelompok] = useState("");
+  const [isKetuaIsiFormJenis3, setIsKetuaIsiFormJenis3] = useState(false);
+  const [selectedIdForm, setSelectedIdForm] = useState(null);
+  const [selectedIdFormJenis3, setSelectedIdFormJenis3] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const params = useParams();
@@ -60,35 +68,47 @@ const DaftarKelompok = () => {
     return { nama_matkul, kelas, id_mk };
   }
 
-  const dataRekap = {
-    nama: "Faisal Surya Pratama",
-    penilai: [
-      {
-        npm: "6181901090",
-        nama: "Irsyad Hanif Sjahbandi",
-        komponen1: 88,
-        komponen2: 88,
-        komponen3: 88,
-        hasil: 88,
-      },
-      {
-        npm: "6181901090",
-        nama: "Irsad Fadlurohman",
-        komponen1: 88,
-        komponen2: 88,
-        komponen3: 88,
-        hasil: 88,
-      },
-      {
-        npm: "6181901090",
-        nama: "Alexander Jose",
-        komponen1: 88,
-        komponen2: 88,
-        komponen3: 88,
-        hasil: 88,
-      },
-    ],
-    hasil_akhir: 88,
+  const fetchDataDetailRekapMahasiswa = async (id_form, id_user) => {
+    try {
+      const response = await axios.post("/api/rekapnilai/fetch/detailnilai", {
+        id_form: id_form,
+        id_dinilai: id_user,
+      });
+
+      if (!response?.data?.success) {
+        router.refresh();
+        return;
+      }
+
+      // console.log(response?.data);
+
+      const data = response?.data?.data;
+      setDataDetailRekapMahasiswa(data || []);
+    } catch (error) {
+      router.refresh();
+    }
+  };
+
+  const fetchDataStudentRekap = async () => {
+    try {
+      const { id_mk } = parseMatkulParam(params.matkul);
+
+      const response = await axios.post("/api/rekapnilai/fetch/mahasiswa", {
+        id_mk: id_mk,
+      });
+
+      if (!response.data.success) {
+        router.refresh();
+        return;
+      }
+
+      const data = response?.data?.data;
+
+      // console.log(data);
+      setDataStudentsRekap(data);
+    } catch (error) {
+      router.refresh();
+    }
   };
 
   const fetchAnggotaKelompokIsiForm = async () => {
@@ -127,6 +147,23 @@ const DaftarKelompok = () => {
       setDataAnggota(anggota);
       setDataPM(peranUser !== "Ketua" ? pm : []);
       setPeranUser(peranUser); // simpan state peran user yang login
+    } catch (error) {
+      router.refresh();
+    }
+  };
+
+  const fetchPeranUserKelompok = async () => {
+    try {
+      const { id_mk } = parseMatkulParam(params.matkul);
+
+      const response = await axios.post("/api/peran/", {
+        id_mk: id_mk,
+        id_user: session?.user?.id,
+      });
+
+      const data = response?.data?.data?.peran;
+      console.log(data);
+      setPeranUserKelompok(data);
     } catch (error) {
       router.refresh();
     }
@@ -235,6 +272,17 @@ const DaftarKelompok = () => {
     }
   };
 
+  const handleLihatFormRekap = async (id_form) => {
+    setIsModalRekapFormList(true);
+    setSelectedIdForm(id_form);
+  };
+
+  const handleDetailRekap = async (student) => {
+    setIsModalDetailRekapOpen(true);
+    fetchDataDetailRekapMahasiswa(selectedIdForm, student.id_user);
+    // console.log(student);
+  };
+
   const fetchFormPenilaian = async () => {
     try {
       const { nama_matkul, kelas, id_mk } = parseMatkulParam(params.matkul);
@@ -308,41 +356,9 @@ const DaftarKelompok = () => {
   useEffect(() => {
     fetchFormPenilaian();
     fetchKelompok();
+    fetchDataStudentRekap();
+    fetchPeranUserKelompok();
   }, []);
-
-  const students = [
-    { npm: "6181901090", nama: "Faisal Surya Pratama", hasil: 88 },
-    { npm: "6181901091", nama: "Irysad Hanif Sjahbandi", hasil: 86 },
-    { npm: "6181901091", nama: "Irsad Fadlurohman", hasil: 86 },
-    { npm: "6181901091", nama: "Alexander Jose", hasil: 86 },
-    { npm: "6181901091", nama: "Michael Yoga", hasil: 86 },
-    { npm: "6181901091", nama: "Yoga Ananta", hasil: 86 },
-  ];
-
-  const [currentPageStudents, setCurrentPageStudents] = useState(1);
-  const [currentPageKelompok, setCurrentPageKelompok] = useState(1);
-
-  const filteredStudents = students.filter(
-    (student) =>
-      student.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.npm.includes(searchTerm)
-  );
-
-  const indexOfLastStudent = currentPageStudents * itemsPerPage;
-  const indexOfFirstStudent = indexOfLastStudent - itemsPerPage;
-  const currentStudents = filteredStudents.slice(
-    indexOfFirstStudent,
-    indexOfLastStudent
-  );
-  const totalPagesStudents = Math.ceil(filteredStudents.length / itemsPerPage);
-
-  const paginateStudents = (pageNumber) => {
-    setCurrentPageStudents(pageNumber);
-  };
-
-  useEffect(() => {
-    setCurrentPageStudents(1);
-  }, [searchTerm]);
 
   // Filtering logic
   const filteredDaftarKelompok = dataKelompok.filter((daftarKelompok) => {
@@ -570,14 +586,26 @@ const DaftarKelompok = () => {
                         </div>
                       ) : (
                         <div className="space-x-2">
-                          <button
-                            className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm"
-                            onClick={() =>
-                              handleModalIsiFormulir(form?.id_form)
-                            }
-                          >
-                            Isi
-                          </button>
+                          {peranUserKelompok == "Ketua" &&
+                          form?.jenis == "Jenis 3" ? (
+                            <button
+                              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-all text-sm"
+                              onClick={() =>
+                                handleModalIsiKomponen(form?.id_form)
+                              }
+                            >
+                              Isi Komponen
+                            </button>
+                          ) : (
+                            <button
+                              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm"
+                              onClick={() =>
+                                handleModalIsiFormulir(form?.id_form)
+                              }
+                            >
+                              Isi
+                            </button>
+                          )}
                         </div>
                       )}
                     </div>
@@ -614,119 +642,210 @@ const DaftarKelompok = () => {
         );
       case "rekap-nilai":
         return (
-          <div className="bg-white">
-            {/* <p className="text-gray-600 mb-2">
-              Rekap nilai untuk mata kuliah{" "}
-              {parseMatkulParam(params?.matkul).nama_matkul} kelas{" "}
-              {parseMatkulParam(params?.matkul).kelas}
-            </p> */}
+          <div className="space-y-2 pt-2">
+            <div
+              className={`grid ${
+                session?.user?.role === "Dosen"
+                  ? "grid-cols-[2.5fr_1fr_1fr_2fr]"
+                  : "grid-cols-[2.5fr_2fr]"
+              } gap-4 px-4 py-3 bg-blue-500 rounded-md font-semibold text-zinc-100 text-sm`}
+            >
+              <div className="truncate whitespace-nowrap">Nama Form</div>
+              {session?.user?.role === "Dosen" && (
+                <div className="truncate whitespace-nowrap">Jenis Form</div>
+              )}
+              {session?.user?.role === "Dosen" && (
+                <div className="truncate whitespace-nowrap">Status</div>
+              )}
 
-            {/* Check if there are students */}
-            {students.length > 0 ? (
-              <div>
-                {/* Search Bar */}
-                <div className="mb-2 mt-2 flex justify-between space-x-2">
-                  <div className="relative w-1/2">
-                    <IoSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                    <input
-                      type="text"
-                      placeholder="Cari mahasiswa"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md"
-                    />
-                  </div>
-                  <button className="flex items-center gap-1 w-fit p-2 text-white text-sm bg-green-600 hover:bg-green-700 text-nowrap text-center rounded-md transition-colors">
-                    <PiMicrosoftExcelLogoFill
-                      size={24}
-                      className="text-white text-lg"
-                    />
-                    Unduh Excel
-                  </button>
-                </div>
+              <div className="truncate whitespace-nowrap">Aksi</div>
+            </div>
 
-                {/* Table */}
-                <div className="space-y-2 pt-2">
-                  {/* Header */}
-                  <div className="grid grid-cols-[2fr_3fr_2fr_1fr] gap-4 px-4 py-3 bg-blue-500 rounded-md font-semibold text-zinc-100 text-sm">
-                    <div className="truncate whitespace-nowrap">NPM</div>
-                    <div className="truncate whitespace-nowrap">Nama</div>
-                    <div className="truncate whitespace-nowrap">
-                      Hasil Penilaian
+            <ul className="space-y-2">
+              {(() => {
+                // Filter dulu sesuai role
+                const visibleForms =
+                  session?.user?.role === "Mahasiswa"
+                    ? formPenilaian.filter((form) => form.status)
+                    : formPenilaian;
+
+                if (visibleForms.length === 0) {
+                  return (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+                      <p className="text-sm text-gray-500">
+                        Form penilaian belum tersedia
+                      </p>
                     </div>
-                    <div className="truncate whitespace-nowrap">Detail</div>
-                  </div>
+                  );
+                }
 
-                  {/* Content */}
-                  <ul className="space-y-2">
-                    {currentStudents.length === 0 ? (
-                      <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
-                        <p className="text-sm text-gray-500">
-                          Belum ada data mahasiswa
-                        </p>
-                      </div>
-                    ) : (
-                      currentStudents.map((student, index) => (
-                        <li
-                          key={index}
-                          className="bg-white p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow group"
+                return visibleForms.map((form) => (
+                  <li
+                    key={form?.id_form}
+                    className="bg-white p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow group"
+                  >
+                    <div
+                      className={`grid ${
+                        session?.user?.role === "Dosen"
+                          ? "grid-cols-[2.5fr_1fr_1fr_2fr]"
+                          : "grid-cols-[2.5fr_2fr]"
+                      } gap-4 items-center`}
+                    >
+                      <div className="text-sm text-gray-800">{form?.nama}</div>
+                      {session?.user?.role === "Dosen" && (
+                        <div className="text-sm text-gray-800">
+                          {form?.jenis}
+                        </div>
+                      )}
+
+                      {session?.user?.role === "Dosen" && (
+                        <div className="text-sm text-gray-800">
+                          {form?.status ? (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                              Aktif
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                              Nonaktif
+                            </span>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="space-x-2 space-y-2 lg:space-y-0">
+                        <button
+                          className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm"
+                          onClick={() => handleLihatFormRekap(form?.id_form)}
                         >
-                          <div className="grid grid-cols-[2fr_3fr_2fr_1fr] gap-4 items-center">
-                            <div className="text-sm text-gray-800">
-                              {student.npm}
-                            </div>
-                            <div className="text-sm text-gray-800">
-                              {student.nama}
-                            </div>
-                            <div className="text-sm text-gray-800">
-                              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
-                                {student.hasil}
-                              </span>
-                            </div>
-                            <div>
-                              <button
-                                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm"
-                                onClick={() => setIsModalDetailRekapOpen(true)}
-                              >
-                                Detail
-                              </button>
-                            </div>
-                          </div>
-                        </li>
-                      ))
-                    )}
-                  </ul>
+                          Lihat
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                ));
+              })()}
+            </ul>
 
-                  {filteredStudents.length > 0 && (
-                    <Pagination
-                      currentPage={currentPageStudents}
-                      totalPages={totalPagesStudents}
-                      paginate={paginateStudents}
-                      indexOfFirstItem={indexOfFirstStudent}
-                      indexOfLastItem={indexOfLastStudent}
-                      data={filteredStudents}
-                    />
-                  )}
-                </div>
-
-                {/* Empty Search State */}
-                {filteredStudents.length === 0 && searchTerm && (
-                  <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
-                    <p className="text-sm text-gray-500 text-center">
-                      Tidak ada data yang ditemukan untuk pencarian "
-                      {searchTerm}"
-                    </p>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
-                <p className="text-sm text-gray-500">
-                  Data rekap nilai belum tersedia
-                </p>
-              </div>
+            {/* Pagination Component */}
+            {filteredDaftarKelompok.length > 0 && (
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                paginate={paginate}
+                indexOfFirstItem={indexOfFirstItem}
+                indexOfLastItem={indexOfLastItem}
+                data={filteredDaftarKelompok}
+              />
             )}
           </div>
+          // <div className="bg-white">
+          //   {dataStudentsRekap.length > 0 ? (
+          //     <div>
+          //       {/* Search Bar */}
+          //       <div className="mb-2 mt-2 flex justify-between space-x-2">
+          //         <div className="relative w-1/2">
+          //           <IoSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          //           <input
+          //             type="text"
+          //             placeholder="Cari mahasiswa"
+          //             value={searchTerm}
+          //             onChange={(e) => setSearchTerm(e.target.value)}
+          //             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md"
+          //           />
+          //         </div>
+          //         <button className="flex items-center gap-1 w-fit p-2 text-white text-sm bg-green-600 hover:bg-green-700 text-nowrap text-center rounded-md transition-colors">
+          //           <PiMicrosoftExcelLogoFill
+          //             size={24}
+          //             className="text-white text-lg"
+          //           />
+          //           Unduh Excel
+          //         </button>
+          //       </div>
+
+          //       {/* Table */}
+          //       <div className="space-y-2 pt-2">
+          //         {/* Header */}
+          //         <div className="grid grid-cols-[2fr_3fr_2fr_1fr] gap-4 px-4 py-3 bg-blue-500 rounded-md font-semibold text-zinc-100 text-sm">
+          //           <div className="truncate whitespace-nowrap">NPM</div>
+          //           <div className="truncate whitespace-nowrap">Nama</div>
+          //           <div className="truncate whitespace-nowrap">
+          //             Hasil Penilaian
+          //           </div>
+          //           <div className="truncate whitespace-nowrap">Detail</div>
+          //         </div>
+
+          //         {/* Content */}
+          //         <ul className="space-y-2">
+          //           {currentStudents.length === 0 ? (
+          //             <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+          //               <p className="text-sm text-gray-500">
+          //                 Belum ada data mahasiswa
+          //               </p>
+          //             </div>
+          //           ) : (
+          //             currentStudents.map((student, index) => (
+          //               <li
+          //                 key={index}
+          //                 className="bg-white p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow group"
+          //               >
+          //                 <div className="grid grid-cols-[2fr_3fr_2fr_1fr] gap-4 items-center">
+          //                   <div className="text-sm text-gray-800">
+          //                     {student.npm}
+          //                   </div>
+          //                   <div className="text-sm text-gray-800">
+          //                     {student.nama}
+          //                   </div>
+          //                   <div className="text-sm text-gray-800">
+          //                     <span className="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-blue-100 text-blue-800">
+          //                       {!student.nilai_per_form[11]
+          //                         ? 0
+          //                         : student.nilai_per_form[11]}
+          //                     </span>
+          //                   </div>
+          //                   <div>
+          //                     <button
+          //                       className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm"
+          //                       onClick={() => handleDetailRekap(student)}
+          //                     >
+          //                       Detail
+          //                     </button>
+          //                   </div>
+          //                 </div>
+          //               </li>
+          //             ))
+          //           )}
+          //         </ul>
+
+          //         {filteredStudents.length > 0 && (
+          //           <Pagination
+          //             currentPage={currentPageStudents}
+          //             totalPages={totalPagesStudents}
+          //             paginate={paginateStudents}
+          //             indexOfFirstItem={indexOfFirstStudent}
+          //             indexOfLastItem={indexOfLastStudent}
+          //             data={filteredStudents}
+          //           />
+          //         )}
+          //       </div>
+
+          //       {/* Empty Search State */}
+          //       {filteredStudents.length === 0 && searchTerm && (
+          //         <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+          //           <p className="text-sm text-gray-500 text-center">
+          //             Tidak ada data yang ditemukan untuk pencarian "
+          //             {searchTerm}"
+          //           </p>
+          //         </div>
+          //       )}
+          //     </div>
+          //   ) : (
+          //     <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+          //       <p className="text-sm text-gray-500">
+          //         Data rekap nilai belum tersedia
+          //       </p>
+          //     </div>
+          //   )}
+          // </div>
         );
       default:
         return null;
@@ -901,6 +1020,12 @@ const DaftarKelompok = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleModalIsiKomponen = async (id_form) => {
+    setSelectedIdFormJenis3(id_form);
+    setIsKetuaIsiFormJenis3(true);
+    openModal();
   };
 
   const fetchAnggotaKelompok = async (kelompokId) => {
@@ -1133,25 +1258,39 @@ const DaftarKelompok = () => {
       const komponenYangDipakai = getKomponenByJenisForm(formData);
       const mkId = parseMatkulParam(params.matkul);
 
-      // console.log(mkId?.id_mk);
-      // console.log(formData.nama_form);
-      // console.log(formData.jenis_form);
-      // console.log(komponenYangDipakai);
+      console.log(formData);
 
-      const response = await axios.post("/api/formpenilaian/tambah", {
-        nama_form: formData?.nama_form,
+      // Prepare payload
+      const payload = {
         id_mk: mkId?.id_mk,
         id_jenis: formData?.jenis_form,
         formData: komponenYangDipakai,
-      });
+      };
+
+      // Cek apakah ini untuk form yang sudah ada (ketua mengisi form jenis 3)
+      if (formData.id_form && !formData.nama_form) {
+        // Untuk ketua yang mengisi form jenis 3 yang sudah ada
+        payload.id_form = formData.id_form;
+        // nama_form tidak perlu dikirim karena form sudah ada
+      } else {
+        // Untuk membuat form baru
+        payload.nama_form = formData?.nama_form;
+      }
+
+      const response = await axios.post("/api/formpenilaian/tambah", payload);
 
       if (response.data.success) {
-        alert("Berhasil membuat form!");
+        if (formData.id_form && !formData.nama_form) {
+          alert("Berhasil menambahkan komponen ke form!");
+        } else {
+          alert("Berhasil membuat form!");
+        }
       } else {
-        alert(response.data.message || "Gagal mmembuat form!");
+        alert(response.data.message || "Gagal membuat form!");
       }
     } catch (error) {
-      alert(response.data.message || "Gagal mmembuat form! Server Error!");
+      console.error("Error:", error);
+      alert("Gagal membuat form! Server Error!");
     } finally {
       fetchFormPenilaian();
     }
@@ -1303,6 +1442,8 @@ const DaftarKelompok = () => {
         onClose={closeModal}
         onSubmit={handleSubmitForm}
         initialData={initialData}
+        isKetuaIsiFormJenis3={isKetuaIsiFormJenis3}
+        id_form={selectedIdFormJenis3}
       />
 
       <ModalFormPenilaian
@@ -1313,12 +1454,31 @@ const DaftarKelompok = () => {
         dataForm={detailFormPenilaian}
         formData={formDataDetail}
         session={session}
+        isKetuaIsiFormJenis3={isKetuaIsiFormJenis3}
+      />
+
+      <DetailFormListMahasiswa
+        isOpen={isModalRekapFormList}
+        onClose={() => {
+          setIsModalRekapFormList(false), setSelectedIdForm(null);
+        }}
+        currentPageStudents={currentPageStudents}
+        setCurrentPageStudents={setCurrentPageStudents}
+        searchTerm={searchTerm}
+        setSearchTerm={setSearchTerm}
+        itemsPerPage={itemsPerPage}
+        data={dataStudentsRekap}
+        handleDetailRekap={handleDetailRekap}
+        setDataDetailRekapMahasiswa={setDataDetailRekapMahasiswa}
+        id_form={selectedIdForm}
       />
 
       <DetailRekapModal
         isOpen={isModalDetailRekapOpen}
-        onClose={() => setIsModalDetailRekapOpen(false)}
-        data={dataRekap}
+        onClose={() => {
+          setIsModalDetailRekapOpen(false), setDataDetailRekapMahasiswa([]);
+        }}
+        data={dataDetailRekapMahasiswa}
       />
     </div>
   );
@@ -2006,19 +2166,48 @@ const AnggotaKelompokModal = ({
   );
 };
 
-const DetailRekapModal = ({ isOpen, onClose, data }) => {
+const DetailFormListMahasiswa = ({
+  isOpen,
+  onClose,
+  currentPageStudents,
+  setCurrentPageStudents,
+  searchTerm,
+  setSearchTerm,
+  itemsPerPage,
+  data,
+  handleDetailRekap,
+  id_form,
+}) => {
   if (!isOpen) return null;
+
+  const filteredStudents = data.filter(
+    (student) =>
+      student.nama.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      student.npm.includes(searchTerm)
+  );
+
+  const indexOfLastStudent = currentPageStudents * itemsPerPage;
+  const indexOfFirstStudent = indexOfLastStudent - itemsPerPage;
+  const currentStudents = filteredStudents.slice(
+    indexOfFirstStudent,
+    indexOfLastStudent
+  );
+  const totalPagesStudents = Math.ceil(filteredStudents.length / itemsPerPage);
+
+  const paginateStudents = (pageNumber) => {
+    setCurrentPageStudents(pageNumber);
+  };
 
   return (
     <div
       className="fixed inset-0 flex items-center justify-center z-50"
       style={{ backgroundColor: "rgba(75, 85, 99, 0.4)" }}
     >
-      <div className="bg-white rounded-md shadow-2xl w-full max-w-3xl p-6 relative">
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl p-6 relative max-h-[90vh] overflow-hidden">
         {/* Tombol Close */}
         <button
           onClick={onClose}
-          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700"
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 z-10"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -2036,57 +2225,252 @@ const DetailRekapModal = ({ isOpen, onClose, data }) => {
           </svg>
         </button>
 
-        <h2 className="text-2xl font-bold mb-5 text-gray-800">
+        <h2 className="text-2xl font-bold mb-4 text-gray-800">
+          Detail Rekap Mahasiswa
+        </h2>
+
+        <div className="bg-white">
+          {data.length > 0 ? (
+            <div>
+              {/* Search Bar */}
+              <div className="mb-2 mt-2 flex justify-between space-x-2">
+                <div className="relative w-1/2">
+                  <IoSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <input
+                    type="text"
+                    placeholder="Cari mahasiswa"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md"
+                  />
+                </div>
+                <button className="flex items-center gap-1 w-fit p-2 text-white text-sm bg-green-600 hover:bg-green-700 text-nowrap text-center rounded-md transition-colors">
+                  <PiMicrosoftExcelLogoFill
+                    size={24}
+                    className="text-white text-lg"
+                  />
+                  Unduh Excel
+                </button>
+              </div>
+
+              {/* Table */}
+              <div className="space-y-2 pt-2">
+                {/* Header */}
+                <div className="grid grid-cols-[2fr_3fr_2fr_1fr] gap-4 px-4 py-3 bg-blue-500 rounded-md font-semibold text-zinc-100 text-sm">
+                  <div className="truncate whitespace-nowrap">NPM</div>
+                  <div className="truncate whitespace-nowrap">Nama</div>
+                  <div className="truncate whitespace-nowrap">
+                    Hasil Penilaian
+                  </div>
+                  <div className="truncate whitespace-nowrap">Detail</div>
+                </div>
+
+                {/* Content */}
+                <ul className="space-y-2">
+                  {currentStudents.length === 0 ? (
+                    <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+                      <p className="text-sm text-gray-500">
+                        Belum ada data mahasiswa
+                      </p>
+                    </div>
+                  ) : (
+                    currentStudents.map((student) => (
+                      <li
+                        key={student.npm}
+                        className="bg-white p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow group"
+                      >
+                        <div className="grid grid-cols-[2fr_3fr_2fr_1fr] gap-4 items-center">
+                          <div className="text-sm text-gray-800">
+                            {student.npm}
+                          </div>
+                          <div className="text-sm text-gray-800">
+                            {student.nama}
+                          </div>
+                          <div className="text-sm text-gray-800">
+                            <span className="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-blue-100 text-blue-800">
+                              {student.nilai_per_form[id_form] || 0}
+                            </span>
+                          </div>
+                          <div>
+                            <button
+                              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm"
+                              onClick={() => handleDetailRekap(student)}
+                            >
+                              Detail
+                            </button>
+                          </div>
+                        </div>
+                      </li>
+                    ))
+                  )}
+                </ul>
+
+                {/* Pagination */}
+                {filteredStudents.length > 0 && (
+                  <Pagination
+                    currentPage={currentPageStudents}
+                    totalPages={totalPagesStudents}
+                    paginate={paginateStudents}
+                    indexOfFirstItem={indexOfFirstStudent}
+                    indexOfLastItem={indexOfLastStudent}
+                    data={filteredStudents}
+                  />
+                )}
+              </div>
+
+              {/* Empty Search State */}
+              {filteredStudents.length === 0 && searchTerm && (
+                <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+                  <p className="text-sm text-gray-500 text-center">
+                    Tidak ada data yang ditemukan untuk pencarian "{searchTerm}"
+                  </p>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+              <p className="text-sm text-gray-500">
+                Data rekap nilai belum tersedia
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Tombol Tutup */}
+        <div className="flex justify-end mt-6">
+          <button
+            onClick={onClose}
+            className="px-5 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+          >
+            Tutup
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const DetailRekapModal = ({ isOpen, onClose, data }) => {
+  if (!isOpen) return null;
+
+  // Fungsi untuk membuat header kolom komponen dinamis
+  const renderKomponenHeaders = () => {
+    if (!data.komponen_list || data.komponen_list.length === 0) return null;
+
+    return data.komponen_list.map((namaKomponen, index) => (
+      <th key={index} className="px-4 py-3 text-center">
+        {namaKomponen}
+      </th>
+    ));
+  };
+
+  // Fungsi untuk membuat kolom nilai komponen dinamis
+  const renderKomponenValues = (penilai) => {
+    if (!data.komponen_list || data.komponen_list.length === 0) return null;
+
+    return data.komponen_list.map((_, index) => (
+      <td key={index} className="px-4 py-2 text-center">
+        {penilai[`komponen${index + 1}`] || 0}
+      </td>
+    ));
+  };
+
+  return (
+    <div
+      className="fixed inset-0 flex items-center justify-center z-50"
+      style={{ backgroundColor: "rgba(75, 85, 99, 0.4)" }}
+    >
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl p-6 relative max-h-[90vh] overflow-hidden">
+        {/* Tombol Close */}
+        <button
+          onClick={onClose}
+          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 z-10"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-6 w-6"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M6 18L18 6M6 6l12 12"
+            />
+          </svg>
+        </button>
+
+        <h2 className="text-2xl font-bold mb-4 text-gray-800">
           Detail Rekap {data.nama}
         </h2>
 
-        <p className="text-gray-700 font-medium mb-4">
-          Diperoleh penilaian dari :
-        </p>
+        <div className="mb-4">
+          <p className="text-md mb-2">{data.form_name}</p>
+          <div className="text-gray-700 font-medium">
+            {!data?.total_penilai ? (
+              "Belum ada penilai"
+            ) : (
+              <p>
+                Diperoleh penilaian dari {data.total_penilai} penilai yaitu:
+              </p>
+            )}
+          </div>
+        </div>
 
-        {/* Tabel */}
-        <div className="overflow-x-auto">
+        {/* Container untuk tabel dengan scroll */}
+        <div className="overflow-auto max-h-96 rounded-md">
           <table className="w-full text-sm text-left">
-            <thead>
-              <tr className="bg-blue-500 text-white">
-                <th className="px-4 py-3">NPM</th>
-                <th className="px-4 py-3">Nama</th>
-                <th className="px-4 py-3 text-center">Komponen 1</th>
-                <th className="px-4 py-3 text-center">Komponen 2</th>
-                <th className="px-4 py-3 text-center">Komponen 3</th>
-                <th className="px-4 py-3 text-center">Hasil</th>
+            <thead className="sticky top-0 bg-blue-500 text-white">
+              <tr>
+                <th className="px-4 py-3 min-w-[100px]">NPM</th>
+                <th className="px-4 py-3 min-w-[150px]">Nama</th>
+                {renderKomponenHeaders()}
+                <th className="px-4 py-3 text-center min-w-[80px]">
+                  Rata-rata
+                </th>
               </tr>
             </thead>
             <tbody>
-              {data.penilai.map((item, idx) => (
-                <tr
-                  key={idx}
-                  className={
-                    idx % 2 === 0
-                      ? "bg-gray-50 hover:bg-blue-50"
-                      : "hover:bg-blue-50"
-                  }
-                >
-                  <td className="px-4 py-2">{item.npm}</td>
-                  <td className="px-4 py-2">{item.nama}</td>
-                  <td className="px-4 py-2 text-center">{item.komponen1}</td>
-                  <td className="px-4 py-2 text-center">{item.komponen2}</td>
-                  <td className="px-4 py-2 text-center">{item.komponen3}</td>
-                  <td className="px-4 py-2 text-center font-semibold">
-                    {item.hasil}
-                  </td>
-                </tr>
-              ))}
+              {data.penilai &&
+                data.penilai.map((penilai, idx) => (
+                  <tr
+                    key={idx}
+                    className={
+                      idx % 2 === 0
+                        ? "bg-gray-50 hover:bg-blue-50"
+                        : "hover:bg-blue-50"
+                    }
+                  >
+                    <td className="px-4 py-2">{penilai.npm}</td>
+                    <td className="px-4 py-2">{penilai.nama}</td>
+                    {renderKomponenValues(penilai)}
+                    <td className="px-4 py-2 text-center font-semibold">
+                      {penilai.hasil}
+                    </td>
+                  </tr>
+                ))}
             </tbody>
           </table>
         </div>
+
+        {/* Info Komponen */}
+        {data.komponen_list && data.komponen_list.length > 0 && (
+          <div className="mt-4 p-3 bg-gray-100 rounded-lg">
+            <p className="text-sm text-gray-600">
+              <strong>Komponen Penilaian:</strong>{" "}
+              {data.komponen_list.join(", ")}
+            </p>
+          </div>
+        )}
 
         {/* Hasil Akhir */}
         <div className="flex justify-end items-center mt-6 space-x-4">
           <span className="text-gray-600 text-sm">Hasil Akhir :</span>
           <div className="flex items-center space-x-3">
             <span
-              className={`text-lg font-semibold px-4 py-1 rounded-md text-white ${
+              className={`text-lg font-semibold px-4 py-2 rounded-md text-white ${
                 data.hasil_akhir >= 80
                   ? "bg-green-500"
                   : data.hasil_akhir >= 60
@@ -2094,7 +2478,7 @@ const DetailRekapModal = ({ isOpen, onClose, data }) => {
                   : "bg-red-500"
               }`}
             >
-              {data.hasil_akhir}
+              {!data.hasil_akhir ? 0 : data.hasil_akhir}
             </span>
           </div>
         </div>
@@ -2162,10 +2546,17 @@ const ModalBackdrop = ({ children, isOpen, onClose }) => {
 };
 
 // Form Penilaian Sejawat Component
-const PeerEvaluationForm = ({ onSubmit, onCancel, initialData = null }) => {
+const PeerEvaluationForm = ({
+  onSubmit,
+  onCancel,
+  initialData = null,
+  isKetuaIsiFormJenis3,
+  id_form,
+}) => {
   const [formData, setFormData] = useState({
     nama_form: initialData?.nama_form || "",
     jenis_form: initialData?.jenis_form || "1",
+    id_form: initialData?.id_form || id_form || null,
     komponen_anggota_ke_anggota: initialData?.komponen_anggota_ke_anggota || [
       { nama_komponen: "", bobot: "", deskripsi: "" },
     ],
@@ -2180,6 +2571,17 @@ const PeerEvaluationForm = ({ onSubmit, onCancel, initialData = null }) => {
 
   const [errors, setErrors] = useState({});
   const [isKetua, setIsKetua] = useState(true); // Asumsi: nilai ini akan diambil dari konteks autentikasi
+
+  // Effect untuk mengatur jenis_form dan is_form berdasarkan isKetuaIsiFormJenis3
+  useEffect(() => {
+    if (isKetuaIsiFormJenis3) {
+      setFormData((prev) => ({
+        ...prev,
+        jenis_form: "3",
+        id_form: id_form,
+      }));
+    }
+  }, [isKetuaIsiFormJenis3, id_form]);
 
   // Reset form berdasarkan jenis yang dipilih
   useEffect(() => {
@@ -2218,6 +2620,7 @@ const PeerEvaluationForm = ({ onSubmit, onCancel, initialData = null }) => {
       setFormData({
         nama_form: initialData.nama_form || "",
         jenis_form: initialData.jenis_form || "1",
+        id_form: initialData.id_form || id_form || null,
         komponen_anggota_ke_anggota:
           initialData.komponen_anggota_ke_anggota || [
             { nama_komponen: "", bobot: "", deskripsi: "" },
@@ -2325,9 +2728,9 @@ const PeerEvaluationForm = ({ onSubmit, onCancel, initialData = null }) => {
   const validateForm = () => {
     const newErrors = {};
 
-    if (!formData.nama_form.trim()) {
-      newErrors.nama_form = "Nama form harus diisi";
-    }
+    // if (!formData.nama_form.trim()) {
+    //   newErrors.nama_form = "Nama form harus diisi";
+    // }
 
     // Validasi komponen_anggota_ke_anggota untuk jenis 1 & 2
     if (formData.jenis_form === "1" || formData.jenis_form === "2") {
@@ -2388,6 +2791,7 @@ const PeerEvaluationForm = ({ onSubmit, onCancel, initialData = null }) => {
     }
 
     // Validasi komponen_ketua_ke_anggota khusus jenis 3
+
     if (formData.jenis_form === "3") {
       let totalBobotKetuaAnggota = 0;
       formData.komponen_ketua_ke_anggota.forEach((item, index) => {
@@ -2624,72 +3028,80 @@ const PeerEvaluationForm = ({ onSubmit, onCancel, initialData = null }) => {
       </div>
 
       <form onSubmit={handleSubmit}>
-        <div className="mb-4">
-          <label className="block text-gray-700 font-medium mb-2">
-            Nama Form
-          </label>
-          <input
-            type="text"
-            name="nama_form"
-            value={formData.nama_form}
-            onChange={handleFormChange}
-            className={`w-full p-2 border ${
-              errors.nama_form ? "border-red-500" : "border-gray-300"
-            } rounded`}
-            placeholder="Masukkan nama form"
-          />
-          {errors.nama_form && (
-            <p className="text-red-500 text-sm mt-1">{errors.nama_form}</p>
-          )}
-        </div>
+        {!isKetuaIsiFormJenis3 && (
+          <div>
+            <div className="mb-4">
+              <label className="block text-gray-700 font-medium mb-2">
+                Nama Form
+              </label>
+              <input
+                type="text"
+                name="nama_form"
+                value={formData.nama_form}
+                onChange={handleFormChange}
+                className={`w-full p-2 border ${
+                  errors.nama_form ? "border-red-500" : "border-gray-300"
+                } rounded`}
+                placeholder="Masukkan nama form"
+              />
+              {errors.nama_form && (
+                <p className="text-red-500 text-sm mt-1">{errors.nama_form}</p>
+              )}
+            </div>
 
-        <div className="mb-6 relative">
-          <label className="block text-gray-700 font-medium mb-2">
-            Jenis Form
-          </label>
-          <div className="relative">
-            <select
-              name="jenis_form"
-              value={formData.jenis_form}
-              onChange={handleFormChange}
-              className="appearance-none w-full p-2 border border-gray-300 rounded bg-white pr-10"
-            >
-              <option value="1">
-                Jenis 1 - Anggota ke Anggota & Anggota ke Ketua
-              </option>
-              <option value="2">Jenis 2 - Hanya Anggota ke Anggota</option>
-              <option value="3">Jenis 3 - Hanya Ketua ke Anggota</option>
-            </select>
-            {/* Custom arrow */}
-            <div className="pointer-events-none absolute inset-y-0 right-1 flex items-center px-2 text-gray-600">
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
+            <div className="mb-6 relative">
+              <label className="block text-gray-700 font-medium mb-2">
+                Jenis Form
+              </label>
+              <div className="relative">
+                <select
+                  name="jenis_form"
+                  value={formData.jenis_form}
+                  onChange={handleFormChange}
+                  disabled={isKetuaIsiFormJenis3} // Disable jika ketua mengisi form jenis 3
+                  className={`appearance-none w-full p-2 border border-gray-300 rounded bg-white pr-10 ${
+                    isKetuaIsiFormJenis3 ? "bg-gray-100 cursor-not-allowed" : ""
+                  }`}
+                >
+                  <option value="1">
+                    Jenis 1 - Anggota ke Anggota & Anggota ke Ketua
+                  </option>
+                  <option value="2">Jenis 2 - Hanya Anggota ke Anggota</option>
+                  <option value="3">Jenis 3 - Hanya Ketua ke Anggota</option>
+                </select>
+                {/* Custom arrow */}
+                <div className="pointer-events-none absolute inset-y-0 right-1 flex items-center px-2 text-gray-600">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
         {/* Render komponen anggota ke anggota untuk jenis 1 dan 2 */}
         {(formData.jenis_form === "1" || formData.jenis_form === "2") &&
+          !isKetuaIsiFormJenis3 &&
           renderKomponenTable("anggota_ke_anggota")}
 
         {/* Render komponen anggota ke ketua untuk jenis 1 */}
-        {formData.jenis_form === "1" && renderKomponenTable("anggota_ke_ketua")}
+        {formData.jenis_form === "1" &&
+          !isKetuaIsiFormJenis3 &&
+          renderKomponenTable("anggota_ke_ketua")}
 
         {/* Render komponen ketua ke anggota untuk jenis 3 */}
-        {formData.jenis_form === "3" &&
-          isKetua &&
-          renderKomponenTable("ketua_ke_anggota")}
+        {isKetuaIsiFormJenis3 && renderKomponenTable("ketua_ke_anggota")}
 
         <div className="mt-8 flex justify-end space-x-2">
           <button
@@ -2717,6 +3129,8 @@ export const PeerEvaluationModal = ({
   onClose,
   onSubmit,
   initialData = null,
+  isKetuaIsiFormJenis3,
+  id_form,
 }) => {
   return (
     <ModalBackdrop isOpen={isOpen} onClose={onClose}>
@@ -2727,6 +3141,8 @@ export const PeerEvaluationModal = ({
         }}
         onCancel={onClose}
         initialData={initialData}
+        isKetuaIsiFormJenis3={isKetuaIsiFormJenis3}
+        id_form={id_form}
       />
     </ModalBackdrop>
   );

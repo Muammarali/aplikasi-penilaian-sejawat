@@ -10,6 +10,7 @@ const ModalFormPenilaian = ({
   dataForm = {},
   formData = {},
   session,
+  isKetuaIsiFormJenis3,
 }) => {
   const [nilaiAnggotaAnggota, setNilaiAnggotaAnggota] = useState([]);
   const [nilaiAnggotaPM, setNilaiAnggotaPM] = useState([]);
@@ -145,7 +146,7 @@ const ModalFormPenilaian = ({
       return 0;
     }
 
-    return totalNilai;
+    return parseFloat(totalNilai.toFixed(2));
   };
 
   // Fungsi untuk cek apakah semua nilai telah diisi
@@ -279,7 +280,7 @@ const ModalFormPenilaian = ({
         });
       }
 
-      console.log("Data to submit:", hasilPenilaian);
+      // console.log("Data to submit:", hasilPenilaian);
 
       // Kirim data ke API
       const response = await axios.post("/api/formpenilaian/nilai", {
@@ -287,7 +288,7 @@ const ModalFormPenilaian = ({
         id_form: id_form,
       });
 
-      console.log("Response:", response.data);
+      // console.log("Response:", response.data);
 
       setNilaiAnggotaAnggota([]);
       setNilaiAnggotaPM([]);
@@ -534,15 +535,20 @@ const ModalFormPenilaian = ({
                               onBlur={(e) => {
                                 let value = e.target.value;
 
-                                // Kalau kosong, nggak usah diformat
                                 if (value !== "") {
                                   let numValue = parseFloat(value);
 
-                                  // Kalau lebih dari 100 tetap dipaksa 100
                                   if (numValue > 100) numValue = 100;
 
                                   // Format jadi 2 angka di belakang koma
-                                  value = numValue.toFixed(2);
+                                  let formattedValue = numValue.toFixed(2);
+
+                                  // Kalau hasilnya berakhir .00, buang desimalnya
+                                  if (formattedValue.endsWith(".00")) {
+                                    value = parseInt(formattedValue).toString();
+                                  } else {
+                                    value = formattedValue;
+                                  }
 
                                   handleAnggotaAnggotaChange(
                                     idx,
@@ -665,15 +671,20 @@ const ModalFormPenilaian = ({
                             onBlur={(e) => {
                               let value = e.target.value;
 
-                              // Kalau kosong, nggak usah diformat
                               if (value !== "") {
                                 let numValue = parseFloat(value);
 
-                                // Kalau lebih dari 100 tetap dipaksa 100
                                 if (numValue > 100) numValue = 100;
 
                                 // Format jadi 2 angka di belakang koma
-                                value = numValue.toFixed(2);
+                                let formattedValue = numValue.toFixed(2);
+
+                                // Kalau hasilnya berakhir .00, buang desimalnya
+                                if (formattedValue.endsWith(".00")) {
+                                  value = parseInt(formattedValue).toString();
+                                } else {
+                                  value = formattedValue;
+                                }
 
                                 handleAnggotaPMChange(
                                   idx,
