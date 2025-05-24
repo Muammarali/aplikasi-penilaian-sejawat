@@ -32,8 +32,6 @@ export async function POST(req) {
       responseMessage = "Form & Komponen berhasil dibuat";
     }
 
-    console.log(form_id);
-
     // Insert komponen_penilaian sesuai id_jenis
     if (id_jenis == 1) {
       for (const item of formData.anggota_ke_anggota) {

@@ -8,6 +8,7 @@ import { PiMicrosoftExcelLogoFill } from "react-icons/pi";
 import toast from "react-hot-toast";
 import ModalFormPenilaian from "../FormPenilaian/IsiForm";
 import { IoSearch } from "react-icons/io5";
+import DownloadExcelButton from "../ExcelButton";
 
 const DaftarKelompok = () => {
   const [dataKelompok, setDataKelompok] = useState([]);
@@ -104,8 +105,6 @@ const DaftarKelompok = () => {
       }
 
       const data = response?.data?.data;
-
-      // console.log(data);
       setDataStudentsRekap(data);
     } catch (error) {
       router.refresh();
@@ -1477,6 +1476,7 @@ const DaftarKelompok = () => {
         isKetuaIsiFormJenis3={isKetuaIsiFormJenis3}
         id_form={selectedIdFormJenis3}
         formJenis3Terisi={formJenis3Terisi}
+        isDosen={session?.user?.role == "Dosen" ? "Dosen" : "Mahasiswa"}
       />
 
       <ModalFormPenilaian
@@ -1504,6 +1504,8 @@ const DaftarKelompok = () => {
         handleDetailRekap={handleDetailRekap}
         setDataDetailRekapMahasiswa={setDataDetailRekapMahasiswa}
         id_form={selectedIdForm}
+        id_mk={parseMatkulParam(params.matkul).id_mk}
+        nama_matkul={parseMatkulParam(params.matkul).nama_matkul}
       />
 
       <DetailRekapModal
@@ -2210,6 +2212,8 @@ const DetailFormListMahasiswa = ({
   data,
   handleDetailRekap,
   id_form,
+  id_mk,
+  nama_matkul,
 }) => {
   if (!isOpen) return null;
 
@@ -2262,7 +2266,7 @@ const DetailFormListMahasiswa = ({
           Detail Rekap Mahasiswa
         </h2>
 
-        <div className="bg-white">
+        <div>
           {data.length > 0 ? (
             <div>
               {/* Search Bar */}
@@ -2277,13 +2281,14 @@ const DetailFormListMahasiswa = ({
                     className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md"
                   />
                 </div>
-                <button className="flex items-center gap-1 w-fit p-2 text-white text-sm bg-green-600 hover:bg-green-700 text-nowrap text-center rounded-md transition-colors">
-                  <PiMicrosoftExcelLogoFill
-                    size={24}
-                    className="text-white text-lg"
-                  />
-                  Unduh Excel
-                </button>
+
+                <DownloadExcelButton
+                  id_mk={id_mk}
+                  courseName={nama_matkul}
+                  studentsData={data}
+                  selectedForms={[id_form]}
+                  className="shadow-sm"
+                />
               </div>
 
               {/* Table */}
@@ -2587,6 +2592,7 @@ const PeerEvaluationForm = ({
   isKetuaIsiFormJenis3,
   id_form,
   formJenis3Terisi,
+  isDosen,
 }) => {
   const [formData, setFormData] = useState({
     nama_form: initialData?.nama_form || "",
@@ -2763,9 +2769,11 @@ const PeerEvaluationForm = ({
   const validateForm = () => {
     const newErrors = {};
 
-    // if (!formData.nama_form.trim()) {
-    //   newErrors.nama_form = "Nama form harus diisi";
-    // }
+    if (!formData.nama_form.trim()) {
+      if (!isKetuaIsiFormJenis3) {
+        newErrors.nama_form = "Nama form harus diisi";
+      }
+    }
 
     // Validasi komponen_anggota_ke_anggota untuk jenis 1 & 2
     if (formData.jenis_form === "1" || formData.jenis_form === "2") {
@@ -3146,19 +3154,22 @@ const PeerEvaluationForm = ({
           >
             Batal
           </button>
-          <button
-            type={
-              isKetuaIsiFormJenis3 && !formJenis3Terisi ? "submit" : "button"
-            }
-            className={`px-4 py-2 text-white rounded ${
-              isKetuaIsiFormJenis3 && !formJenis3Terisi
-                ? "bg-blue-600 hover:bg-blue-700"
-                : "bg-gray-400"
-            }`}
-            disabled={!(isKetuaIsiFormJenis3 && !formJenis3Terisi)}
-          >
-            Simpan
-          </button>
+          {isDosen == "Dosen" || (isKetuaIsiFormJenis3 && !formJenis3Terisi) ? (
+            <button
+              type="submit"
+              className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Simpan
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="px-4 py-2 bg-gray-400 text-white rounded"
+              disabled
+            >
+              Simpan
+            </button>
+          )}
         </div>
       </form>
     </div>
@@ -3174,6 +3185,7 @@ export const PeerEvaluationModal = ({
   isKetuaIsiFormJenis3,
   id_form,
   formJenis3Terisi,
+  isDosen,
 }) => {
   return (
     <ModalBackdrop isOpen={isOpen} onClose={onClose}>
@@ -3187,6 +3199,7 @@ export const PeerEvaluationModal = ({
         isKetuaIsiFormJenis3={isKetuaIsiFormJenis3}
         id_form={id_form}
         formJenis3Terisi={formJenis3Terisi}
+        isDosen={isDosen}
       />
     </ModalBackdrop>
   );
