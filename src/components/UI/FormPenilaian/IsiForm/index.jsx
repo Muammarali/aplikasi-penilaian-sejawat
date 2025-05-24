@@ -10,7 +10,6 @@ const ModalFormPenilaian = ({
   dataForm = {},
   formData = {},
   session,
-  isKetuaIsiFormJenis3,
 }) => {
   const [nilaiAnggotaAnggota, setNilaiAnggotaAnggota] = useState([]);
   const [nilaiAnggotaPM, setNilaiAnggotaPM] = useState([]);
@@ -790,7 +789,7 @@ const ModalFormPenilaian = ({
                                   }
                                 }
 
-                                handleAnggotaPMChange(
+                                handleKetuaAnggotaChange(
                                   idx,
                                   komp.id_komponen,
                                   value
@@ -804,11 +803,17 @@ const ModalFormPenilaian = ({
                               if (value !== "") {
                                 let numValue = parseFloat(value);
 
-                                // Kalau lebih dari 100 tetap dipaksa 100
                                 if (numValue > 100) numValue = 100;
 
                                 // Format jadi 2 angka di belakang koma
-                                value = numValue.toFixed(2);
+                                let formattedValue = numValue.toFixed(2);
+
+                                // Kalau hasilnya berakhir .00, buang desimalnya
+                                if (formattedValue.endsWith(".00")) {
+                                  value = parseInt(formattedValue).toString();
+                                } else {
+                                  value = formattedValue;
+                                }
 
                                 handleKetuaAnggotaChange(
                                   idx,

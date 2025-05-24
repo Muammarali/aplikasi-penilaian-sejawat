@@ -353,6 +353,14 @@ const DaftarKelompok = () => {
     }
   };
 
+  const fetchFormJenis3 = async () => {
+    try {
+      const response = await axios.post("/api/formpenilaian/fetch/formjenis3", {
+        id_form: id_form,
+      });
+    } catch (error) {}
+  };
+
   useEffect(() => {
     fetchFormPenilaian();
     fetchKelompok();
@@ -588,23 +596,36 @@ const DaftarKelompok = () => {
                         <div className="space-x-2">
                           {peranUserKelompok == "Ketua" &&
                           form?.jenis == "Jenis 3" ? (
-                            <button
-                              className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-all text-sm"
-                              onClick={() =>
-                                handleModalIsiKomponen(form?.id_form)
-                              }
-                            >
-                              Isi Komponen
-                            </button>
+                            <div>
+                              <button
+                                className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-all text-sm"
+                                onClick={() =>
+                                  handleModalIsiKomponen(form?.id_form)
+                                }
+                              >
+                                Isi Komponen
+                              </button>
+
+                              <button
+                                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm"
+                                onClick={() =>
+                                  handleModalIsiFormulir(form?.id_form)
+                                }
+                              >
+                                Isi
+                              </button>
+                            </div>
                           ) : (
-                            <button
-                              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm"
-                              onClick={() =>
-                                handleModalIsiFormulir(form?.id_form)
-                              }
-                            >
-                              Isi
-                            </button>
+                            form?.jenis !== "Jenis 3" && (
+                              <button
+                                className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm"
+                                onClick={() =>
+                                  handleModalIsiFormulir(form?.id_form)
+                                }
+                              >
+                                Isi
+                              </button>
+                            )
                           )}
                         </div>
                       )}
@@ -642,7 +663,7 @@ const DaftarKelompok = () => {
         );
       case "rekap-nilai":
         return (
-          <div className="space-y-2 pt-2">
+          <div className="space-y-2 pt-4.5">
             <div
               className={`grid ${
                 session?.user?.role === "Dosen"
