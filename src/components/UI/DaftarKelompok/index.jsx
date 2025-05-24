@@ -54,6 +54,7 @@ const DaftarKelompok = () => {
   const [isKetuaIsiFormJenis3, setIsKetuaIsiFormJenis3] = useState(false);
   const [selectedIdForm, setSelectedIdForm] = useState(null);
   const [selectedIdFormJenis3, setSelectedIdFormJenis3] = useState(null);
+  const [formJenis3Terisi, setFormJenis3Terisi] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
   const params = useParams();
@@ -162,7 +163,6 @@ const DaftarKelompok = () => {
       });
 
       const data = response?.data?.data?.peran;
-      console.log(data);
       setPeranUserKelompok(data);
     } catch (error) {
       router.refresh();
@@ -353,12 +353,22 @@ const DaftarKelompok = () => {
     }
   };
 
-  const fetchFormJenis3 = async () => {
+  const fetchFormJenis3 = async (id) => {
     try {
       const response = await axios.post("/api/formpenilaian/fetch/formjenis3", {
-        id_form: id_form,
+        id_form: id,
       });
-    } catch (error) {}
+
+      let status = false;
+
+      if (response?.data?.data?.length > 0) {
+        status = true;
+      }
+
+      setFormJenis3Terisi(status);
+    } catch (error) {
+      router.refresh();
+    }
   };
 
   useEffect(() => {
@@ -596,7 +606,7 @@ const DaftarKelompok = () => {
                         <div className="space-x-2">
                           {peranUserKelompok == "Ketua" &&
                           form?.jenis == "Jenis 3" ? (
-                            <div>
+                            <div className="flex gap-2">
                               <button
                                 className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-all text-sm"
                                 onClick={() =>
@@ -1046,6 +1056,7 @@ const DaftarKelompok = () => {
   const handleModalIsiKomponen = async (id_form) => {
     setSelectedIdFormJenis3(id_form);
     setIsKetuaIsiFormJenis3(true);
+    fetchFormJenis3(id_form);
     openModal();
   };
 
@@ -1279,7 +1290,7 @@ const DaftarKelompok = () => {
       const komponenYangDipakai = getKomponenByJenisForm(formData);
       const mkId = parseMatkulParam(params.matkul);
 
-      console.log(formData);
+      // console.log(formData);
 
       // Prepare payload
       const payload = {
@@ -1465,6 +1476,7 @@ const DaftarKelompok = () => {
         initialData={initialData}
         isKetuaIsiFormJenis3={isKetuaIsiFormJenis3}
         id_form={selectedIdFormJenis3}
+        formJenis3Terisi={formJenis3Terisi}
       />
 
       <ModalFormPenilaian
@@ -2429,6 +2441,7 @@ const DetailRekapModal = ({ isOpen, onClose, data }) => {
 
         <div className="mb-4">
           <p className="text-md mb-2">{data.form_name}</p>
+          <p className="text-md mb-2">{data.nama_kelompok}</p>
           <div className="text-gray-700 font-medium">
             {!data?.total_penilai ? (
               "Belum ada penilai"
@@ -2573,6 +2586,7 @@ const PeerEvaluationForm = ({
   initialData = null,
   isKetuaIsiFormJenis3,
   id_form,
+  formJenis3Terisi,
 }) => {
   const [formData, setFormData] = useState({
     nama_form: initialData?.nama_form || "",
@@ -3133,8 +3147,15 @@ const PeerEvaluationForm = ({
             Batal
           </button>
           <button
-            type="submit"
-            className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"
+            type={
+              isKetuaIsiFormJenis3 && !formJenis3Terisi ? "submit" : "button"
+            }
+            className={`px-4 py-2 text-white rounded ${
+              isKetuaIsiFormJenis3 && !formJenis3Terisi
+                ? "bg-blue-600 hover:bg-blue-700"
+                : "bg-gray-400"
+            }`}
+            disabled={!(isKetuaIsiFormJenis3 && !formJenis3Terisi)}
           >
             Simpan
           </button>
@@ -3152,6 +3173,7 @@ export const PeerEvaluationModal = ({
   initialData = null,
   isKetuaIsiFormJenis3,
   id_form,
+  formJenis3Terisi,
 }) => {
   return (
     <ModalBackdrop isOpen={isOpen} onClose={onClose}>
@@ -3164,6 +3186,7 @@ export const PeerEvaluationModal = ({
         initialData={initialData}
         isKetuaIsiFormJenis3={isKetuaIsiFormJenis3}
         id_form={id_form}
+        formJenis3Terisi={formJenis3Terisi}
       />
     </ModalBackdrop>
   );

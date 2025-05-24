@@ -295,7 +295,6 @@ const ModalFormPenilaian = ({
       setValidasiError(false);
       onClose();
     } catch (error) {
-      console.error("Error submitting data:", error);
       setSubmitError(
         "Terjadi kesalahan saat menyimpan data. Silakan coba lagi."
       );
@@ -309,6 +308,7 @@ const ModalFormPenilaian = ({
     setNilaiAnggotaPM([]);
     setNilaiKetuaAnggota([]);
     setValidasiError(false);
+    setSubmitError("");
     onClose();
   };
 

@@ -16,7 +16,7 @@ export async function POST(req) {
         SELECT kp.id_komponen, fp.id_form
         FROM komponen_penilaian kp
         JOIN form_penilaian fp ON kp.id_form = fp.id_form
-        WHERE fp.id_jenis = 3
+        WHERE fp.id_jenis = 3 AND fp.id_form = $1
     `;
 
     const result = await handlerQuery(query, [id_form]);

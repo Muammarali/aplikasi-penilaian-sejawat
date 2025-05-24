@@ -12,7 +12,28 @@ export async function POST(req) {
       );
     }
 
-    // Query ambil peran user di matkul tertentu
+    // Cek role user
+    const getUserRoleQuery = `SELECT role FROM users WHERE id_user = $1 LIMIT 1`;
+    const roleResult = await handlerQuery(getUserRoleQuery, [id_user]);
+
+    if (roleResult.rows.length === 0) {
+      return NextResponse.json(
+        { success: false, message: "User tidak ditemukan." },
+        { status: 404 }
+      );
+    }
+
+    const userRole = roleResult.rows[0].role;
+
+    if (userRole === "Dosen") {
+      // Langsung return 403 tanpa jalankan query peran
+      return NextResponse.json(
+        { success: true, message: "Dosen tidak memiliki kelompok." },
+        { status: 200 }
+      );
+    }
+
+    // Hanya jalankan query ini jika bukan dosen
     const getUserPeranQuery = `
       SELECT mk.peran, k.nama_kelompok
       FROM mahasiswa_kelompok mk

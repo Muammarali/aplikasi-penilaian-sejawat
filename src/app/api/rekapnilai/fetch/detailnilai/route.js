@@ -29,15 +29,26 @@ export async function POST(req) {
         kp.id_komponen,
         kp.nama_komponen,
         hp.id_dinilai,
-        hp.nilai
+        hp.nilai,
+        MIN(mk_dinilai.id_kelompok) AS id_kelompok,
+        MIN(k.nama_kelompok) AS nama_kelompok
       FROM 
         hasil_penilaian hp
       JOIN users u_penilai ON hp.id_penilai = u_penilai.id_user
       JOIN users u_dinilai ON hp.id_dinilai = u_dinilai.id_user
       JOIN form_penilaian fp ON hp.id_form = fp.id_form
       JOIN komponen_penilaian kp ON hp.id_komponen = kp.id_komponen
+      LEFT JOIN mahasiswa_kelompok mk_dinilai 
+        ON hp.id_dinilai = mk_dinilai.id_user
+      LEFT JOIN kelompok k 
+        ON mk_dinilai.id_kelompok = k.id_kelompok 
+        AND k.id_mk = fp.id_mk 
       WHERE hp.id_dinilai = $1 AND fp.id_form = $2
-      ORDER BY u_penilai.nama, kp.nama_komponen
+      GROUP BY 
+        hp.id_penilai, u_penilai.nama, u_dinilai.nama, u_penilai.npm,
+        fp.id_form, fp.nama, kp.id_komponen, kp.nama_komponen,
+        hp.id_dinilai, hp.nilai
+      ORDER BY u_penilai.nama, kp.nama_komponen;
     `;
 
     // Eksekusi query
@@ -125,6 +136,9 @@ export async function POST(req) {
         ? (totalHasil / penilaiArray.length).toFixed(2)
         : 0;
 
+    // Ambil nama_kelompok dari row pertama
+    const namaKelompok = result?.rows[0]?.nama_kelompok || null;
+
     // Format response sesuai dengan struktur yang dibutuhkan modal
     const responseData = {
       nama: namaDinilai,
@@ -134,6 +148,7 @@ export async function POST(req) {
       total_penilai: penilaiArray.length,
       komponen_list: komponenList, // Daftar nama komponen untuk header tabel
       jumlah_komponen: komponenList.length, // Jumlah komponen untuk membuat kolom dinamis
+      nama_kelompok: namaKelompok, // 🆕 tambahkan nama_kelompok di sini
     };
 
     return NextResponse.json({
