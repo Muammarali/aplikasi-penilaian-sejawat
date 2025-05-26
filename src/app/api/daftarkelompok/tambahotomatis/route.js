@@ -2,12 +2,7 @@ import { NextResponse } from "next/server";
 import handlerQuery from "../../../utils/db";
 
 export async function POST(req) {
-  const {
-    id_mk,
-    kelas,
-    nama_matkul,
-    anggota_per_kelompok = 4,
-  } = await req.json();
+  const { id_mk, kelas, nama_matkul, anggota_per_kelompok } = await req.json();
 
   try {
     // Validasi mata kuliah
