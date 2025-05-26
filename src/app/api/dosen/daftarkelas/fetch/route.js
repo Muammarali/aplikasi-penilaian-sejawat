@@ -15,12 +15,14 @@ export async function POST(req) {
           mata_kuliah mk
       LEFT JOIN (
           SELECT 
-              id_mk,
-              COUNT(DISTINCT id_user) AS jumlah_peserta
+              dk.id_mk,
+              COUNT(DISTINCT dk.id_user) AS jumlah_peserta
           FROM 
-              daftar_kelas
+              daftar_kelas dk
+          JOIN users u ON dk.id_user = u.id_user
+          WHERE u.role = 'Mahasiswa'
           GROUP BY 
-              id_mk
+              dk.id_mk
       ) jp ON mk.id_mk = jp.id_mk
       LEFT JOIN (
           SELECT 
@@ -31,7 +33,7 @@ export async function POST(req) {
           GROUP BY 
               id_mk
       ) jk ON mk.id_mk = jk.id_mk
-      ORDER BY mk.nama
+      ORDER BY mk.nama;
     `;
 
     const data = await handlerQuery(query);

@@ -25,11 +25,12 @@ export async function POST(req) {
       });
     }
 
-    // Hitung jumlah mahasiswa di kelas ini
+    // Hitung jumlah mahasiswa di kelas ini (role = 'Mahasiswa')
     const getMahasiswaCountQuery = `
-      SELECT COUNT(DISTINCT id_user) AS total_mahasiswa
-      FROM daftar_kelas
-      WHERE id_mk = $1;
+      SELECT COUNT(DISTINCT dk.id_user) AS total_mahasiswa
+      FROM daftar_kelas dk
+      JOIN users u ON dk.id_user = u.id_user
+      WHERE dk.id_mk = $1 AND u.role = 'Mahasiswa';
     `;
 
     const countResult = await handlerQuery(getMahasiswaCountQuery, [id_mk]);

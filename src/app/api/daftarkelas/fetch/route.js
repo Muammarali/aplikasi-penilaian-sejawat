@@ -7,40 +7,42 @@ export async function POST(req) {
 
   try {
     const query = `
-        SELECT 
-            dk.id_daftar_kelas,
-            dk.id_user,
-            dk.id_mk,
-            mk.kode_mk,
-            mk.nama,
-            mk.kelas,
-            COALESCE(jp.jumlah_peserta, 0) AS jumlah_peserta,
-            COALESCE(jk.jumlah_kelompok, 0) AS jumlah_kelompok
-        FROM 
-            daftar_kelas dk
-        JOIN 
-            mata_kuliah mk ON dk.id_mk = mk.id_mk
-        LEFT JOIN (
-            SELECT 
-                id_mk,
-                COUNT(DISTINCT id_user) AS jumlah_peserta
-            FROM 
-                daftar_kelas
-            GROUP BY 
-                id_mk
-        ) jp ON mk.id_mk = jp.id_mk
-        LEFT JOIN (
-            SELECT 
-                id_mk,
-                COUNT(*) AS jumlah_kelompok
-            FROM 
-                kelompok
-            GROUP BY 
-                id_mk
-        ) jk ON mk.id_mk = jk.id_mk
-        WHERE
-          id_user = $1;
-      `;
+      SELECT 
+          dk.id_daftar_kelas,
+          dk.id_user,
+          dk.id_mk,
+          mk.kode_mk,
+          mk.nama,
+          mk.kelas,
+          COALESCE(jp.jumlah_peserta, 0) AS jumlah_peserta,
+          COALESCE(jk.jumlah_kelompok, 0) AS jumlah_kelompok
+      FROM 
+          daftar_kelas dk
+      JOIN 
+          mata_kuliah mk ON dk.id_mk = mk.id_mk
+      LEFT JOIN (
+          SELECT 
+              dk.id_mk,
+              COUNT(DISTINCT dk.id_user) AS jumlah_peserta
+          FROM 
+              daftar_kelas dk
+          JOIN users u ON dk.id_user = u.id_user
+          WHERE u.role = 'Mahasiswa'
+          GROUP BY 
+              dk.id_mk
+      ) jp ON mk.id_mk = jp.id_mk
+      LEFT JOIN (
+          SELECT 
+              id_mk,
+              COUNT(*) AS jumlah_kelompok
+          FROM 
+              kelompok
+          GROUP BY 
+              id_mk
+      ) jk ON mk.id_mk = jk.id_mk
+      WHERE
+        dk.id_user = $1;
+    `;
 
     const values = [id_user];
 
