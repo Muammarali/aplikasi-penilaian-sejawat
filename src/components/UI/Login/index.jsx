@@ -35,9 +35,11 @@ const Login = () => {
           redirect: false,
         });
 
+        console.log(response);
+
         showNotification.dismiss(loadingToastId);
 
-        if (response?.error) {
+        if (!response?.ok) {
           showNotification.error("Invalid email or password");
           setIsLoading(false);
         } else {
