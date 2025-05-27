@@ -35,8 +35,6 @@ const Login = () => {
           redirect: false,
         });
 
-        console.log(response);
-
         showNotification.dismiss(loadingToastId);
 
         if (!response?.ok) {

@@ -6,9 +6,6 @@ export async function POST(req) {
   const id_mk = request.id_mk;
   const id_user = request.id_user;
 
-  console.log(id_mk);
-  console.log(id_user);
-
   try {
     const query = `
       INSERT INTO daftar_kelas(id_mk, id_user)

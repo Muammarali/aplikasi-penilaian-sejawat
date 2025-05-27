@@ -7,6 +7,7 @@ import { FiLogOut } from "react-icons/fi";
 import { PiMicrosoftExcelLogoFill } from "react-icons/pi";
 import toast from "react-hot-toast";
 import ModalFormPenilaian from "../FormPenilaian/IsiForm";
+import EditPeerEvaluationModal from "../FormPenilaian/EditForm";
 import { IoSearch } from "react-icons/io5";
 import DownloadExcelButton from "../ExcelButton";
 
@@ -56,6 +57,8 @@ const DaftarKelompok = () => {
   const [isKetuaIsiFormJenis3, setIsKetuaIsiFormJenis3] = useState(false);
   const [selectedIdForm, setSelectedIdForm] = useState(null);
   const [selectedIdFormJenis3, setSelectedIdFormJenis3] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [selectedForm, setSelectedForm] = useState(null);
   const [formJenis3Terisi, setFormJenis3Terisi] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -269,6 +272,73 @@ const DaftarKelompok = () => {
     } catch (error) {
       console.error("Error fetching available groups:", error);
       toast.error("Gagal mengambil data kelompok");
+    }
+  };
+
+  const handleEditForm = async (formId) => {
+    try {
+      // Fetch data form yang akan diedit
+      const response = await axios.post("/api/formpenilaian/fetch/ubah", {
+        id_form: formId,
+      });
+
+      if (response.data.success) {
+        // Transform data sesuai struktur yang dibutuhkan form
+        const formData = {
+          id_form: response.data.data.id_form,
+          nama_form: response.data.data.nama,
+          jenis_form: response.data.data.id_jenis.toString(),
+          komponen_anggota_ke_anggota:
+            response.data.data.komponen?.filter(
+              (k) => k.tipe_penilaian === "Anggota ke Anggota"
+            ) || [],
+          komponen_anggota_ke_ketua:
+            response.data.data.komponen?.filter(
+              (k) => k.tipe_penilaian === "Anggota ke Ketua"
+            ) || [],
+          komponen_ketua_ke_anggota:
+            response.data.data.komponen?.filter(
+              (k) => k.tipe_penilaian === "Ketua ke Anggota"
+            ) || [],
+        };
+
+        setSelectedForm(formData);
+        setIsEditModalOpen(true);
+      }
+    } catch (error) {
+      console.error("Error fetching form data:", error);
+    }
+  };
+
+  const handleEditSubmit = async (formData) => {
+    try {
+      const payload = {
+        id_form: formData.id_form,
+        nama_form: formData.nama_form,
+        id_jenis: parseInt(formData.jenis_form),
+        formData: {
+          anggota_ke_anggota: formData.komponen_anggota_ke_anggota,
+          anggota_ke_ketua: formData.komponen_anggota_ke_ketua,
+          ketua_ke_anggota: formData.komponen_ketua_ke_anggota,
+        },
+      };
+
+      const response = await axios.put("/api/formpenilaian/ubah", {
+        id_form: formData.id_form,
+        nama_form: formData.nama_form,
+        id_jenis: parseInt(formData.jenis_form),
+        formData: payload,
+      });
+
+      if (response.data.success) {
+        alert("Form berhasil diubah!");
+        fetchFormPenilaian();
+      } else {
+        alert(`Error: ${result.message}`);
+      }
+    } catch (error) {
+      console.error("Error updating form:", error);
+      alert("Terjadi kesalahan saat mengubah form");
     }
   };
 
@@ -579,7 +649,10 @@ const DaftarKelompok = () => {
 
                       {session?.user?.role === "Dosen" ? (
                         <div className="space-x-2 space-y-2 lg:space-y-0">
-                          <button className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-all text-sm">
+                          <button
+                            className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-all text-sm"
+                            onClick={() => handleEditForm(form?.id_form)}
+                          >
                             Ubah
                           </button>
                           {form?.status ? (
@@ -1523,6 +1596,16 @@ const DaftarKelompok = () => {
         formData={formDataDetail}
         session={session}
         isKetuaIsiFormJenis3={isKetuaIsiFormJenis3}
+      />
+
+      <EditPeerEvaluationModal
+        isOpen={isEditModalOpen}
+        onClose={() => {
+          setIsEditModalOpen(false);
+          setSelectedForm(null);
+        }}
+        onSubmit={handleEditSubmit}
+        initialData={selectedForm}
       />
 
       <DetailFormListMahasiswa

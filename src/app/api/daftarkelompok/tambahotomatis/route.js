@@ -43,11 +43,11 @@ export async function POST(req) {
       });
     }
 
-    console.log("Total mahasiswa:", totalMahasiswa);
+    // console.log("Total mahasiswa:", totalMahasiswa);
 
     // Hitung jumlah kelompok yang diperlukan
     const jumlahKelompok = Math.ceil(totalMahasiswa / anggota_per_kelompok);
-    console.log("Jumlah kelompok yang akan dibuat:", jumlahKelompok);
+    // console.log("Jumlah kelompok yang akan dibuat:", jumlahKelompok);
 
     const createdGroups = [];
 

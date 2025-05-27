@@ -40,7 +40,7 @@ export const authOptions = {
           };
         }
 
-        console.log("credentials", credentials);
+        // console.log("credentials", credentials);
         return null;
       },
     }),
