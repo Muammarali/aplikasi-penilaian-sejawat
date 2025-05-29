@@ -7,6 +7,7 @@ const ModalFormPenilaian = ({
   onClose,
   dataAnggota = [],
   dataPM = [],
+  dataKetua = [], // Tambahan untuk data ketua
   dataForm = {},
   formData = {},
   session,
@@ -14,6 +15,7 @@ const ModalFormPenilaian = ({
   const [nilaiAnggotaAnggota, setNilaiAnggotaAnggota] = useState([]);
   const [nilaiAnggotaPM, setNilaiAnggotaPM] = useState([]);
   const [nilaiKetuaAnggota, setNilaiKetuaAnggota] = useState([]);
+  const [nilaiDosenKetua, setNilaiDosenKetua] = useState([]); // State untuk nilai Dosen-Ketua
   const [validasiError, setValidasiError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
@@ -25,6 +27,7 @@ const ModalFormPenilaian = ({
   const komponenAnggotaAnggota = formData?.komponen?.anggota_anggota || [];
   const komponenAnggotaPM = formData?.komponen?.anggota_pm || [];
   const komponenKetuaAnggota = formData?.komponen?.ketua_anggota || [];
+  const komponenDosenKetua = formData?.komponen?.dosen_ketua || [];
 
   // Inisialisasi nilai
   useEffect(() => {
@@ -74,15 +77,36 @@ const ModalFormPenilaian = ({
       });
       setNilaiKetuaAnggota(initialValues);
     }
+
+    // Inisialisasi nilai Dosen-Ketua
+    if (
+      dataKetua.length > 0 &&
+      komponenDosenKetua.length > 0 &&
+      nilaiDosenKetua.length === 0 &&
+      session?.user?.role === "Dosen"
+    ) {
+      const initialValues = dataKetua.map(() => {
+        const values = {};
+        komponenDosenKetua.forEach((komp) => {
+          values[komp.id_komponen] = "";
+        });
+        return values;
+      });
+      setNilaiDosenKetua(initialValues);
+    }
   }, [
     dataAnggota,
     dataPM,
+    dataKetua,
     komponenAnggotaAnggota,
     komponenAnggotaPM,
     komponenKetuaAnggota,
+    komponenDosenKetua,
     nilaiAnggotaAnggota.length,
     nilaiAnggotaPM.length,
     nilaiKetuaAnggota.length,
+    nilaiDosenKetua.length,
+    session?.user?.role,
   ]);
 
   if (!isOpen) return null;
@@ -116,6 +140,18 @@ const ModalFormPenilaian = ({
       const newNilai = [...nilaiKetuaAnggota];
       newNilai[index] = { ...newNilai[index], [field]: value };
       setNilaiKetuaAnggota(newNilai);
+      // Reset error saat ada perubahan
+      setValidasiError(false);
+    }
+  };
+
+  // Handler untuk Dosen-Ketua
+  const handleDosenKetuaChange = (index, field, value) => {
+    // Validasi input tidak lebih dari 100
+    if (value === "" || (parseInt(value) >= 0 && parseInt(value) <= 100)) {
+      const newNilai = [...nilaiDosenKetua];
+      newNilai[index] = { ...newNilai[index], [field]: value };
+      setNilaiDosenKetua(newNilai);
       // Reset error saat ada perubahan
       setValidasiError(false);
     }
@@ -191,6 +227,26 @@ const ModalFormPenilaian = ({
           if (
             !nilaiKetuaAnggota[i] ||
             nilaiKetuaAnggota[i][komp.id_komponen] === ""
+          ) {
+            semuaLengkap = false;
+            break;
+          }
+        }
+        if (!semuaLengkap) break;
+      }
+    }
+
+    // Cek nilai dosen-ketua jika diperlukan
+    if (
+      semuaLengkap &&
+      session?.user?.role === "Dosen" &&
+      komponenDosenKetua.length > 0
+    ) {
+      for (let i = 0; i < dataKetua.length; i++) {
+        for (let komp of komponenDosenKetua) {
+          if (
+            !nilaiDosenKetua[i] ||
+            nilaiDosenKetua[i][komp.id_komponen] === ""
           ) {
             semuaLengkap = false;
             break;
@@ -279,6 +335,26 @@ const ModalFormPenilaian = ({
         });
       }
 
+      // Proses nilai dosen-ketua
+      if (session?.user?.role === "Dosen" && komponenDosenKetua.length > 0) {
+        dataKetua.forEach((ketua, idx) => {
+          komponenDosenKetua.forEach((komp) => {
+            if (
+              nilaiDosenKetua[idx] &&
+              nilaiDosenKetua[idx][komp.id_komponen] !== ""
+            ) {
+              hasilPenilaian.push({
+                id_penilai,
+                id_dinilai: ketua.id_user,
+                nilai: parseInt(nilaiDosenKetua[idx][komp.id_komponen]),
+                id_form,
+                id_komponen: komp.id_komponen,
+              });
+            }
+          });
+        });
+      }
+
       // console.log("Data to submit:", hasilPenilaian);
 
       // Kirim data ke API
@@ -292,6 +368,7 @@ const ModalFormPenilaian = ({
       setNilaiAnggotaAnggota([]);
       setNilaiAnggotaPM([]);
       setNilaiKetuaAnggota([]);
+      setNilaiDosenKetua([]);
       setValidasiError(false);
       onClose();
     } catch (error) {
@@ -307,6 +384,7 @@ const ModalFormPenilaian = ({
     setNilaiAnggotaAnggota([]);
     setNilaiAnggotaPM([]);
     setNilaiKetuaAnggota([]);
+    setNilaiDosenKetua([]);
     setValidasiError(false);
     setSubmitError("");
     onClose();
@@ -702,6 +780,9 @@ const ModalFormPenilaian = ({
                           />
                         </td>
                       ))}
+                      <td className="px-3 py-2 text-center border-b border-gray-100 font-medium">
+                        {hitungTotal(nilaiAnggotaPM[idx], komponenAnggotaPM)}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -711,140 +792,282 @@ const ModalFormPenilaian = ({
         )}
 
         {/* Penilaian Ketua-Anggota */}
-        {id_jenis === 3 && komponenKetuaAnggota.length > 0 && (
-          <div className="mb-8">
-            <div className="flex items-center mb-3">
-              <div className="w-1 h-6 bg-purple-500 rounded mr-2"></div>
-              <h4 className="font-medium text-lg">Penilaian Ketua-Anggota</h4>
-            </div>
+        {id_jenis === 3 &&
+          session?.user?.role === "Mahasiswa" &&
+          komponenKetuaAnggota.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center mb-3">
+                <div className="w-1 h-6 bg-purple-500 rounded mr-2"></div>
+                <h4 className="font-medium text-lg">Penilaian Ketua-Anggota</h4>
+              </div>
 
-            <div className="flex flex-col gap-2 mb-3 text-sm text-gray-600 bg-gray-50 p-3 rounded">
-              {komponenKetuaAnggota.map((komp, idx) => (
-                <div key={idx}>
-                  {komp.nama_komponen}: {komp.deskripsi} (Bobot: {komp.bobot}%)
-                </div>
-              ))}
-            </div>
+              <div className="flex flex-col gap-2 mb-3 text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                {komponenKetuaAnggota.map((komp, idx) => (
+                  <div key={idx}>
+                    {komp.nama_komponen}: {komp.deskripsi} (Bobot: {komp.bobot}
+                    %)
+                  </div>
+                ))}
+              </div>
 
-            <div className="overflow-x-auto rounded-lg border border-gray-200">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-100">
-                  <tr>
-                    <th className="px-3 py-2 text-left text-gray-600 font-medium border-b">
-                      NPM
-                    </th>
-                    <th className="px-3 py-2 text-left text-gray-600 font-medium border-b">
-                      Nama
-                    </th>
-                    {komponenKetuaAnggota.map((komp, idx) => (
-                      <th
-                        key={idx}
-                        className="px-3 py-2 text-center text-gray-600 font-medium border-b"
-                      >
-                        {komp.nama_komponen}
+              <div className="overflow-x-auto rounded-lg border border-gray-200">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="px-3 py-2 text-left text-gray-600 font-medium border-b">
+                        NPM
                       </th>
-                    ))}
-                    <th className="px-3 py-2 text-center text-gray-600 font-medium border-b">
-                      Hasil
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dataAnggota.map((mhs, idx) => (
-                    <tr
-                      key={idx}
-                      className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
-                    >
-                      <td className="px-3 py-2 border-b border-gray-100">
-                        {mhs.npm}
-                      </td>
-                      <td className="px-3 py-2 border-b border-gray-100">
-                        {mhs.nama}
-                      </td>
-                      {komponenKetuaAnggota.map((komp, kompIdx) => (
-                        <td
-                          key={kompIdx}
-                          className="px-3 py-2 text-center border-b border-gray-100"
+                      <th className="px-3 py-2 text-left text-gray-600 font-medium border-b">
+                        Nama
+                      </th>
+                      {komponenKetuaAnggota.map((komp, idx) => (
+                        <th
+                          key={idx}
+                          className="px-3 py-2 text-center text-gray-600 font-medium border-b"
                         >
-                          <input
-                            type="text"
-                            value={
-                              nilaiKetuaAnggota[idx]?.[komp.id_komponen] || ""
-                            }
-                            onChange={(e) => {
-                              let value = e.target.value;
-
-                              // Validasi format: angka atau angka.koma maksimal 2 angka
-                              if (
-                                value === "" ||
-                                /^\d{0,3}(\.\d{0,2})?$/.test(value)
-                              ) {
-                                // Cek nilai jika bukan kosong
-                                if (value !== "") {
-                                  const numValue = parseFloat(value);
-
-                                  // Validasi nilai maksimal 100
-                                  if (numValue > 100) {
-                                    value = "100";
-                                  }
-                                }
-
-                                handleKetuaAnggotaChange(
-                                  idx,
-                                  komp.id_komponen,
-                                  value
-                                );
-                              }
-                            }}
-                            onBlur={(e) => {
-                              let value = e.target.value;
-
-                              // Kalau kosong, nggak usah diformat
-                              if (value !== "") {
-                                let numValue = parseFloat(value);
-
-                                if (numValue > 100) numValue = 100;
-
-                                // Format jadi 2 angka di belakang koma
-                                let formattedValue = numValue.toFixed(2);
-
-                                // Kalau hasilnya berakhir .00, buang desimalnya
-                                if (formattedValue.endsWith(".00")) {
-                                  value = parseInt(formattedValue).toString();
-                                } else {
-                                  value = formattedValue;
-                                }
-
-                                handleKetuaAnggotaChange(
-                                  idx,
-                                  komp.id_komponen,
-                                  value
-                                );
-                              }
-                            }}
-                            className={`w-14 border rounded py-1 px-2 text-center focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
-                              validasiError &&
-                              (!nilaiKetuaAnggota[idx] ||
-                                nilaiKetuaAnggota[idx][komp.id_komponen] === "")
-                                ? "border-red-300 bg-red-50"
-                                : "border-gray-300"
-                            }`}
-                          />
-                        </td>
+                          {komp.nama_komponen}
+                        </th>
                       ))}
-                      <td className="px-3 py-2 text-center border-b border-gray-100 font-medium">
-                        {hitungTotal(
-                          nilaiKetuaAnggota[idx],
-                          komponenKetuaAnggota
-                        )}
-                      </td>
+                      <th className="px-3 py-2 text-center text-gray-600 font-medium border-b">
+                        Hasil
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {dataAnggota.map((mhs, idx) => (
+                      <tr
+                        key={idx}
+                        className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                      >
+                        <td className="px-3 py-2 border-b border-gray-100">
+                          {mhs.npm}
+                        </td>
+                        <td className="px-3 py-2 border-b border-gray-100">
+                          {mhs.nama}
+                        </td>
+                        {komponenKetuaAnggota.map((komp, kompIdx) => (
+                          <td
+                            key={kompIdx}
+                            className="px-3 py-2 text-center border-b border-gray-100"
+                          >
+                            <input
+                              type="text"
+                              value={
+                                nilaiKetuaAnggota[idx]?.[komp.id_komponen] || ""
+                              }
+                              onChange={(e) => {
+                                let value = e.target.value;
+
+                                // Validasi format: angka atau angka.koma maksimal 2 angka
+                                if (
+                                  value === "" ||
+                                  /^\d{0,3}(\.\d{0,2})?$/.test(value)
+                                ) {
+                                  // Cek nilai jika bukan kosong
+                                  if (value !== "") {
+                                    const numValue = parseFloat(value);
+
+                                    // Validasi nilai maksimal 100
+                                    if (numValue > 100) {
+                                      value = "100";
+                                    }
+                                  }
+
+                                  handleKetuaAnggotaChange(
+                                    idx,
+                                    komp.id_komponen,
+                                    value
+                                  );
+                                }
+                              }}
+                              onBlur={(e) => {
+                                let value = e.target.value;
+
+                                // Kalau kosong, nggak usah diformat
+                                if (value !== "") {
+                                  let numValue = parseFloat(value);
+
+                                  if (numValue > 100) numValue = 100;
+
+                                  // Format jadi 2 angka di belakang koma
+                                  let formattedValue = numValue.toFixed(2);
+
+                                  // Kalau hasilnya berakhir .00, buang desimalnya
+                                  if (formattedValue.endsWith(".00")) {
+                                    value = parseInt(formattedValue).toString();
+                                  } else {
+                                    value = formattedValue;
+                                  }
+
+                                  handleKetuaAnggotaChange(
+                                    idx,
+                                    komp.id_komponen,
+                                    value
+                                  );
+                                }
+                              }}
+                              className={`w-14 border rounded py-1 px-2 text-center focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
+                                validasiError &&
+                                (!nilaiKetuaAnggota[idx] ||
+                                  nilaiKetuaAnggota[idx][komp.id_komponen] ===
+                                    "")
+                                  ? "border-red-300 bg-red-50"
+                                  : "border-gray-300"
+                              }`}
+                            />
+                          </td>
+                        ))}
+                        <td className="px-3 py-2 text-center border-b border-gray-100 font-medium">
+                          {hitungTotal(
+                            nilaiKetuaAnggota[idx],
+                            komponenKetuaAnggota
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
-        )}
+          )}
+
+        {/* Penilaian Dosen-Ketua */}
+        {id_jenis === 3 &&
+          session?.user?.role === "Dosen" &&
+          komponenDosenKetua.length > 0 && (
+            <div className="mb-8">
+              <div className="flex items-center mb-3">
+                <div className="w-1 h-6 bg-orange-500 rounded mr-2"></div>
+                <h4 className="font-medium text-lg">Penilaian Dosen-Ketua</h4>
+              </div>
+
+              <div className="flex flex-col gap-2 mb-3 text-sm text-gray-600 bg-gray-50 p-3 rounded">
+                {komponenDosenKetua.map((komp, idx) => (
+                  <div key={idx}>
+                    {komp.nama_komponen}: {komp.deskripsi} (Bobot: {komp.bobot}
+                    %)
+                  </div>
+                ))}
+              </div>
+
+              <div className="overflow-x-auto rounded-lg border border-gray-200">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-100">
+                    <tr>
+                      <th className="px-3 py-2 text-left text-gray-600 font-medium border-b">
+                        NPM
+                      </th>
+                      <th className="px-3 py-2 text-left text-gray-600 font-medium border-b">
+                        Nama
+                      </th>
+                      {komponenDosenKetua.map((komp, idx) => (
+                        <th
+                          key={idx}
+                          className="px-3 py-2 text-center text-gray-600 font-medium border-b"
+                        >
+                          {komp.nama_komponen}
+                        </th>
+                      ))}
+                      <th className="px-3 py-2 text-center text-gray-600 font-medium border-b">
+                        Hasil
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {dataKetua.map((ketua, idx) => (
+                      <tr
+                        key={idx}
+                        className={idx % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                      >
+                        <td className="px-3 py-2 border-b border-gray-100">
+                          {ketua.npm}
+                        </td>
+                        <td className="px-3 py-2 border-b border-gray-100">
+                          {ketua.nama}
+                        </td>
+                        {komponenDosenKetua.map((komp, kompIdx) => (
+                          <td
+                            key={kompIdx}
+                            className="px-3 py-2 text-center border-b border-gray-100"
+                          >
+                            <input
+                              type="text"
+                              value={
+                                nilaiDosenKetua[idx]?.[komp.id_komponen] || ""
+                              }
+                              onChange={(e) => {
+                                let value = e.target.value;
+
+                                // Validasi format: angka atau angka.koma maksimal 2 angka
+                                if (
+                                  value === "" ||
+                                  /^\d{0,3}(\.\d{0,2})?$/.test(value)
+                                ) {
+                                  // Cek nilai jika bukan kosong
+                                  if (value !== "") {
+                                    const numValue = parseFloat(value);
+
+                                    // Validasi nilai maksimal 100
+                                    if (numValue > 100) {
+                                      value = "100";
+                                    }
+                                  }
+
+                                  handleDosenKetuaChange(
+                                    idx,
+                                    komp.id_komponen,
+                                    value
+                                  );
+                                }
+                              }}
+                              onBlur={(e) => {
+                                let value = e.target.value;
+
+                                if (value !== "") {
+                                  let numValue = parseFloat(value);
+
+                                  if (numValue > 100) numValue = 100;
+
+                                  // Format jadi 2 angka di belakang koma
+                                  let formattedValue = numValue.toFixed(2);
+
+                                  // Kalau hasilnya berakhir .00, buang desimalnya
+                                  if (formattedValue.endsWith(".00")) {
+                                    value = parseInt(formattedValue).toString();
+                                  } else {
+                                    value = formattedValue;
+                                  }
+
+                                  handleDosenKetuaChange(
+                                    idx,
+                                    komp.id_komponen,
+                                    value
+                                  );
+                                }
+                              }}
+                              className={`w-14 border rounded py-1 px-2 text-center focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 ${
+                                validasiError &&
+                                (!nilaiDosenKetua[idx] ||
+                                  nilaiDosenKetua[idx][komp.id_komponen] === "")
+                                  ? "border-red-300 bg-red-50"
+                                  : "border-gray-300"
+                              }`}
+                            />
+                          </td>
+                        ))}
+                        <td className="px-3 py-2 text-center border-b border-gray-100 font-medium">
+                          {hitungTotal(
+                            nilaiDosenKetua[idx],
+                            komponenDosenKetua
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
 
         <div className="flex justify-end gap-3">
           <button

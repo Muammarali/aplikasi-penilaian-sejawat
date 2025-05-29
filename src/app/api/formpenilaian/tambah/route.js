@@ -99,6 +99,28 @@ export async function POST(req) {
       }
     } else if (id_jenis == 3) {
       // Handle untuk jenis form 3
+
+      // Insert komponen dosen ke ketua (untuk dosen yang membuat form)
+      if (formData.dosen_ke_ketua) {
+        const validDosenKeKetua = filterValidComponents(
+          formData.dosen_ke_ketua
+        );
+        for (const item of validDosenKeKetua) {
+          await handlerQuery(
+            `INSERT INTO komponen_penilaian (nama_komponen, bobot, deskripsi, tipe_penilaian, id_form)
+            VALUES ($1, $2, $3, $4, $5)`,
+            [
+              item.nama_komponen,
+              parseInt(item.bobot),
+              item.deskripsi,
+              "Dosen ke Ketua",
+              form_id,
+            ]
+          );
+        }
+      }
+
+      // Insert komponen ketua ke anggota (untuk ketua yang mengisi form)
       if (formData.ketua_ke_anggota) {
         const validKetuaKeAnggota = filterValidComponents(
           formData.ketua_ke_anggota
@@ -118,6 +140,7 @@ export async function POST(req) {
         }
       }
 
+      // Insert komponen anggota ke anggota (jika ada)
       if (formData.anggota_ke_anggota) {
         const validAnggotaKeAnggota = filterValidComponents(
           formData.anggota_ke_anggota
@@ -137,6 +160,7 @@ export async function POST(req) {
         }
       }
 
+      // Insert komponen anggota ke ketua (jika ada)
       if (formData.anggota_ke_ketua) {
         const validAnggotaKeKetua = filterValidComponents(
           formData.anggota_ke_ketua

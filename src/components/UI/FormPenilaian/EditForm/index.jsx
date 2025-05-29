@@ -17,7 +17,7 @@ const EditPeerEvaluationModal = ({
     komponen_anggota_ke_ketua: initialData?.komponen_anggota_ke_ketua || [
       { nama_komponen: "", bobot: "", deskripsi: "" },
     ],
-    komponen_ketua_ke_anggota: initialData?.komponen_ketua_ke_anggota || [
+    komponen_dosen_ke_ketua: initialData?.komponen_dosen_ke_ketua || [
       { nama_komponen: "", bobot: "", deskripsi: "" },
     ],
   });
@@ -32,7 +32,7 @@ const EditPeerEvaluationModal = ({
         setFormData((prev) => ({
           ...prev,
           komponen_anggota_ke_ketua: [],
-          komponen_ketua_ke_anggota: [],
+          komponen_dosen_ke_ketua: [],
         }));
       } else if (formData.jenis_form === "1") {
         if (formData.komponen_anggota_ke_ketua.length === 0) {
@@ -41,15 +41,15 @@ const EditPeerEvaluationModal = ({
             komponen_anggota_ke_ketua: [
               { nama_komponen: "", bobot: "", deskripsi: "" },
             ],
-            komponen_ketua_ke_anggota: [],
+            komponen_dosen_ke_ketua: [],
           }));
         }
       } else if (formData.jenis_form === "3") {
-        if (formData.komponen_ketua_ke_anggota.length === 0) {
+        if (formData.komponen_dosen_ke_ketua.length === 0) {
           setFormData((prev) => ({
             ...prev,
             komponen_anggota_ke_ketua: [],
-            komponen_ketua_ke_anggota: [
+            komponen_dosen_ke_ketua: [
               { nama_komponen: "", bobot: "", deskripsi: "" },
             ],
           }));
@@ -72,7 +72,7 @@ const EditPeerEvaluationModal = ({
         komponen_anggota_ke_ketua: initialData.komponen_anggota_ke_ketua || [
           { nama_komponen: "", bobot: "", deskripsi: "" },
         ],
-        komponen_ketua_ke_anggota: initialData.komponen_ketua_ke_anggota || [
+        komponen_dosen_ke_ketua: initialData.komponen_dosen_ke_ketua || [
           { nama_komponen: "", bobot: "", deskripsi: "" },
         ],
       });
@@ -97,8 +97,8 @@ const EditPeerEvaluationModal = ({
       komponenKey = "komponen_anggota_ke_anggota";
     } else if (type === "anggota_ke_ketua") {
       komponenKey = "komponen_anggota_ke_ketua";
-    } else if (type === "ketua_ke_anggota") {
-      komponenKey = "komponen_ketua_ke_anggota";
+    } else if (type === "dosen_ke_ketua") {
+      komponenKey = "komponen_dosen_ke_ketua";
     }
 
     // Jika field adalah bobot, pastikan hanya bilangan bulat dan maksimal 3 digit
@@ -124,6 +124,7 @@ const EditPeerEvaluationModal = ({
     }));
   };
 
+  console.log(initialData);
   const addKomponen = (type) => {
     let komponenKey;
 
@@ -131,8 +132,8 @@ const EditPeerEvaluationModal = ({
       komponenKey = "komponen_anggota_ke_anggota";
     } else if (type === "anggota_ke_ketua") {
       komponenKey = "komponen_anggota_ke_ketua";
-    } else if (type === "ketua_ke_anggota") {
-      komponenKey = "komponen_ketua_ke_anggota";
+    } else if (type === "dosen_ke_ketua") {
+      komponenKey = "komponen_dosen_ke_ketua";
     }
 
     setFormData((prev) => ({
@@ -151,8 +152,8 @@ const EditPeerEvaluationModal = ({
       komponenKey = "komponen_anggota_ke_anggota";
     } else if (type === "anggota_ke_ketua") {
       komponenKey = "komponen_anggota_ke_ketua";
-    } else if (type === "ketua_ke_anggota") {
-      komponenKey = "komponen_ketua_ke_anggota";
+    } else if (type === "dosen_ke_ketua") {
+      komponenKey = "komponen_dosen_ke_ketua";
     }
 
     if (formData[komponenKey].length > 1) {
@@ -274,10 +275,10 @@ const EditPeerEvaluationModal = ({
       komponenKey = "komponen_anggota_ke_ketua";
       title = "KOMPONEN PENILAIAN ANGGOTA KE KETUA";
       errorKey = "total_bobot_ketua";
-    } else if (type === "ketua_ke_anggota") {
-      komponenKey = "komponen_ketua_ke_anggota";
-      title = "KOMPONEN PENILAIAN KETUA KE ANGGOTA";
-      errorKey = "total_bobot_ketua_anggota";
+    } else if (type === "dosen_ke_ketua") {
+      komponenKey = "komponen_dosen_ke_ketua";
+      title = "KOMPONEN PENILAIAN DOSEN KE KETUA";
+      errorKey = "total_bobot_dosen_ketua";
     }
 
     return (
@@ -464,7 +465,7 @@ const EditPeerEvaluationModal = ({
         </button>
 
         <h2 className="text-2xl font-semibold mb-6 text-gray-800">
-          {isEditMode ? "UBAH" : "BUAT"} FORM PENILAIAN SEJAWAT
+          UBAH FORM PENILAIAN SEJAWAT
         </h2>
 
         {/* Information Section */}
@@ -570,17 +571,15 @@ const EditPeerEvaluationModal = ({
           </div>
 
           {/* Render komponen sesuai jenis form, kecuali jenis 3 */}
-          {formData.jenis_form !== "3" && (
-            <>
-              {/* Render komponen anggota ke anggota untuk jenis 1 dan 2 */}
-              {(formData.jenis_form === "1" || formData.jenis_form === "2") &&
-                renderKomponenTable("anggota_ke_anggota")}
 
-              {/* Render komponen anggota ke ketua untuk jenis 1 */}
-              {formData.jenis_form === "1" &&
-                renderKomponenTable("anggota_ke_ketua")}
-            </>
-          )}
+          {/* Render komponen anggota ke anggota untuk jenis 1 dan 2 */}
+          {(formData.jenis_form === "1" || formData.jenis_form === "2") &&
+            renderKomponenTable("anggota_ke_anggota")}
+
+          {/* Render komponen anggota ke ketua untuk jenis 1 */}
+          {formData.jenis_form === "1" &&
+            renderKomponenTable("anggota_ke_ketua")}
+          {formData.jenis_form === "3" && renderKomponenTable("dosen_ke_ketua")}
 
           <div className="mt-8 flex justify-end gap-3">
             <button

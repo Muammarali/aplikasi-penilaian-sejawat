@@ -28,14 +28,36 @@ export async function PUT(req) {
       });
     }
 
-    // Jika jenis 3, hapus semua komponen existing
+    // Jika jenis 3, hapus semua komponen existing dan return
+    // (Karena untuk jenis 3, dosen hanya membuat komponen "Dosen ke Ketua" saat create form)
     if (id_jenis == 3) {
       await handlerQuery(`DELETE FROM komponen_penilaian WHERE id_form = $1`, [
         id_form,
       ]);
+
+      // Insert komponen "Dosen ke Ketua" jika ada
+      if (formData.dosen_ke_ketua && Array.isArray(formData.dosen_ke_ketua)) {
+        for (const komponen of formData.dosen_ke_ketua) {
+          if (komponen.nama_komponen && komponen.bobot && komponen.deskripsi) {
+            await handlerQuery(
+              `INSERT INTO komponen_penilaian (nama_komponen, bobot, deskripsi, tipe_penilaian, id_form)
+               VALUES ($1, $2, $3, $4, $5)`,
+              [
+                komponen.nama_komponen.trim(),
+                parseInt(komponen.bobot),
+                komponen.deskripsi.trim(),
+                "Dosen ke Ketua",
+                id_form,
+              ]
+            );
+          }
+        }
+      }
+
       return NextResponse.json({
         success: true,
-        message: "Form berhasil diubah ke jenis 3. Semua komponen dihapus.",
+        message:
+          "Form berhasil diubah ke jenis 3. Komponen dosen ke ketua ditambahkan.",
         data: { id_form },
       });
     }
@@ -44,17 +66,19 @@ export async function PUT(req) {
     let deletedCount = 0;
 
     if (id_jenis == 1) {
-      const deleteResult = await handlerQuery(
-        `DELETE FROM komponen_penilaian 
-         WHERE id_form = $1 AND tipe_penilaian = $2`,
-        [id_form, "Ketua ke Anggota"]
-      );
-      deletedCount += deleteResult.rowCount;
-    } else if (id_jenis == 2) {
+      // Untuk jenis 1, hapus komponen "Ketua ke Anggota" dan "Dosen ke Ketua"
       const deleteResult = await handlerQuery(
         `DELETE FROM komponen_penilaian 
          WHERE id_form = $1 AND tipe_penilaian IN ($2, $3)`,
-        [id_form, "Anggota ke Ketua", "Ketua ke Anggota"]
+        [id_form, "Ketua ke Anggota", "Dosen ke Ketua"]
+      );
+      deletedCount += deleteResult.rowCount;
+    } else if (id_jenis == 2) {
+      // Untuk jenis 2, hapus komponen "Anggota ke Ketua", "Ketua ke Anggota", dan "Dosen ke Ketua"
+      const deleteResult = await handlerQuery(
+        `DELETE FROM komponen_penilaian 
+         WHERE id_form = $1 AND tipe_penilaian IN ($2, $3, $4)`,
+        [id_form, "Anggota ke Ketua", "Ketua ke Anggota", "Dosen ke Ketua"]
       );
       deletedCount += deleteResult.rowCount;
     }
@@ -102,10 +126,12 @@ export async function PUT(req) {
       }
     };
 
+    // Handle komponen berdasarkan jenis form
     await updateOrInsertKomponen(
       formData.anggota_ke_anggota,
       "Anggota ke Anggota"
     );
+
     if (id_jenis == 1) {
       await updateOrInsertKomponen(
         formData.anggota_ke_ketua,

@@ -74,6 +74,9 @@ export async function POST(req) {
       result.komponen.ketua_anggota = komponenData.filter(
         (k) => k.tipe_penilaian === "Ketua ke Anggota"
       );
+      result.komponen.dosen_ketua = komponenData.filter(
+        (k) => k.tipe_penilaian === "Dosen ke Ketua"
+      );
     }
 
     return NextResponse.json({

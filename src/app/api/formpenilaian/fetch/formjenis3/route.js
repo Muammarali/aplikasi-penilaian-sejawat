@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import handlerQuery from "../../../../utils/db";
 
 export async function POST(req) {
-  const { id_form } = await req.json();
+  const { id_form, tipe_pengecekan } = await req.json();
 
   try {
     if (!id_form) {
@@ -12,18 +12,94 @@ export async function POST(req) {
       );
     }
 
-    const query = `
-        SELECT kp.id_komponen, fp.id_form
+    if (!tipe_pengecekan) {
+      return NextResponse.json(
+        { success: false, message: "tipe_pengecekan wajib diisi" },
+        { status: 400 }
+      );
+    }
+
+    let query;
+    let tipe_penilaian;
+
+    // Tentukan tipe penilaian berdasarkan tipe pengecekan
+    if (tipe_pengecekan === "ketua_ke_anggota") {
+      tipe_penilaian = "Ketua ke Anggota";
+      query = `
+        SELECT kp.id_komponen, fp.id_form, kp.tipe_penilaian
+        FROM komponen_penilaian kp
+        JOIN form_penilaian fp ON kp.id_form = fp.id_form
+        WHERE fp.id_jenis = 3 AND fp.id_form = $1 AND kp.tipe_penilaian = $2
+      `;
+    } else if (tipe_pengecekan === "dosen_ke_ketua") {
+      tipe_penilaian = "Dosen ke Ketua";
+      query = `
+        SELECT kp.id_komponen, fp.id_form, kp.tipe_penilaian
+        FROM komponen_penilaian kp
+        JOIN form_penilaian fp ON kp.id_form = fp.id_form
+        WHERE fp.id_jenis = 3 AND fp.id_form = $1 AND kp.tipe_penilaian = $2
+      `;
+    } else if (tipe_pengecekan === "all") {
+      // Untuk mengecek semua komponen form jenis 3
+      query = `
+        SELECT kp.id_komponen, fp.id_form, kp.tipe_penilaian
         FROM komponen_penilaian kp
         JOIN form_penilaian fp ON kp.id_form = fp.id_form
         WHERE fp.id_jenis = 3 AND fp.id_form = $1
-    `;
+      `;
+    } else {
+      return NextResponse.json(
+        {
+          success: false,
+          message:
+            "tipe_pengecekan tidak valid. Gunakan: ketua_ke_anggota, dosen_ke_ketua, atau all",
+        },
+        { status: 400 }
+      );
+    }
 
-    const result = await handlerQuery(query, [id_form]);
+    const result = await handlerQuery(
+      query,
+      tipe_pengecekan === "all" ? [id_form] : [id_form, tipe_penilaian]
+    );
+
+    // Analisis hasil berdasarkan tipe pengecekan
+    let response_data = {
+      total_komponen: result.rows.length,
+      komponen: result.rows,
+    };
+
+    if (tipe_pengecekan === "all") {
+      // Pisahkan komponen berdasarkan tipe
+      const komponen_dosen_ke_ketua = result.rows.filter(
+        (row) => row.tipe_penilaian === "Dosen ke Ketua"
+      );
+      const komponen_ketua_ke_anggota = result.rows.filter(
+        (row) => row.tipe_penilaian === "Ketua ke Anggota"
+      );
+
+      response_data = {
+        ...response_data,
+        ada_komponen_dosen_ke_ketua: komponen_dosen_ke_ketua.length > 0,
+        ada_komponen_ketua_ke_anggota: komponen_ketua_ke_anggota.length > 0,
+        jumlah_komponen_dosen_ke_ketua: komponen_dosen_ke_ketua.length,
+        jumlah_komponen_ketua_ke_anggota: komponen_ketua_ke_anggota.length,
+        komponen_dosen_ke_ketua: komponen_dosen_ke_ketua,
+        komponen_ketua_ke_anggota: komponen_ketua_ke_anggota,
+      };
+    } else {
+      response_data = {
+        ...response_data,
+        sudah_ada_komponen: result.rows.length > 0,
+        tipe_penilaian: tipe_penilaian,
+      };
+    }
+
+    console.log(response_data);
 
     return NextResponse.json({
       success: true,
-      data: result.rows,
+      data: response_data,
     });
   } catch (error) {
     console.error("Error checking komponen:", error);
