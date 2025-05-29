@@ -143,8 +143,6 @@ const DaftarKelompok = () => {
 
       const data = response?.data?.data;
 
-      console.log(data);
-
       // Cek peran user yang login
       const currentUserData = data.find(
         (item) => item.id_user === session?.user?.id
@@ -439,7 +437,7 @@ const DaftarKelompok = () => {
 
       // Ambil data langsung dari response.data.data
       const formData = response?.data?.data;
-      console.log("Data Form Penilaian:", formData);
+      // console.log("Data Form Penilaian:", formData);
 
       // Simpan ke state
       setFormDataDetail(formData);

@@ -124,7 +124,6 @@ const EditPeerEvaluationModal = ({
     }));
   };
 
-  console.log(initialData);
   const addKomponen = (type) => {
     let komponenKey;
 
