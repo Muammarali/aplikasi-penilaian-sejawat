@@ -37,12 +37,12 @@ export async function POST(req) {
 
     // Query untuk ambil nilai akhir per form untuk mata kuliah tertentu
     const gradesQuery = `
+    WITH weighted_scores_per_assessor AS (
         SELECT 
             hp.id_dinilai,
             hp.id_form,
-            ROUND(
-                SUM(hp.nilai * (k.bobot::numeric / 100.0)) / COUNT(DISTINCT hp.id_penilai)
-            , 2) AS nilai_akhir
+            hp.id_penilai,
+            SUM(hp.nilai * (k.bobot::numeric / 100.0)) AS nilai_weighted_per_penilai
         FROM 
             hasil_penilaian hp
         JOIN 
@@ -52,10 +52,21 @@ export async function POST(req) {
         WHERE 
             dk.id_mk = $1
         GROUP BY 
-            hp.id_dinilai, hp.id_form
-        ORDER BY 
-            hp.id_dinilai, hp.id_form
-    `;
+            hp.id_dinilai, hp.id_form, hp.id_penilai
+    )
+    SELECT 
+        id_dinilai,
+        id_form,
+        ROUND(
+            AVG(nilai_weighted_per_penilai), 2
+        ) AS nilai_akhir
+    FROM 
+        weighted_scores_per_assessor
+    GROUP BY 
+        id_dinilai, id_form
+    ORDER BY 
+        id_dinilai, id_form
+`;
 
     // Eksekusi kedua query
     const [studentsResult, gradesResult] = await Promise.all([

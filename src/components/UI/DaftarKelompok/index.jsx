@@ -1315,8 +1315,6 @@ const DaftarKelompok = () => {
   const getFormStatusText = (formStatus) => {
     if (!formStatus) return "Loading...";
 
-    console.log(formStatus);
-
     // Jika user tidak ada dalam kelompok untuk mata kuliah ini
     if (formStatus.id_kelompok_user === null) {
       return "Anda tidak terdaftar dalam kelompok untuk mata kuliah ini";
