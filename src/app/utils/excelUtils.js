@@ -15,6 +15,8 @@ export const fetchStudentsDetailedGradesData = async (id_mk) => {
       throw new Error(response.data.message || "Failed to fetch data");
     }
 
+    console.log(response.data);
+
     return response.data;
   } catch (error) {
     console.error("Error fetching detailed data:", error);
@@ -418,6 +420,7 @@ export const generateGroupedExcelFromStudentsData = async (
 };
 
 // Function untuk generate Excel detailed dengan komponen detail
+// Function untuk generate Excel detailed dengan komponen detail dan info penilai
 export const generateDetailedExcelFromStudentsData = async (
   studentsData,
   courseName = "Mata Kuliah",
@@ -428,10 +431,12 @@ export const generateDetailedExcelFromStudentsData = async (
       throw new Error("No data available");
     }
 
-    const formsAndComponents = extractFormsAndComponentsFromData(
+    // Transform data untuk mendapatkan struktur yang dibutuhkan
+    const detailedDataWithAssessors = transformDataWithAssessors(
       studentsData,
       selectedForms
     );
+
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet(`Nilai Detail ${courseName}`);
 
@@ -440,81 +445,46 @@ export const generateDetailedExcelFromStudentsData = async (
     // Define columns
     const columns = [
       { header: "No", key: "no", width: 6 },
-      { header: "NPM", key: "npm", width: 18 },
-      { header: "Nama", key: "nama", width: 28 },
+      { header: "NPM", key: "npm", width: 15 },
+      { header: "Nama", key: "nama", width: 25 },
+      { header: "NPM Penilai", key: "npm_penilai", width: 15 },
+      { header: "Nama Penilai", key: "nama_penilai", width: 25 },
     ];
 
-    // Add columns for each form and its components
-    formsAndComponents.forEach(({ formId, komponen }) => {
-      // Add component columns for this form
-      komponen.forEach((komponenData) => {
-        columns.push({
-          header: `${komponenData.nama}`,
-          key: `form_${formId}_komponen_${komponenData.id}`,
-          width: 25,
-        });
-      });
+    // Ambil informasi komponen dari data yang ada
+    const komponenInfo = extractKomponenInfo(studentsData, selectedForms);
 
-      // Add total column for this form
+    // Add columns for each component
+    komponenInfo.forEach((komponen) => {
       columns.push({
-        header: `Total`,
-        key: `form_${formId}_total`,
-        width: 12,
+        header: `${komponen.nama} (${komponen.bobot}%)`,
+        key: `komponen_${komponen.id}`,
+        width: 20,
       });
+    });
+
+    // Add total column
+    columns.push({
+      header: "Total",
+      key: "total",
+      width: 12,
+    });
+
+    // Add final result column
+    columns.push({
+      header: "Hasil Akhir",
+      key: "hasil_akhir",
+      width: 15,
     });
 
     worksheet.columns = columns;
 
-    // Create multi-level header
-    // Insert a new row at the top for form headers
-    worksheet.spliceRows(1, 0, []);
-
-    let currentCol = 4; // Start after No, NPM, Nama
-
-    formsAndComponents.forEach(({ formId, komponen }) => {
-      const startCol = currentCol;
-      const endCol = currentCol + komponen.length; // komponen + total
-
-      // Merge cells for form header
-      worksheet.mergeCells(1, startCol, 1, endCol);
-      const formHeaderCell = worksheet.getCell(1, startCol);
-      formHeaderCell.value = `Komponen`;
-      formHeaderCell.font = { bold: true, color: { argb: "FFFFFF" } };
-      formHeaderCell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "4472C4" },
-      };
-      formHeaderCell.alignment = { vertical: "middle", horizontal: "center" };
-      formHeaderCell.border = {
-        top: { style: "thin" },
-        left: { style: "thin" },
-        bottom: { style: "thin" },
-        right: { style: "thin" },
-      };
-
-      currentCol = endCol + 1;
-    });
-
-    // Style the main header row (row 2)
-    const headerRow = worksheet.getRow(2);
+    // Style header row
+    const headerRow = worksheet.getRow(1);
     headerRow.height = 25;
 
-    // Merge cells for No, NPM, Nama in row 1 and set their values
-    worksheet.mergeCells(1, 1, 2, 1); // No
-    worksheet.mergeCells(1, 2, 2, 2); // NPM
-    worksheet.mergeCells(1, 3, 2, 3); // Nama
-
-    // Set values and style basic info headers
-    const basicHeaders = [
-      { col: 1, value: "No" },
-      { col: 2, value: "NPM" },
-      { col: 3, value: "Nama" },
-    ];
-
-    basicHeaders.forEach(({ col, value }) => {
-      const cell = worksheet.getCell(1, col);
-      cell.value = value;
+    worksheet.columns.forEach((column, colIndex) => {
+      const cell = headerRow.getCell(colIndex + 1);
       cell.font = { bold: true, color: { argb: "FFFFFF" } };
       cell.fill = {
         type: "pattern",
@@ -530,104 +500,116 @@ export const generateDetailedExcelFromStudentsData = async (
       };
     });
 
-    // Style component and total headers in row 2 (skip kolom 1-3 karena sudah di-merge)
-    let colIndex = 4; // Start from column 4
-    formsAndComponents.forEach(({ formId, komponen }) => {
-      // Style component headers
-      komponen.forEach((komponenData) => {
-        const cell = headerRow.getCell(colIndex);
-        cell.font = { bold: true, color: { argb: "FFFFFF" } };
-        cell.fill = {
-          type: "pattern",
-          pattern: "solid",
-          fgColor: { argb: "4472C4" },
+    let rowNumber = 1;
+
+    // Process data untuk setiap mahasiswa dan penilainya
+    detailedDataWithAssessors.forEach((studentData) => {
+      const { student, assessments } = studentData;
+      const startRow = worksheet.rowCount + 1;
+
+      // Untuk setiap assessment (penilai)
+      assessments.forEach((assessment, assessmentIndex) => {
+        const rowData = {
+          no: assessmentIndex === 0 ? rowNumber : "",
+          npm: assessmentIndex === 0 ? student.npm : "",
+          nama: assessmentIndex === 0 ? student.nama : "",
+          npm_penilai: assessment.npm_penilai,
+          nama_penilai: assessment.nama_penilai,
         };
-        cell.alignment = { vertical: "middle", horizontal: "center" };
-        cell.border = {
-          top: { style: "thin" },
-          left: { style: "thin" },
-          bottom: { style: "thin" },
-          right: { style: "thin" },
-        };
-        colIndex++;
-      });
-
-      // Style total header
-      const totalCell = headerRow.getCell(colIndex);
-      totalCell.font = { bold: true, color: { argb: "FFFFFF" } };
-      totalCell.fill = {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "4472C4" },
-      };
-      totalCell.alignment = { vertical: "middle", horizontal: "center" };
-      totalCell.border = {
-        top: { style: "thin" },
-        left: { style: "thin" },
-        bottom: { style: "thin" },
-        right: { style: "thin" },
-      };
-      colIndex++;
-    });
-
-    // Add data rows (starting from row 3)
-    studentsData.forEach((student, index) => {
-      const rowData = {
-        no: index + 1,
-        npm: student.npm,
-        nama: student.nama,
-      };
-
-      // Add values for each form and component
-      formsAndComponents.forEach(({ formId, komponen }) => {
-        const formData = student.nilai_per_form?.[formId];
 
         // Add component values
-        komponen.forEach((komponenData) => {
-          const komponenValue =
-            formData?.komponen?.[komponenData.id]?.nilai_rata || 0;
-          rowData[`form_${formId}_komponen_${komponenData.id}`] = komponenValue;
+        komponenInfo.forEach((komponen) => {
+          const komponenValue = assessment.komponen_nilai[komponen.id] || 0;
+          rowData[`komponen_${komponen.id}`] = komponenValue;
         });
 
-        // Add total value
-        const totalValue = formData?.total || 0;
-        rowData[`form_${formId}_total`] = totalValue;
+        // Add total value for this assessment
+        rowData.total = assessment.total || 0;
+
+        // Add final result (rata-rata dari semua penilai) - hanya tampil di baris pertama
+        if (assessmentIndex === 0) {
+          rowData.hasil_akhir = student.nilai_akhir || 0;
+        } else {
+          rowData.hasil_akhir = "";
+        }
+
+        const row = worksheet.addRow(rowData);
+        row.height = 22;
+
+        // Alternating row color per student (bukan per row)
+        if ((rowNumber - 1) % 2 === 1) {
+          row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+            cell.fill = {
+              type: "pattern",
+              pattern: "solid",
+              fgColor: { argb: "F8F9FA" },
+            };
+          });
+        }
+
+        // Cell alignment & border
+        row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+          cell.border = {
+            top: { style: "thin" },
+            left: { style: "thin" },
+            bottom: { style: "thin" },
+            right: { style: "thin" },
+          };
+
+          if (colNumber > 5) {
+            // After Nama Penilai
+            cell.alignment = { vertical: "middle", horizontal: "center" };
+            if (typeof cell.value === "number") {
+              cell.numFmt = "0.0";
+            }
+          } else if (colNumber === 3 || colNumber === 5) {
+            // Nama columns
+            cell.alignment = { vertical: "middle", horizontal: "left" };
+          } else {
+            cell.alignment = { vertical: "middle", horizontal: "center" };
+          }
+        });
       });
 
-      const row = worksheet.addRow(rowData);
-      row.height = 22;
+      // Merge cells untuk No, NPM, Nama, dan Hasil Akhir jika ada multiple assessors
+      if (assessments.length > 1) {
+        const endRow = worksheet.rowCount;
 
-      // Alternating row color
-      if (index % 2 === 1) {
-        row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-          cell.fill = {
-            type: "pattern",
-            pattern: "solid",
-            fgColor: { argb: "F8F9FA" },
-          };
-        });
+        // Merge No
+        worksheet.mergeCells(startRow, 1, endRow, 1);
+        const noCell = worksheet.getCell(startRow, 1);
+        noCell.value = rowNumber;
+        noCell.alignment = { vertical: "middle", horizontal: "center" };
+
+        // Merge NPM
+        worksheet.mergeCells(startRow, 2, endRow, 2);
+        const npmCell = worksheet.getCell(startRow, 2);
+        npmCell.value = student.npm;
+        npmCell.alignment = { vertical: "middle", horizontal: "center" };
+
+        // Merge Nama
+        worksheet.mergeCells(startRow, 3, endRow, 3);
+        const namaCell = worksheet.getCell(startRow, 3);
+        namaCell.value = student.nama;
+        namaCell.alignment = { vertical: "middle", horizontal: "left" };
+
+        // Merge Hasil Akhir
+        const hasilAkhirColIndex = columns.length;
+        worksheet.mergeCells(
+          startRow,
+          hasilAkhirColIndex,
+          endRow,
+          hasilAkhirColIndex
+        );
+        const hasilAkhirCell = worksheet.getCell(startRow, hasilAkhirColIndex);
+        hasilAkhirCell.value = student.nilai_akhir || 0;
+        hasilAkhirCell.alignment = { vertical: "middle", horizontal: "center" };
+        if (typeof hasilAkhirCell.value === "number") {
+          hasilAkhirCell.numFmt = "0.0";
+        }
       }
 
-      // Cell alignment & border
-      row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-        cell.border = {
-          top: { style: "thin" },
-          left: { style: "thin" },
-          bottom: { style: "thin" },
-          right: { style: "thin" },
-        };
-
-        if (colNumber > 3) {
-          cell.alignment = { vertical: "middle", horizontal: "center" };
-          if (typeof cell.value === "number") {
-            cell.numFmt = "0.0";
-          }
-        } else if (colNumber === 3) {
-          cell.alignment = { vertical: "middle", horizontal: "left" };
-        } else {
-          cell.alignment = { vertical: "middle", horizontal: "center" };
-        }
-      });
+      rowNumber++;
     });
 
     // Summary info
@@ -648,20 +630,19 @@ export const generateDetailedExcelFromStudentsData = async (
 
     // Pastikan kolom summary ada
     if (summaryStartColIndex <= 16384) {
-      // Excel limit
+      worksheet.getColumn(summaryStartColIndex).width = 22;
+      worksheet.getColumn(summaryStartColIndex + 1).width = 30;
+
       const summaryStartColLetter =
         worksheet.getColumn(summaryStartColIndex).letter;
       const summaryValueColLetter = worksheet.getColumn(
         summaryStartColIndex + 1
       ).letter;
 
-      worksheet.getColumn(summaryStartColIndex).width = 22;
-      worksheet.getColumn(summaryStartColIndex + 1).width = 30;
-
       worksheet.getCell(`${summaryStartColLetter}3`).value = "Total Mahasiswa:";
       worksheet.getCell(`${summaryStartColLetter}3`).font = { bold: true };
       worksheet.getCell(`${summaryValueColLetter}3`).value =
-        studentsData.length;
+        detailedDataWithAssessors.length;
       worksheet.getCell(`${summaryValueColLetter}3`).alignment = {
         horizontal: "left",
       };
@@ -676,6 +657,139 @@ export const generateDetailedExcelFromStudentsData = async (
     console.error("Error generating detailed Excel:", error);
     throw error;
   }
+};
+
+// Helper function untuk transform data dengan info penilai berdasarkan API response baru
+const transformDataWithAssessors = (studentsData, selectedForms = null) => {
+  const result = [];
+
+  studentsData.forEach((student) => {
+    const assessmentsMap = new Map();
+    let totalNilaiAkhir = 0;
+    let formCount = 0;
+
+    if (student.nilai_per_form) {
+      Object.keys(student.nilai_per_form).forEach((formId) => {
+        const formIdInt = parseInt(formId);
+
+        if (!selectedForms || selectedForms.includes(formIdInt)) {
+          const formData = student.nilai_per_form[formId];
+
+          if (formData && formData.assessors) {
+            // Iterate through each assessor for this form
+            Object.keys(formData.assessors).forEach((assessorId) => {
+              const assessorInfo = formData.assessors[assessorId];
+              const assessorKey = `${assessorId}_${formId}`;
+
+              if (!assessmentsMap.has(assessorKey)) {
+                assessmentsMap.set(assessorKey, {
+                  npm_penilai: assessorInfo.npm_penilai,
+                  nama_penilai: assessorInfo.nama_penilai,
+                  komponen_nilai: {},
+                  total: 0,
+                  formId: formIdInt,
+                  assessorId: assessorId,
+                });
+              }
+
+              // Calculate total for this assessor on this form
+              let assessorTotal = 0;
+              if (formData.komponen) {
+                Object.keys(formData.komponen).forEach((komponenId) => {
+                  const komponenData = formData.komponen[komponenId];
+
+                  if (
+                    komponenData.assessors &&
+                    komponenData.assessors[assessorId]
+                  ) {
+                    const nilaiAssessor =
+                      komponenData.assessors[assessorId].nilai;
+                    const bobot = komponenData.bobot;
+
+                    assessmentsMap.get(assessorKey).komponen_nilai[komponenId] =
+                      nilaiAssessor;
+                    assessorTotal += (nilaiAssessor * bobot) / 100;
+                  }
+                });
+              }
+
+              assessmentsMap.get(assessorKey).total = assessorTotal;
+            });
+          }
+
+          // Add form total to calculate average
+          if (formData.total) {
+            totalNilaiAkhir += formData.total;
+            formCount++;
+          }
+        }
+      });
+    }
+
+    // Calculate final average score
+    const nilaiAkhir = formCount > 0 ? totalNilaiAkhir / formCount : 0;
+
+    // Convert assessments map to array
+    const assessments = Array.from(assessmentsMap.values());
+
+    // If no assessments found, create a placeholder
+    if (assessments.length === 0) {
+      assessments.push({
+        npm_penilai: "N/A",
+        nama_penilai: "Tidak ada data penilai",
+        komponen_nilai: {},
+        total: 0,
+      });
+    }
+
+    result.push({
+      student: {
+        ...student,
+        nilai_akhir: nilaiAkhir,
+      },
+      assessments: assessments.sort((a, b) => {
+        // Sort by form first, then by assessor
+        if (a.formId !== b.formId) return a.formId - b.formId;
+        return a.assessorId.localeCompare(b.assessorId);
+      }),
+    });
+  });
+
+  return result;
+};
+
+// Helper function untuk extract informasi komponen dari struktur data baru
+const extractKomponenInfo = (studentsData, selectedForms = null) => {
+  const komponenMap = new Map();
+
+  studentsData.forEach((student) => {
+    if (student.nilai_per_form) {
+      Object.keys(student.nilai_per_form).forEach((formId) => {
+        const formIdInt = parseInt(formId);
+
+        if (!selectedForms || selectedForms.includes(formIdInt)) {
+          const formData = student.nilai_per_form[formId];
+
+          if (formData && formData.komponen) {
+            Object.keys(formData.komponen).forEach((komponenId) => {
+              const komponenData = formData.komponen[komponenId];
+              if (komponenData && komponenData.nama_komponen) {
+                komponenMap.set(komponenId, {
+                  id: komponenId,
+                  nama: komponenData.nama_komponen,
+                  bobot: komponenData.bobot || 0,
+                });
+              }
+            });
+          }
+        }
+      });
+    }
+  });
+
+  return Array.from(komponenMap.values()).sort(
+    (a, b) => parseInt(a.id) - parseInt(b.id)
+  );
 };
 
 // Function untuk extract forms dan komponen dari data yang sudah ada

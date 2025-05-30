@@ -1,20 +1,13 @@
-// File ini adalah: /api/rekapnilai/fetch/mahasiswa/detailed/route.js
-
 import { NextResponse } from "next/server";
 import handlerQuery from "../../../../../utils/db";
 
-// POST method untuk ambil daftar mahasiswa beserta nilai detail per komponen
 export async function POST(req) {
   try {
     const { id_mk } = await req.json();
 
-    // Validasi input
     if (!id_mk) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "id_mk is required",
-        },
+        { success: false, message: "id_mk is required" },
         { status: 400 }
       );
     }
@@ -37,35 +30,53 @@ export async function POST(req) {
         u.nama
     `;
 
-    // Query untuk ambil nilai per komponen untuk setiap form dengan info kelompok
-    const detailedGradesQuery = `
+    // Query yang dimodifikasi untuk mengambil informasi penilai
+    const detailedGradesWithAssessorQuery = `
       SELECT 
         dk.id_user as id_dinilai,
+        u_dinilai.nama as nama_dinilai,
+        u_dinilai.npm as npm_dinilai,
         hp.id_form,
         hp.id_komponen,
         kp.nama_komponen,
         kp.bobot,
-        k.nama_kelompok,
-        k.id_kelompok,
-        AVG(hp.nilai) as nilai_rata_komponen,
-        ROUND(AVG(hp.nilai) * (kp.bobot::numeric / 100.0), 2) as nilai_weighted_komponen
+        hp.id_penilai,
+        CASE 
+          WHEN k.id_kelompok IS NOT NULL THEN k.nama_kelompok
+          WHEN u_penilai.id_user IS NOT NULL THEN u_penilai.nama
+          ELSE 'Unknown'
+        END as nama_penilai,
+        CASE 
+          WHEN k.id_kelompok IS NOT NULL THEN 'Kelompok'
+          WHEN u_penilai.id_user IS NOT NULL THEN u_penilai.npm
+          ELSE 'Unknown'
+        END as npm_penilai,
+        hp.nilai,
+        AVG(hp.nilai) OVER (
+          PARTITION BY dk.id_user, hp.id_form, hp.id_komponen
+        ) as nilai_rata_komponen,
+        ROUND(AVG(hp.nilai) OVER (
+          PARTITION BY dk.id_user, hp.id_form, hp.id_komponen
+        ) * (kp.bobot::numeric / 100.0), 2) as nilai_weighted_komponen
       FROM 
         hasil_penilaian hp
       JOIN 
         daftar_kelas dk ON hp.id_dinilai = dk.id_user
       JOIN 
+        users u_dinilai ON dk.id_user = u_dinilai.id_user
+      JOIN 
         komponen_penilaian kp ON hp.id_komponen = kp.id_komponen
       LEFT JOIN 
         kelompok k ON hp.id_penilai = k.id_kelompok
+      LEFT JOIN 
+        users u_penilai ON hp.id_penilai = u_penilai.id_user
       WHERE 
         dk.id_mk = $1
-      GROUP BY 
-        dk.id_user, hp.id_form, hp.id_komponen, kp.nama_komponen, kp.bobot, k.nama_kelompok, k.id_kelompok
       ORDER BY 
-        dk.id_user, hp.id_form, hp.id_komponen
+        u_dinilai.nama, hp.id_form, hp.id_komponen, hp.id_penilai
     `;
 
-    // Query untuk ambil nilai akhir per form (total) - sama seperti API yang sudah ada
+    // Query untuk nilai total (tetap sama)
     const totalGradesQuery = `
       WITH weighted_scores_per_assessor AS (
           SELECT 
@@ -96,36 +107,31 @@ export async function POST(req) {
           id_dinilai, id_form
     `;
 
-    // Eksekusi semua query
     const [studentsResult, detailedGradesResult, totalGradesResult] =
       await Promise.all([
         handlerQuery(studentsQuery, [id_mk]),
-        handlerQuery(detailedGradesQuery, [id_mk]),
+        handlerQuery(detailedGradesWithAssessorQuery, [id_mk]),
         handlerQuery(totalGradesQuery, [id_mk]),
       ]);
 
-    // Ekstrak rows dari hasil query
     const students = studentsResult?.rows || [];
     const detailedGrades = detailedGradesResult?.rows || [];
     const totalGrades = totalGradesResult?.rows || [];
 
-    // Jika data mahasiswa tidak ditemukan
     if (students.length === 0) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "No students found for this course",
-        },
+        { success: false, message: "No students found for this course" },
         { status: 404 }
       );
     }
 
-    // Buat map untuk nilai detail berdasarkan id_user, id_form, dan id_komponen
+    // Strukturkan data dengan informasi penilai
     const detailedGradesMap = {};
     detailedGrades.forEach((grade) => {
       const userKey = String(grade.id_dinilai);
       const formKey = String(grade.id_form);
       const komponenKey = String(grade.id_komponen);
+      const penilaiKey = String(grade.id_penilai);
 
       if (!detailedGradesMap[userKey]) {
         detailedGradesMap[userKey] = {};
@@ -133,30 +139,39 @@ export async function POST(req) {
       if (!detailedGradesMap[userKey][formKey]) {
         detailedGradesMap[userKey][formKey] = {
           komponen: {},
+          assessors: {}, // Informasi per penilai
           total: 0,
-          kelompok_info: {},
+        };
+      }
+      if (!detailedGradesMap[userKey][formKey].komponen[komponenKey]) {
+        detailedGradesMap[userKey][formKey].komponen[komponenKey] = {
+          nama_komponen: grade.nama_komponen,
+          bobot: parseFloat(grade.bobot),
+          nilai_rata: parseFloat(grade.nilai_rata_komponen),
+          nilai_weighted: parseFloat(grade.nilai_weighted_komponen),
+          assessors: {},
         };
       }
 
-      detailedGradesMap[userKey][formKey].komponen[komponenKey] = {
-        nama_komponen: grade.nama_komponen,
-        bobot: parseFloat(grade.bobot),
-        nilai_rata: parseFloat(grade.nilai_rata_komponen),
-        nilai_weighted: parseFloat(grade.nilai_weighted_komponen),
-        nama_kelompok: grade.nama_kelompok,
-        id_kelompok: grade.id_kelompok,
+      // Simpan nilai individual dari setiap penilai
+      detailedGradesMap[userKey][formKey].komponen[komponenKey].assessors[
+        penilaiKey
+      ] = {
+        nama_penilai: grade.nama_penilai,
+        npm_penilai: grade.npm_penilai,
+        nilai: parseFloat(grade.nilai),
       };
 
-      // Simpan info kelompok untuk komponen ini
-      if (grade.nama_kelompok) {
-        detailedGradesMap[userKey][formKey].kelompok_info[komponenKey] = {
-          nama_kelompok: grade.nama_kelompok,
-          id_kelompok: grade.id_kelompok,
+      // Simpan informasi penilai di level form
+      if (!detailedGradesMap[userKey][formKey].assessors[penilaiKey]) {
+        detailedGradesMap[userKey][formKey].assessors[penilaiKey] = {
+          nama_penilai: grade.nama_penilai,
+          npm_penilai: grade.npm_penilai,
         };
       }
     });
 
-    // Buat map untuk nilai total berdasarkan id_user dan id_form
+    // Tambahkan total grades
     const totalGradesMap = {};
     totalGrades.forEach((grade) => {
       const userKey = String(grade.id_dinilai);
@@ -168,16 +183,13 @@ export async function POST(req) {
       totalGradesMap[userKey][formKey] = parseFloat(grade.nilai_akhir);
     });
 
-    // Gabungkan semua data
+    // Gabungkan data
     const result = students.map((student) => {
       const userKey = String(student.id_user);
       const studentDetailedGrades = detailedGradesMap[userKey] || {};
       const studentTotalGrades = totalGradesMap[userKey] || {};
 
-      // Gabungkan detail komponen dengan total untuk setiap form
       const combinedGrades = {};
-
-      // Tambahkan total scores ke detailed grades
       Object.keys(studentDetailedGrades).forEach((formId) => {
         combinedGrades[formId] = {
           ...studentDetailedGrades[formId],
@@ -185,13 +197,12 @@ export async function POST(req) {
         };
       });
 
-      // Tambahkan form yang hanya memiliki total tanpa detail komponen
       Object.keys(studentTotalGrades).forEach((formId) => {
         if (!combinedGrades[formId]) {
           combinedGrades[formId] = {
             komponen: {},
+            assessors: {},
             total: studentTotalGrades[formId],
-            kelompok_info: {},
           };
         }
       });
@@ -205,7 +216,6 @@ export async function POST(req) {
       };
     });
 
-    // Berhasil ambil data
     return NextResponse.json({
       success: true,
       data: result,
