@@ -95,9 +95,8 @@ const DaftarKelompok = () => {
         return;
       }
 
-      // console.log(response?.data);
-
       const data = response?.data?.data;
+      console.log(data);
       setDataDetailRekapMahasiswa(data || []);
     } catch (error) {
       router.refresh();
@@ -2888,7 +2887,14 @@ const DetailRekapModal = ({ isOpen, onClose, data }) => {
           <div className="mt-4 p-3 bg-gray-100 rounded-lg">
             <p className="text-sm text-gray-600">
               <strong>Komponen Penilaian:</strong>{" "}
-              {data.komponen_list.join(", ")}
+              {data.komponen_list
+                .map(
+                  (komponen) =>
+                    `${komponen} (Bobot ${
+                      data.komponen_bobot[komponen] ?? "-"
+                    }%)`
+                )
+                .join(", ")}
             </p>
           </div>
         )}
