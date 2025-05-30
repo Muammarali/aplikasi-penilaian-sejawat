@@ -51,6 +51,7 @@ const DaftarKelompok = () => {
   const [dataKetua, setDataKetua] = useState([]);
   const [peranUser, setPeranUser] = useState("");
   const [dataStudentsRekap, setDataStudentsRekap] = useState([]);
+  const [dataStudentsRekapExcel, setDataStudentsRekapExcel] = useState([]);
   const [dataDetailRekapMahasiswa, setDataDetailRekapMahasiswa] = useState([]);
   const [detailFormPenilaian, setDetailFormPenilaian] = useState({});
   const [peranUserKelompok, setPeranUserKelompok] = useState("");
@@ -60,6 +61,7 @@ const DaftarKelompok = () => {
   const [selectedIdFormJenis3, setSelectedIdFormJenis3] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedForm, setSelectedForm] = useState(null);
+  const [formJenis, setFormJenis] = useState(null);
   const [formJenis3Terisi, setFormJenis3Terisi] = useState(false);
   const [formJenis3Status, setFormJenis3Status] = useState({
     ada_komponen_dosen: false,
@@ -118,6 +120,29 @@ const DaftarKelompok = () => {
 
       const data = response?.data?.data;
       setDataStudentsRekap(data);
+    } catch (error) {
+      router.refresh();
+    }
+  };
+
+  const fetchDataStudentRekapExcel = async () => {
+    try {
+      const { id_mk } = parseMatkulParam(params.matkul);
+
+      const response = await axios.post(
+        "/api/rekapnilai/fetch/mahasiswa/detailed",
+        {
+          id_mk: id_mk,
+        }
+      );
+
+      if (!response.data.success) {
+        router.refresh();
+        return;
+      }
+
+      const data = response?.data?.data;
+      setDataStudentsRekapExcel(data);
     } catch (error) {
       router.refresh();
     }
@@ -556,6 +581,7 @@ const DaftarKelompok = () => {
     fetchFormPenilaian();
     fetchKelompok();
     fetchDataStudentRekap();
+    fetchDataStudentRekapExcel();
     fetchPeranUserKelompok();
   }, []);
 
@@ -982,7 +1008,10 @@ const DaftarKelompok = () => {
                       <div className="space-x-2 space-y-2 lg:space-y-0">
                         <button
                           className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm"
-                          onClick={() => handleLihatFormRekap(form?.id_form)}
+                          onClick={() => {
+                            handleLihatFormRekap(form?.id_form),
+                              setFormJenis(form?.jenis);
+                          }}
                         >
                           Lihat
                         </button>
@@ -1880,7 +1909,9 @@ const DaftarKelompok = () => {
       <DetailFormListMahasiswa
         isOpen={isModalRekapFormList}
         onClose={() => {
-          setIsModalRekapFormList(false), setSelectedIdForm(null);
+          setIsModalRekapFormList(false),
+            setSelectedIdForm(null),
+            setFormJenis(null);
         }}
         currentPageStudents={currentPageStudents}
         setCurrentPageStudents={setCurrentPageStudents}
@@ -1888,11 +1919,13 @@ const DaftarKelompok = () => {
         setSearchTerm={setSearchTerm}
         itemsPerPage={itemsPerPage}
         data={dataStudentsRekap}
+        dataExcel={dataStudentsRekapExcel}
         handleDetailRekap={handleDetailRekap}
         setDataDetailRekapMahasiswa={setDataDetailRekapMahasiswa}
         id_form={selectedIdForm}
         id_mk={parseMatkulParam(params.matkul).id_mk}
         nama_matkul={parseMatkulParam(params.matkul).nama_matkul}
+        formJenis={formJenis}
       />
 
       <DetailRekapModal
@@ -2598,10 +2631,12 @@ const DetailFormListMahasiswa = ({
   setSearchTerm,
   itemsPerPage,
   data,
+  dataExcel,
   handleDetailRekap,
   id_form,
   id_mk,
   nama_matkul,
+  formJenis,
 }) => {
   if (!isOpen) return null;
 
@@ -2673,9 +2708,11 @@ const DetailFormListMahasiswa = ({
                 <DownloadExcelButton
                   id_mk={id_mk}
                   courseName={nama_matkul}
-                  studentsData={data}
+                  studentsData={dataExcel}
                   selectedForms={[id_form]}
                   className="shadow-sm"
+                  // exportType={"grouped"}
+                  exportType={formJenis == "Jenis 3" ? "grouped" : "detailed"}
                 />
               </div>
 
@@ -2885,17 +2922,18 @@ const DetailRekapModal = ({ isOpen, onClose, data }) => {
         {/* Info Komponen */}
         {data.komponen_list && data.komponen_list.length > 0 && (
           <div className="mt-4 p-3 bg-gray-100 rounded-lg">
-            <p className="text-sm text-gray-600">
-              <strong>Komponen Penilaian:</strong>{" "}
-              {data.komponen_list
-                .map(
-                  (komponen) =>
-                    `${komponen} (Bobot ${
-                      data.komponen_bobot[komponen] ?? "-"
-                    }%)`
-                )
-                .join(", ")}
+            <p className="text-md text-gray-700 font-semibold mb-2">
+              Komponen Penilaian:
             </p>
+            <div className="space-y-1">
+              {data.komponen_list.map((komponen, index) => (
+                <p key={index} className="text-sm text-gray-700">
+                  {komponen} (
+                  <strong>Bobot {data.komponen_bobot[komponen] ?? "-"}%</strong>
+                  )
+                </p>
+              ))}
+            </div>
           </div>
         )}
 
