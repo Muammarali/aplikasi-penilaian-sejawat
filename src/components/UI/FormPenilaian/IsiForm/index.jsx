@@ -19,6 +19,7 @@ const ModalFormPenilaian = ({
   const [validasiError, setValidasiError] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState("");
+  const [idKelompokUser, setIdKelompokUser] = useState(null);
 
   // Mendapatkan tipe penilaian berdasarkan id_jenis
   const id_jenis = formData?.form_details?.id_jenis || 1;
@@ -26,9 +27,34 @@ const ModalFormPenilaian = ({
   // Komponen penilaian berdasarkan tipe
   const komponenAnggotaAnggota = formData?.komponen?.anggota_anggota || [];
   const komponenAnggotaPM = formData?.komponen?.anggota_pm || [];
-  const komponenKetuaAnggota = formData?.komponen?.ketua_anggota || [];
+  const komponenKetuaAnggota = idKelompokUser
+    ? (formData?.komponen?.ketua_anggota || []).filter(
+        (komp) => komp.id_kelompok === idKelompokUser
+      )
+    : formData?.komponen?.ketua_anggota || [];
   const komponenDosenKetua = formData?.komponen?.dosen_ketua || [];
 
+  const id_form = formData?.form_details?.id_form;
+
+  const fetchIdKelompokUser = async () => {
+    try {
+      const response = await axios.post("/api/formpenilaian/fetch/idkelompok", {
+        id_user: session?.user?.id,
+        id_form: id_form,
+      });
+
+      const kelompokId = response?.data?.data?.id_kelompok;
+      setIdKelompokUser(kelompokId);
+    } catch (error) {
+      console.error("Error fetching id_kelompok:", error);
+    }
+  };
+
+  useEffect(() => {
+    if (session?.user?.id && session?.user?.role != "Dosen" && id_form) {
+      fetchIdKelompokUser();
+    }
+  }, [session?.user?.id, id_form]);
   // Inisialisasi nilai
   useEffect(() => {
     // Cek dulu kalau state-nya belum di-set

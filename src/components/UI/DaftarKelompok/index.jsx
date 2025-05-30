@@ -489,6 +489,7 @@ const DaftarKelompok = () => {
       const response = await axios.post("/api/formpenilaian/fetch/formjenis3", {
         id_form: id,
         tipe_pengecekan: "all",
+        id_user: session?.user?.id, // Menambahkan id_user untuk filter kelompok
       });
 
       if (response?.data?.success) {
@@ -500,6 +501,10 @@ const DaftarKelompok = () => {
             data.ada_komponen_dosen_ke_ketua &&
             data.ada_komponen_ketua_ke_anggota,
           total_komponen: data.total_komponen,
+          id_kelompok_user: data.id_kelompok_user, // Info kelompok user
+          id_mk: data.id_mk, // Info mata kuliah
+          jumlah_komponen_dosen: data.jumlah_komponen_dosen_ke_ketua,
+          jumlah_komponen_ketua: data.jumlah_komponen_ketua_ke_anggota,
         };
       }
 
@@ -508,6 +513,10 @@ const DaftarKelompok = () => {
         ada_komponen_ketua: false,
         form_lengkap: false,
         total_komponen: 0,
+        id_kelompok_user: null,
+        id_mk: null,
+        jumlah_komponen_dosen: 0,
+        jumlah_komponen_ketua: 0,
       };
     } catch (error) {
       console.error("Error fetching status form jenis 3:", error);
@@ -516,6 +525,10 @@ const DaftarKelompok = () => {
         ada_komponen_ketua: false,
         form_lengkap: false,
         total_komponen: 0,
+        id_kelompok_user: null,
+        id_mk: null,
+        jumlah_komponen_dosen: 0,
+        jumlah_komponen_ketua: 0,
       };
     }
   };
@@ -535,10 +548,10 @@ const DaftarKelompok = () => {
       setFormJenis3StatusMap(statusMap);
     };
 
-    if (formPenilaian.length > 0) {
+    if (formPenilaian.length > 0 && session?.user?.id) {
       loadFormJenis3Status();
     }
-  }, [formPenilaian]);
+  }, [formPenilaian, session?.user?.id]);
 
   useEffect(() => {
     fetchFormPenilaian();
@@ -741,11 +754,9 @@ const DaftarKelompok = () => {
                               <div className="mt-1">
                                 <span
                                   className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                    formStatus.form_lengkap
+                                    formStatus.ada_komponen_ketua
                                       ? "bg-green-100 text-green-800"
-                                      : formStatus.ada_komponen_dosen
-                                      ? "bg-yellow-100 text-yellow-800"
-                                      : "bg-gray-100 text-gray-800"
+                                      : "bg-yellow-100 text-yellow-800"
                                   }`}
                                 >
                                   {getFormStatusText(formStatus)}
@@ -775,7 +786,7 @@ const DaftarKelompok = () => {
                         )}
 
                         {session?.user?.role === "Dosen" ? (
-                          <div className="space-x-2 space-y-2 lg:space-y-0">
+                          <div className="space-x-2 space-y-2 xl:space-y-0">
                             <button
                               className="px-4 py-2 bg-yellow-500 text-white rounded-md hover:bg-yellow-600 transition-all text-sm"
                               onClick={() => handleEditForm(form?.id_form)}
@@ -818,20 +829,21 @@ const DaftarKelompok = () => {
                             {peranUserKelompok === "Ketua" &&
                             form?.jenis === "Jenis 3" ? (
                               <div className="flex gap-2 flex-wrap">
-                                {/* Tombol Isi Komponen - hanya muncul jika kondisi terpenuhi */}
-                                {shouldShowIsiKomponenButton(formStatus) && (
-                                  <button
-                                    className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-all text-sm"
-                                    onClick={() =>
-                                      handleModalIsiKomponen(form?.id_form)
-                                    }
-                                  >
-                                    Isi Komponen
-                                  </button>
-                                )}
+                                {/* Tombol Isi Komponen - hanya muncul jika belum ada komponen ketua */}
+                                {formStatus &&
+                                  !formStatus.ada_komponen_ketua && (
+                                    <button
+                                      className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-all text-sm"
+                                      onClick={() =>
+                                        handleModalIsiKomponen(form?.id_form)
+                                      }
+                                    >
+                                      Isi Komponen
+                                    </button>
+                                  )}
 
-                                {/* Tombol Isi Formulir - hanya muncul jika form sudah lengkap */}
-                                {formStatus?.form_lengkap && (
+                                {/* Tombol Isi Formulir - hanya muncul jika sudah ada komponen ketua */}
+                                {formStatus?.ada_komponen_ketua && (
                                   <button
                                     className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm"
                                     onClick={() =>
@@ -841,25 +853,38 @@ const DaftarKelompok = () => {
                                     Isi Formulir
                                   </button>
                                 )}
-
-                                {/* Jika form belum ada komponen dosen */}
-                                {!formStatus?.ada_komponen_dosen && (
-                                  <span className="px-4 py-2 bg-gray-200 text-gray-600 rounded-md text-sm">
-                                    Menunggu dosen membuat komponen
-                                  </span>
-                                )}
                               </div>
                             ) : (
-                              form?.jenis !== "Jenis 3" && (
-                                <button
-                                  className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm"
-                                  onClick={() =>
-                                    handleModalIsiFormulir(form?.id_form)
-                                  }
-                                >
-                                  Isi
-                                </button>
-                              )
+                              // Untuk anggota biasa atau form selain Jenis 3
+                              <>
+                                {form?.jenis === "Jenis 3" ? (
+                                  // Anggota biasa - hanya bisa isi formulir jika ada komponen ketua
+                                  formStatus?.ada_komponen_ketua ? (
+                                    <button
+                                      className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm"
+                                      onClick={() =>
+                                        handleModalIsiFormulir(form?.id_form)
+                                      }
+                                    >
+                                      Isi Formulir
+                                    </button>
+                                  ) : (
+                                    <span className="px-4 py-2 bg-gray-200 text-gray-600 rounded-md text-sm">
+                                      {getFormStatusText(formStatus)}
+                                    </span>
+                                  )
+                                ) : (
+                                  // Form selain Jenis 3
+                                  <button
+                                    className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm"
+                                    onClick={() =>
+                                      handleModalIsiFormulir(form?.id_form)
+                                    }
+                                  >
+                                    Isi
+                                  </button>
+                                )}
+                              </>
                             )}
                           </div>
                         )}
@@ -1290,17 +1315,47 @@ const DaftarKelompok = () => {
   const getFormStatusText = (formStatus) => {
     if (!formStatus) return "Loading...";
 
-    if (!formStatus.ada_komponen_dosen && !formStatus.ada_komponen_ketua) {
-      return "Form belum memiliki komponen";
-    } else if (
-      formStatus.ada_komponen_dosen &&
-      !formStatus.ada_komponen_ketua
-    ) {
-      return "Menunggu ketua mengisi komponen";
-    } else if (formStatus.form_lengkap) {
-      return "Form lengkap - siap untuk penilaian";
+    console.log(formStatus);
+
+    // Jika user tidak ada dalam kelompok untuk mata kuliah ini
+    if (formStatus.id_kelompok_user === null) {
+      return "Anda tidak terdaftar dalam kelompok untuk mata kuliah ini";
+    }
+
+    // Logika berdasarkan role user
+    if (session?.user?.role === "Mahasiswa") {
+      // Untuk mahasiswa, yang penting adalah ada komponen ketua ke anggota
+      if (formStatus.ada_komponen_ketua) {
+        return "Form lengkap - siap untuk penilaian";
+      } else {
+        return "Menunggu ketua kelompok mengisi komponen penilaian";
+      }
+    } else if (session?.user?.role === "Dosen") {
+      // Untuk dosen, yang penting adalah ada komponen dosen ke ketua
+      if (formStatus.ada_komponen_dosen) {
+        return "Form lengkap - siap untuk penilaian";
+      } else {
+        return "Menunggu dosen mengisi komponen penilaian";
+      }
     } else {
-      return "Status tidak diketahui";
+      // Untuk role lain atau tidak diketahui, cek kedua komponen
+      if (!formStatus.ada_komponen_dosen && !formStatus.ada_komponen_ketua) {
+        return "Form belum memiliki komponen untuk kelompok Anda";
+      } else if (
+        formStatus.ada_komponen_dosen &&
+        !formStatus.ada_komponen_ketua
+      ) {
+        return "Menunggu ketua kelompok mengisi komponen penilaian";
+      } else if (
+        !formStatus.ada_komponen_dosen &&
+        formStatus.ada_komponen_ketua
+      ) {
+        return "Menunggu dosen mengisi komponen penilaian";
+      } else if (formStatus.form_lengkap) {
+        return "Form lengkap - siap untuk penilaian";
+      } else {
+        return "Status tidak diketahui";
+      }
     }
   };
 
@@ -1618,6 +1673,7 @@ const DaftarKelompok = () => {
         id_mk: mkId?.id_mk,
         id_jenis: formData?.jenis_form,
         formData: komponenYangDipakai,
+        id_user: session?.user?.id,
       };
 
       // Cek apakah ini untuk form yang sudah ada (ketua mengisi form jenis 3)
@@ -3595,7 +3651,7 @@ const PeerEvaluationForm = ({
           >
             Batal
           </button>
-          {isDosen == "Dosen" || (isKetuaIsiFormJenis3 && !formJenis3Terisi) ? (
+          {isDosen == "Dosen" || isKetuaIsiFormJenis3 ? (
             <button
               type="submit"
               className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700"

@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import handlerQuery from "../../../utils/db";
 
 export async function POST(req) {
-  const { nama_form, id_mk, id_jenis, formData, id_form } = await req.json();
+  // Tambahkan id_user ke dalam destructuring
+  const { nama_form, id_mk, id_jenis, formData, id_form, id_user } =
+    await req.json();
 
   try {
     let form_id;
@@ -44,6 +46,26 @@ export async function POST(req) {
           item.deskripsi.trim() !== ""
       );
     };
+
+    // Query untuk mengambil id_kelompok berdasarkan id_user dan id_mk
+    let id_kelompok = null;
+    if (id_jenis == 3 && id_user && id_mk) {
+      const kelompokQuery = `
+        SELECT k.id_kelompok 
+        FROM kelompok k
+        JOIN mahasiswa_kelompok mk ON k.id_kelompok = mk.id_kelompok
+        WHERE mk.id_user = $1 AND k.id_mk = $2 AND mk.peran = 'Ketua'
+      `;
+
+      const kelompokResult = await handlerQuery(kelompokQuery, [
+        id_user,
+        id_mk,
+      ]);
+
+      if (kelompokResult.rows.length > 0) {
+        id_kelompok = kelompokResult.rows[0].id_kelompok;
+      }
+    }
 
     // Insert komponen_penilaian sesuai id_jenis
     if (id_jenis == 1) {
@@ -127,14 +149,15 @@ export async function POST(req) {
         );
         for (const item of validKetuaKeAnggota) {
           await handlerQuery(
-            `INSERT INTO komponen_penilaian (nama_komponen, bobot, deskripsi, tipe_penilaian, id_form)
-            VALUES ($1, $2, $3, $4, $5)`,
+            `INSERT INTO komponen_penilaian (nama_komponen, bobot, deskripsi, tipe_penilaian, id_form, id_kelompok)
+            VALUES ($1, $2, $3, $4, $5, $6)`,
             [
               item.nama_komponen,
               parseInt(item.bobot),
               item.deskripsi,
               "Ketua ke Anggota",
               form_id,
+              id_kelompok,
             ]
           );
         }

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import handlerQuery from "../../../../utils/db";
 
 export async function POST(req) {
-  const { id_form, tipe_pengecekan } = await req.json();
+  const { id_form, tipe_pengecekan, id_user } = await req.json();
 
   try {
     if (!id_form) {
@@ -19,34 +19,116 @@ export async function POST(req) {
       );
     }
 
+    let id_kelompok_user = null;
+    let id_mk = null;
+
+    // Jika id_user disediakan, ambil id_kelompok user tersebut
+    if (id_user) {
+      // 1. Dapatkan id_mk dari form_penilaian berdasarkan id_form
+      const formQuery = `
+        SELECT id_mk 
+        FROM form_penilaian 
+        WHERE id_form = $1
+      `;
+
+      const formResult = await handlerQuery(formQuery, [id_form]);
+
+      if (formResult.rows.length === 0) {
+        return NextResponse.json(
+          {
+            success: false,
+            message: "Form tidak ditemukan",
+          },
+          { status: 404 }
+        );
+      }
+
+      id_mk = formResult.rows[0].id_mk;
+
+      // 2. Dapatkan id_kelompok user berdasarkan id_user dan id_mk
+      const kelompokQuery = `
+        SELECT 
+          k.id_kelompok,
+          k.nama_kelompok,
+          mk.peran,
+          k.id_mk
+        FROM kelompok k
+        JOIN mahasiswa_kelompok mk ON k.id_kelompok = mk.id_kelompok
+        WHERE mk.id_user = $1 AND k.id_mk = $2
+      `;
+
+      const kelompokResult = await handlerQuery(kelompokQuery, [
+        id_user,
+        id_mk,
+      ]);
+
+      if (kelompokResult.rows.length > 0) {
+        id_kelompok_user = kelompokResult.rows[0].id_kelompok;
+      }
+    }
+
     let query;
+    let queryParams;
     let tipe_penilaian;
 
     // Tentukan tipe penilaian berdasarkan tipe pengecekan
     if (tipe_pengecekan === "ketua_ke_anggota") {
       tipe_penilaian = "Ketua ke Anggota";
-      query = `
-        SELECT kp.id_komponen, fp.id_form, kp.tipe_penilaian
-        FROM komponen_penilaian kp
-        JOIN form_penilaian fp ON kp.id_form = fp.id_form
-        WHERE fp.id_jenis = 3 AND fp.id_form = $1 AND kp.tipe_penilaian = $2
-      `;
+      if (id_kelompok_user) {
+        query = `
+          SELECT kp.id_komponen, fp.id_form, kp.tipe_penilaian, kp.id_kelompok
+          FROM komponen_penilaian kp
+          JOIN form_penilaian fp ON kp.id_form = fp.id_form
+          WHERE fp.id_jenis = 3 AND fp.id_form = $1 AND kp.tipe_penilaian = $2 AND kp.id_kelompok = $3
+        `;
+        queryParams = [id_form, tipe_penilaian, id_kelompok_user];
+      } else {
+        query = `
+          SELECT kp.id_komponen, fp.id_form, kp.tipe_penilaian, kp.id_kelompok
+          FROM komponen_penilaian kp
+          JOIN form_penilaian fp ON kp.id_form = fp.id_form
+          WHERE fp.id_jenis = 3 AND fp.id_form = $1 AND kp.tipe_penilaian = $2
+        `;
+        queryParams = [id_form, tipe_penilaian];
+      }
     } else if (tipe_pengecekan === "dosen_ke_ketua") {
       tipe_penilaian = "Dosen ke Ketua";
-      query = `
-        SELECT kp.id_komponen, fp.id_form, kp.tipe_penilaian
-        FROM komponen_penilaian kp
-        JOIN form_penilaian fp ON kp.id_form = fp.id_form
-        WHERE fp.id_jenis = 3 AND fp.id_form = $1 AND kp.tipe_penilaian = $2
-      `;
+      if (id_kelompok_user) {
+        query = `
+          SELECT kp.id_komponen, fp.id_form, kp.tipe_penilaian, kp.id_kelompok
+          FROM komponen_penilaian kp
+          JOIN form_penilaian fp ON kp.id_form = fp.id_form
+          WHERE fp.id_jenis = 3 AND fp.id_form = $1 AND kp.tipe_penilaian = $2 AND kp.id_kelompok = $3
+        `;
+        queryParams = [id_form, tipe_penilaian, id_kelompok_user];
+      } else {
+        query = `
+          SELECT kp.id_komponen, fp.id_form, kp.tipe_penilaian, kp.id_kelompok
+          FROM komponen_penilaian kp
+          JOIN form_penilaian fp ON kp.id_form = fp.id_form
+          WHERE fp.id_jenis = 3 AND fp.id_form = $1 AND kp.tipe_penilaian = $2
+        `;
+        queryParams = [id_form, tipe_penilaian];
+      }
     } else if (tipe_pengecekan === "all") {
       // Untuk mengecek semua komponen form jenis 3
-      query = `
-        SELECT kp.id_komponen, fp.id_form, kp.tipe_penilaian
-        FROM komponen_penilaian kp
-        JOIN form_penilaian fp ON kp.id_form = fp.id_form
-        WHERE fp.id_jenis = 3 AND fp.id_form = $1
-      `;
+      if (id_kelompok_user) {
+        query = `
+          SELECT kp.id_komponen, fp.id_form, kp.tipe_penilaian, kp.id_kelompok
+          FROM komponen_penilaian kp
+          JOIN form_penilaian fp ON kp.id_form = fp.id_form
+          WHERE fp.id_jenis = 3 AND fp.id_form = $1 AND kp.id_kelompok = $2
+        `;
+        queryParams = [id_form, id_kelompok_user];
+      } else {
+        query = `
+          SELECT kp.id_komponen, fp.id_form, kp.tipe_penilaian, kp.id_kelompok
+          FROM komponen_penilaian kp
+          JOIN form_penilaian fp ON kp.id_form = fp.id_form
+          WHERE fp.id_jenis = 3 AND fp.id_form = $1
+        `;
+        queryParams = [id_form];
+      }
     } else {
       return NextResponse.json(
         {
@@ -58,15 +140,14 @@ export async function POST(req) {
       );
     }
 
-    const result = await handlerQuery(
-      query,
-      tipe_pengecekan === "all" ? [id_form] : [id_form, tipe_penilaian]
-    );
+    const result = await handlerQuery(query, queryParams);
 
     // Analisis hasil berdasarkan tipe pengecekan
     let response_data = {
       total_komponen: result.rows.length,
       komponen: result.rows,
+      id_kelompok_user: id_kelompok_user,
+      id_mk: id_mk,
     };
 
     if (tipe_pengecekan === "all") {

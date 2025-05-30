@@ -38,7 +38,8 @@ export async function POST(req) {
         kp.bobot, 
         kp.deskripsi,
         kp.id_form,
-        kp.tipe_penilaian
+        kp.tipe_penilaian,
+        kp.id_kelompok
       FROM 
         komponen_penilaian kp
       WHERE 
