@@ -270,6 +270,7 @@ const DaftarKelompok = () => {
     }
 
     const data = response.data.data;
+    console.log(data);
     setMahasiswaList(data);
     setIsModalDaftarMahasiswaOpen(true);
   };
@@ -966,7 +967,7 @@ const DaftarKelompok = () => {
                   return (
                     <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
                       <p className="text-sm text-gray-500">
-                        Form penilaian belum tersedia
+                        Rekap nilai belum tersedia
                       </p>
                     </div>
                   );
