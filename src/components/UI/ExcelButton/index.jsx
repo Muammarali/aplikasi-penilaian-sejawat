@@ -100,7 +100,7 @@ const DownloadExcelButton = ({
       if (downloadResult.success) {
         // Show success message (you can replace with toast notification)
         // Optional: Show toast notification instead of alert
-        // toast.success("File Excel berhasil didownload!");
+        toast.success("File Excel berhasil didownload!");
       } else {
         throw new Error(downloadResult.error);
       }
@@ -120,9 +120,7 @@ const DownloadExcelButton = ({
         errorMessage += error.message;
       }
 
-      alert(errorMessage);
-      // Optional: Show toast notification instead of alert
-      // toast.error(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setIsDownloading(false);
     }

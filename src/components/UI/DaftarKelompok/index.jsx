@@ -307,13 +307,12 @@ const DaftarKelompok = () => {
         fetchKelompok();
 
         // Tampilkan pesan sukses
-        alert("Mahasiswa berhasil bergabung ke kelompok");
+        toast.success("Mahasiswa berhasil bergabung ke kelompok");
       } else {
-        alert(response.data.message || "Gagal bergabung ke kelompok");
+        toast.error(response.data.message || "Gagal bergabung ke kelompok");
       }
     } catch (error) {
-      console.error("Error joining group:", error);
-      alert("Terjadi kesalahan saat bergabung ke kelompok");
+      toast.error("Terjadi kesalahan saat bergabung ke kelompok");
     }
   };
 
@@ -394,14 +393,13 @@ const DaftarKelompok = () => {
       });
 
       if (response.data.success) {
-        alert("Form berhasil diubah!");
+        toast.success("Form berhasil diubah!");
         fetchFormPenilaian();
       } else {
-        alert(`Error: ${result.message}`);
+        toast.error("Terjadi kesalahan saat mengubah form");
       }
     } catch (error) {
-      console.error("Error updating form:", error);
-      alert("Terjadi kesalahan saat mengubah form");
+      toast.error("Terjadi kesalahan saat mengubah form");
     }
   };
 
@@ -618,6 +616,7 @@ const DaftarKelompok = () => {
       });
 
       if (response.data.success) {
+        toast.success("Berhasil mengubah status");
         setIsModalOpen(false);
         setFormData({
           nama_kelompok: "",
@@ -625,10 +624,11 @@ const DaftarKelompok = () => {
         });
         fetchFormPenilaian();
       } else {
-        setError(response.data.message || "Gagal membuat kelompok");
+        toast.error("Gagal mengubah status");
+        setError(response.data.message || "Gagal mengubah status");
       }
     } catch (error) {
-      console.error("Error saat mengubah status form", error);
+      toast.error("Gagal mengubah status, server error");
     }
   };
 
@@ -1230,6 +1230,7 @@ const DaftarKelompok = () => {
       });
 
       if (response.data.success) {
+        toast.success("Berhasil membuat kelompok");
         setIsModalOpen(false);
         setFormData({
           nama_kelompok: "",
@@ -1237,11 +1238,11 @@ const DaftarKelompok = () => {
         });
         fetchKelompok();
       } else {
+        toast.error(response.data.message || "Gagal membuat kelompok");
         setError(response.data.message || "Gagal membuat kelompok");
       }
     } catch (error) {
-      console.error("Error creating group:", error);
-      setError("Terjadi kesalahan saat membuat kelompok");
+      toast.error("Terjadi kesalahan saat membuat kelompok, server error");
     } finally {
       setIsSubmitting(false);
     }
@@ -1261,14 +1262,15 @@ const DaftarKelompok = () => {
       });
 
       if (response.data.success) {
+        toast.success("Berhasil membuat kelompok otomatis");
         setIsModalOpen(false);
         fetchKelompok();
       } else {
+        toast.error(response.data.message || "Gagal membuat kelompok otomatis");
         setError(response.data.message || "Gagal membuat kelompok otomatis");
       }
     } catch (error) {
-      console.error("Error creating automatic groups:", error);
-      setError("Terjadi kesalahan saat membuat kelompok otomatis");
+      toast.error("Terjadi kesalahan saat membuat kelompok otomatis");
     }
   };
 
@@ -1301,6 +1303,7 @@ const DaftarKelompok = () => {
       });
 
       if (response.data.success) {
+        toast.success("Berhasil mengubah kelompok");
         setIsModalOpen(false);
         setFormUbahData({
           nama_kelompok: "",
@@ -1309,11 +1312,11 @@ const DaftarKelompok = () => {
         fetchKelompok();
         setIsModalUbahOpen(false);
       } else {
-        setError(response.data.message || "Gagal membuat kelompok");
+        setError(response.data.message || "Gagal mengubah kelompok");
+        toast.error(response.data.message || "Gagal mengubah kelompok");
       }
     } catch (error) {
-      console.error("Error creating group:", error);
-      setError("Terjadi kesalahan saat membuat kelompok");
+      toast.error(response.data.message || "Gagal mengubah kelompok");
     } finally {
       setIsSubmitting(false);
     }
@@ -1435,13 +1438,12 @@ const DaftarKelompok = () => {
         fetchKelompok();
 
         // Show success message (optional)
-        alert("Berhasil keluar dari kelompok");
+        toast.success("Berhasil keluar dari kelompok");
       } else {
-        alert(response.data.message || "Gagal keluar dari kelompok");
+        toast.error(response.data.message || "Gagal keluar dari kelompok");
       }
     } catch (error) {
-      console.error("Error leaving group:", error);
-      alert("Terjadi kesalahan saat keluar dari kelompok");
+      toast.error("Terjadi kesalahan saat keluar dari kelompok");
     }
   };
 
@@ -1470,15 +1472,17 @@ const DaftarKelompok = () => {
         fetchKelompok();
 
         // Show success message (optional)
-        alert("Berhasil mengeluarkan mahasiswa dari kelompok");
+        toast.success("Berhasil mengeluarkan mahasiswa dari kelompok");
       } else {
-        alert(
+        toast.error(
           response.data.message || "Gagal mengeluarkan mahasiswa dari kelompok"
         );
       }
     } catch (error) {
       console.error("Error leaving group:", error);
-      alert("Terjadi kesalahan saat mengeluarkan mahasiswa dari kelompok");
+      toast.error(
+        "Terjadi kesalahan saat mengeluarkan mahasiswa dari kelompok"
+      );
     }
   };
 
@@ -1506,13 +1510,12 @@ const DaftarKelompok = () => {
         fetchKelompok();
 
         // Tampilkan pesan sukses
-        alert("Berhasil bergabung ke kelompok");
+        toast.success("Berhasil bergabung ke kelompok");
       } else {
-        alert(response.data.message || "Gagal bergabung ke kelompok");
+        toast.error(response.data.message || "Gagal bergabung ke kelompok");
       }
     } catch (error) {
-      console.error("Error joining group:", error);
-      alert("Terjadi kesalahan saat bergabung ke kelompok");
+      toast.error("Terjadi kesalahan saat bergabung ke kelompok");
     }
   };
 
@@ -1533,14 +1536,13 @@ const DaftarKelompok = () => {
       );
 
       if (response.data.success) {
-        alert("Berhasil menjadi ketua!");
+        toast.success("Berhasil menjadi ketua!");
         fetchAnggotaKelompok(kelompokId); // refresh data
       } else {
-        alert(response.data.message || "Gagal menjadi ketua");
+        toast.success(response.data.message || "Gagal menjadi ketua");
       }
     } catch (error) {
-      console.error("Gagal menjadikan ketua:", error);
-      alert("Terjadi kesalahan saat mencoba jadi ketua");
+      toast.success("Terjadi kesalahan saat mencoba jadi ketua");
     }
   };
 
@@ -1559,14 +1561,13 @@ const DaftarKelompok = () => {
       });
 
       if (response.data.success) {
-        alert("Berhasil mengudurkan diri!");
+        toast.success("Berhasil mengudurkan diri!");
         fetchAnggotaKelompok(kelompokId); // refresh data
       } else {
-        alert(response.data.message || "Gagal mengudurkan diri!");
+        toast.error(response.data.message || "Gagal mengudurkan diri!");
       }
     } catch (error) {
-      console.error("Gagal mengudurkan diri:", error);
-      alert("Terjadi kesalahan saat mencoba mengudurkan diri dari ketua");
+      toast.error("Terjadi kesalahan saat mencoba mengudurkan diri dari ketua");
     }
   };
 
@@ -1587,15 +1588,15 @@ const DaftarKelompok = () => {
       );
 
       if (response.data.success) {
-        alert(response.data.message || "Berhasil menghapus kelompok");
+        toast.success(response.data.message || "Berhasil menghapus kelompok");
         fetchKelompok();
       } else {
-        alert(response.data.message || "Gagal menghapus kelompok");
+        toast.error(response.data.message || "Gagal menghapus kelompok");
       }
 
       setIsModalUbahOpen(false);
     } catch (error) {
-      console.error("Gagal menghapus kelompok:", error);
+      toast.error(response.data.message || "Gagal menghapus kelompok");
       setIsUbahKelompokId(null);
       setIsModalUbahOpen(false);
       router.refresh();
@@ -1714,18 +1715,20 @@ const DaftarKelompok = () => {
 
       const response = await axios.post("/api/formpenilaian/tambah", payload);
 
+      console.log(response);
+
       if (response.data.success) {
         if (formData.id_form && !formData.nama_form) {
-          alert("Berhasil menambahkan komponen ke form!");
+          toast.success("Berhasil menambahkan komponen ke form!");
         } else {
-          alert("Berhasil membuat form!");
+          toast.success("Berhasil membuat form!");
         }
       } else {
-        alert(response.data.message || "Gagal membuat form!");
+        toast.error(response.data.message || "Gagal membuat form!");
       }
     } catch (error) {
       console.error("Error:", error);
-      alert("Gagal membuat form! Server Error!");
+      toast.error("Gagal membuat form! Server error");
     } finally {
       fetchFormPenilaian();
     }
@@ -2711,7 +2714,6 @@ const DetailFormListMahasiswa = ({
                   studentsData={dataExcel}
                   selectedForms={[id_form]}
                   className="shadow-sm"
-                  // exportType={"grouped"}
                   exportType={formJenis == "Jenis 3" ? "grouped" : "detailed"}
                 />
               </div>
