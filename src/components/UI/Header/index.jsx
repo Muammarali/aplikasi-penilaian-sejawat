@@ -2,6 +2,8 @@
 import React, { useState, useRef, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { HiMenu, HiUser, HiLogout } from "react-icons/hi";
+import { IoLogOut } from "react-icons/io5";
+import { RiAdminLine } from "react-icons/ri";
 import { signOut, useSession } from "next-auth/react";
 
 const Header = ({ toggleSidebar, toggleCollapse, isCollapsed = true }) => {
@@ -36,6 +38,43 @@ const Header = ({ toggleSidebar, toggleCollapse, isCollapsed = true }) => {
     await signOut({ callbackUrl: "/" });
   };
 
+  const getUserInitials = (name) => {
+    if (!name) return "?";
+    const names = name.split(" ");
+    if (names.length >= 2) {
+      return (
+        names[0].charAt(0) + names[names.length - 1].charAt(0)
+      ).toUpperCase();
+    }
+    return name.charAt(0).toUpperCase();
+  };
+
+  const getRoleColorClass = (role) => {
+    switch (role) {
+      case "Admin":
+        return "bg-red-500";
+      case "Dosen":
+        return "bg-green-500";
+      case "Mahasiswa":
+        return "bg-blue-500";
+      default:
+        return "bg-gray-500";
+    }
+  };
+
+  const getRoleBadgeClass = (role) => {
+    switch (role) {
+      case "Admin":
+        return "bg-red-100 text-red-800";
+      case "Dosen":
+        return "bg-green-100 text-green-800";
+      case "Mahasiswa":
+        return "bg-blue-100 text-blue-800";
+      default:
+        return "bg-gray-100 text-gray-800";
+    }
+  };
+
   return (
     <header className="bg-white shadow-sm z-10">
       <div className="px-2 sm:px-4 lg:px-6">
@@ -68,23 +107,29 @@ const Header = ({ toggleSidebar, toggleCollapse, isCollapsed = true }) => {
                 <span className="hidden md:block text-gray-700 font-medium">
                   {session?.user.nama || "..."}
                 </span>
-                <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white shadow-sm">
-                  <span className="font-medium">
-                    {session?.user.nama ? session?.user.nama.charAt(0) : "..."}
+                <div
+                  className={`h-8 w-8 rounded-full ${getRoleColorClass(
+                    session?.user?.role
+                  )} flex items-center justify-center text-white shadow-sm`}
+                >
+                  <span className="font-medium text-sm">
+                    {getUserInitials(session?.user?.nama)}
                   </span>
                 </div>
               </div>
 
               {/* Enhanced Dropdown Menu */}
               {showDropdown && (
-                <div className="absolute right-0 mt-2 w-64 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none transition-all duration-200 ease-in-out">
-                  <div className="px-4 py-3 border-b">
+                <div className="absolute right-0 mt-2 w-64 origin-top-right rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none transition-all duration-200 ease-in-out overflow-hidden">
+                  <div className="px-4 py-2 pb-4 border-b">
                     <div className="flex items-center space-x-3">
-                      <div className="h-10 min-w-10 rounded-full bg-blue-500 flex items-center justify-center text-white">
-                        <span className="text-lg font-medium">
-                          {session?.user.nama
-                            ? session?.user.nama.charAt(0)
-                            : "..."}
+                      <div
+                        className={`h-10 min-w-10 rounded-full ${getRoleColorClass(
+                          session?.user?.role
+                        )} flex items-center justify-center text-white`}
+                      >
+                        <span className="font-medium text-lg">
+                          {getUserInitials(session?.user?.nama)}
                         </span>
                       </div>
                       <div className="w-full overflow-hidden text-ellipsis">
@@ -94,21 +139,25 @@ const Header = ({ toggleSidebar, toggleCollapse, isCollapsed = true }) => {
                         <p className="text-xs text-gray-500 truncate">
                           {session?.user.email}
                         </p>
-                        <p className="text-xs font-medium text-blue-500 mt-1 truncate">
-                          {session?.user.role || "..."}
-                        </p>
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium mt-1 ${getRoleBadgeClass(
+                            session?.user?.role
+                          )}`}
+                        >
+                          <RiAdminLine className="mr-1" size={10} />
+                          {session?.user?.role || "Loading..."}
+                        </span>
                       </div>
                     </div>
                   </div>
-                  <div className="py-1">
-                    <button
-                      onClick={handleLogout}
-                      className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                    >
-                      <HiLogout className="text-gray-500" />
-                      <span>Logout</span>
-                    </button>
-                  </div>
+
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-4 py-3 text-sm text-gray-700 flex items-center gap-1 hover:bg-zinc-200 transition"
+                  >
+                    <IoLogOut size={20} className="text-zinc-600" />
+                    <span>Logout</span>
+                  </button>
                 </div>
               )}
             </div>

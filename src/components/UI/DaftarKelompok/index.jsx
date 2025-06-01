@@ -270,7 +270,6 @@ const DaftarKelompok = () => {
     }
 
     const data = response.data.data;
-    console.log(data);
     setMahasiswaList(data);
     setIsModalDaftarMahasiswaOpen(true);
   };

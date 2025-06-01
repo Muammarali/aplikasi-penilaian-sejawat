@@ -25,7 +25,7 @@ export async function middleware(req) {
     const roleAccess = {
       Mahasiswa: ["/", "/matakuliah", "/daftarkelas"],
       Dosen: ["/", "/matakuliah", "/daftarkelas"],
-      Admin: ["/", "/matakuliah", "/daftarkelas"],
+      Admin: ["/", "/admin/users", "/admin/dosen-matakuliah"],
     };
 
     const allowedPaths = roleAccess[userRole] || [];
@@ -41,6 +41,8 @@ export async function middleware(req) {
       "/daftarkelas",
       "/login",
       "/forbidden",
+      "/admin/users",
+      "/admin/dosen-matakuliah",
     ];
 
     const isKnownPath = existingPaths.some(
