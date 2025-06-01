@@ -488,15 +488,15 @@ const EditPeerEvaluationModal = ({
           <div className="space-y-2 text-sm text-gray-700">
             <div className="flex items-start">
               <span className="font-medium text-blue-700 mr-2">Jenis 1:</span>
-              <span>Konversi dari Mata Kuliah Proyek Sistem Informasi</span>
+              <span>Referensi dari Mata Kuliah Proyek Sistem Informasi</span>
             </div>
             <div className="flex items-start">
               <span className="font-medium text-blue-700 mr-2">Jenis 2:</span>
-              <span>Konversi dari Mata Kuliah Proyek Informatika</span>
+              <span>Referensi dari Mata Kuliah Proyek Informatika</span>
             </div>
             <div className="flex items-start">
               <span className="font-medium text-blue-700 mr-2">Jenis 3:</span>
-              <span>Konversi dari Mata Kuliah Proyek Data Science</span>
+              <span>Referensi dari Mata Kuliah Proyek Data Science</span>
             </div>
           </div>
           {isEditMode && formData.jenis_form === "3" && (
