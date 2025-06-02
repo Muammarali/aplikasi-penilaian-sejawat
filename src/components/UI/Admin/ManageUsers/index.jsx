@@ -2,34 +2,32 @@
 import React, { useState, useEffect } from "react";
 import ExcelJS from "exceljs";
 import bcrypt from "bcryptjs";
+import axios from "axios";
+import toast from "react-hot-toast";
 
 const KelolaUsers = () => {
-  const [users, setUsers] = useState([
-    {
-      id: 1,
-      npm: "198501012010011001",
-      nama: "Dr. Ahmad Santoso",
-      email: "ahmad.santoso@univ.ac.id",
-      password: "$2a$10$N9qo8uLOickgx2ZMRZoMye.Fwf8zYWXLVo6bJ1QJa2xPZb5gFw7uW", // hashed "password123"
-      role: "Dosen",
-    },
-    {
-      id: 2,
-      npm: "2021001001",
-      nama: "Budi Pratama",
-      email: "budi.pratama@student.univ.ac.id",
-      password: "$2a$10$N9qo8uLOickgx2ZMRZoMye.Fwf8zYWXLVo6bJ1QJa2xPZb5gFw7uW", // hashed "password123"
-      role: "Mahasiswa",
-    },
-    {
-      id: 3,
-      npm: "2021001002",
-      nama: "Siti Rahayu",
-      email: "siti.rahayu@student.univ.ac.id",
-      password: "$2a$10$N9qo8uLOickgx2ZMRZoMye.Fwf8zYWXLVo6bJ1QJa2xPZb5gFw7uW", // hashed "password123"
-      role: "Mahasiswa",
-    },
-  ]);
+  const [users, setUsers] = useState([]);
+
+  const fetchUsers = async () => {
+    try {
+      setIsLoading(true);
+      const response = await axios.get("/api/admin/users");
+
+      if (response.data.success) {
+        setIsLoading(false);
+      }
+
+      setUsers(response.data.data.rows);
+    } catch (error) {
+      toast.error("Gagal mengambil data dari server");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
   const [showModal, setShowModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -108,8 +106,8 @@ const KelolaUsers = () => {
         // Update user
         setUsers((prev) =>
           prev.map((user) =>
-            user.id === editingUser.id
-              ? { ...userData, id: editingUser.id }
+            user.id_user === editingUser.id_user
+              ? { ...userData, id_user: editingUser.id_user }
               : user
           )
         );
@@ -117,7 +115,7 @@ const KelolaUsers = () => {
         // Add new user
         const newUser = {
           ...userData,
-          id: Date.now(),
+          id_user: Date.now(),
         };
         setUsers((prev) => [...prev, newUser]);
       }
@@ -154,7 +152,7 @@ const KelolaUsers = () => {
 
   const handleDelete = (userId) => {
     if (confirm("Apakah Anda yakin ingin menghapus user ini?")) {
-      setUsers((prev) => prev.filter((user) => user.id !== userId));
+      setUsers((prev) => prev.filter((user) => user.id_user !== userId));
     }
   };
 
@@ -192,7 +190,7 @@ const KelolaUsers = () => {
       // Hash semua password
       const processedData = await Promise.all(
         jsonData.map(async (userData, index) => ({
-          id: Date.now() + index,
+          id_user: Date.now() + index,
           npm: userData.npm,
           nama: userData.nama,
           email: userData.email,
@@ -224,26 +222,26 @@ const KelolaUsers = () => {
 
     // Add headers
     worksheet.columns = [
-      { header: "NPM", key: "npm", width: 20 },
+      { header: "NPM", key: "npm", width: 15 },
       { header: "Nama", key: "nama", width: 30 },
       { header: "Email", key: "email", width: 30 },
-      { header: "Password", key: "password", width: 15 },
+      { header: "Password", key: "password", width: 30 },
       { header: "Role", key: "role", width: 15 },
     ];
 
     // Add sample data
     worksheet.addRow({
-      npm: "2021001001",
-      nama: "Contoh Mahasiswa",
-      email: "mahasiswa@example.com",
+      npm: "6181901072",
+      nama: "Nama mahasiswa",
+      email: "mahasiswa@gmail.com",
       password: "password123",
       role: "Mahasiswa",
     });
 
     worksheet.addRow({
-      npm: "D001",
-      nama: "Contoh Dosen",
-      email: "dosen@example.com",
+      npm: "2025060201",
+      nama: "Nama dosen",
+      email: "dosen@gmail.com",
       password: "password123",
       role: "Dosen",
     });
@@ -328,10 +326,10 @@ const KelolaUsers = () => {
   };
 
   return (
-    <div className="w-full max-w-7xl mx-auto">
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+    <div className="w-full lg:max-w-6xl mx-auto justify-center">
+      <div className="">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200">
+        <div className="">
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
               <h1 className="text-2xl font-bold text-gray-900">
@@ -367,7 +365,7 @@ const KelolaUsers = () => {
         </div>
 
         {/* Filters */}
-        <div className="px-6 py-4 border-b border-gray-200 bg-gray-50">
+        <div className="pt-4">
           <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex-1">
               <input
@@ -392,41 +390,31 @@ const KelolaUsers = () => {
           </div>
         </div>
 
-        {/* Loading Overlay */}
-        {isLoading && (
-          <div className="absolute inset-0 bg-white bg-opacity-75 flex items-center justify-center z-10">
-            <div className="flex items-center space-x-2">
-              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-              <span className="text-gray-600">Processing...</span>
-            </div>
-          </div>
-        )}
-
         {/* Table */}
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto pt-4">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-blue-500">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-sm font-bold text-white tracking-wider rounded-l-md">
                   NPM
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-sm font-bold text-white tracking-wider">
                   Nama
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-sm font-bold text-white tracking-wider">
                   Email
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-sm font-bold text-white tracking-wider">
                   Role
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th className="px-6 py-3 text-left text-sm font-bold text-white tracking-wider rounded-r-md">
                   Aksi
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {currentUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
+                <tr key={user.id_user} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
                       {user.npm}
@@ -444,8 +432,8 @@ const KelolaUsers = () => {
                     <span
                       className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                         user.role === "Dosen"
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-green-100 text-green-800"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-blue-100 text-blue-800"
                       }`}
                     >
                       {user.role}
@@ -457,10 +445,10 @@ const KelolaUsers = () => {
                         onClick={() => handleEdit(user)}
                         className="text-blue-600 hover:text-blue-900"
                       >
-                        Edit
+                        Ubah
                       </button>
                       <button
-                        onClick={() => handleDelete(user.id)}
+                        onClick={() => handleDelete(user.id_user)}
                         className="text-red-600 hover:text-red-900"
                       >
                         Hapus
@@ -522,11 +510,14 @@ const KelolaUsers = () => {
 
       {/* Modal Add/Edit User */}
       {showModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50"
+          style={{ backgroundColor: "rgba(75, 85, 99, 0.4)" }}
+        >
           <div className="bg-white rounded-lg max-w-md w-full max-h-[90vh] overflow-y-auto">
             <div className="px-6 py-4 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">
-                {editingUser ? "Edit User" : "Tambah User Baru"}
+                {editingUser ? "Ubah User" : "Tambah User Baru"}
               </h2>
             </div>
 
@@ -555,6 +546,7 @@ const KelolaUsers = () => {
                   name="nama"
                   value={formData.nama}
                   onChange={handleInputChange}
+                  placeholder="Masukkan nama lengkap"
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />
@@ -569,6 +561,7 @@ const KelolaUsers = () => {
                   name="email"
                   value={formData.email}
                   onChange={handleInputChange}
+                  placeholder="users@gmail.com"
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                 />
@@ -635,7 +628,7 @@ const KelolaUsers = () => {
                   {isLoading
                     ? "Processing..."
                     : editingUser
-                    ? "Update"
+                    ? "Ubah"
                     : "Simpan"}
                 </button>
               </div>
@@ -646,8 +639,11 @@ const KelolaUsers = () => {
 
       {/* Modal Import Excel */}
       {showImportModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-y-auto">
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50"
+          style={{ backgroundColor: "rgba(75, 85, 99, 0.4)" }}
+        >
+          <div className="bg-white rounded-lg max-w-5xl w-full max-h-[90vh] overflow-y-auto">
             <div className="px-6 py-4 border-b border-gray-200">
               <h2 className="text-lg font-semibold text-gray-900">
                 Import Data Excel
@@ -659,7 +655,7 @@ const KelolaUsers = () => {
                 <div className="space-y-4">
                   <div className="text-sm text-gray-600">
                     <p className="mb-2">
-                      Upload file Excel (.xlsx) dengan format kolom:
+                      Upload file Excel dengan format kolom:
                     </p>
                     <div className="bg-gray-50 p-4 rounded-lg">
                       <table className="text-xs w-full">
@@ -694,19 +690,27 @@ const KelolaUsers = () => {
                     <button
                       onClick={downloadTemplate}
                       disabled={isLoading}
-                      className="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors text-sm disabled:opacity-50"
+                      className="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-700 transition-colors text-sm disabled:opacity-50"
                     >
                       Download Template
                     </button>
                   </div>
 
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6">
+                  <div className="flex flex-col space-x-4">
+                    <h2>Upload file Excel</h2>
+                    <p className="text-xs text-gray-500 mt-2">
+                      * Format yang diterima (.xlsx dan .xls)
+                      <br />* Maksimal ukuran file 1 Mb
+                    </p>
+                  </div>
+
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 cursor-pointer">
                     <input
                       type="file"
                       accept=".xlsx,.xls"
                       onChange={handleFileImport}
                       disabled={isLoading}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50"
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 disabled:opacity-50 cursor-pointer"
                     />
                   </div>
                 </div>
@@ -759,7 +763,6 @@ const KelolaUsers = () => {
                             <td className="px-4 py-2 text-sm">{user.npm}</td>
                             <td className="px-4 py-2 text-sm">{user.nama}</td>
                             <td className="px-4 py-2 text-sm">{user.email}</td>
-                            <td className="px-4 py-2 text-sm">{user.role}</td>
                             <td className="px-4 py-2 text-sm">
                               <span
                                 className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
