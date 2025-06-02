@@ -474,6 +474,10 @@ const DaftarKelompok = () => {
       // setKomponenAnggotaAnggota(komponenAnggotaAnggota);
       // setKomponenAnggotaPM(komponenAnggotaPM);
       // setKomponenKetuaAnggota(komponenKetuaAnggota);
+
+      // console.log(komponenAnggotaAnggota);
+      // console.log(komponenAnggotaPM);
+      // console.log(komponenKetuaAnggota);
     } catch (error) {
       console.error("Error on route", error);
       router.refresh();
