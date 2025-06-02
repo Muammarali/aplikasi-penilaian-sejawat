@@ -1919,7 +1919,7 @@ const DaftarKelompok = () => {
         setCurrentPageStudents={setCurrentPageStudents}
         searchTerm={searchTerm}
         setSearchTerm={setSearchTerm}
-        itemsPerPage={itemsPerPage}
+        itemsPerPage={10}
         data={dataStudentsRekap}
         dataExcel={dataStudentsRekapExcel}
         handleDetailRekap={handleDetailRekap}
@@ -2662,40 +2662,44 @@ const DetailFormListMahasiswa = ({
 
   return (
     <div
-      className="fixed inset-0 flex items-center justify-center z-50"
+      className="fixed inset-0 flex items-center justify-center z-50 p-4"
       style={{ backgroundColor: "rgba(75, 85, 99, 0.4)" }}
     >
-      <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl p-6 relative max-h-[90vh] overflow-hidden">
-        {/* Tombol Close */}
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 z-10"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            className="h-6 w-6"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
+      <div className="bg-white rounded-lg shadow-2xl w-full max-w-4xl relative max-h-[90vh] flex flex-col">
+        {/* Header - Fixed */}
+        <div className="flex-shrink-0 p-6 pb-4 border-b border-gray-200">
+          {/* Tombol Close */}
+          <button
+            onClick={onClose}
+            className="absolute top-3 right-3 text-gray-500 hover:text-gray-700 z-10"
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M6 18L18 6M6 6l12 12"
-            />
-          </svg>
-        </button>
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-6 w-6"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
 
-        <h2 className="text-2xl font-bold mb-4 text-gray-800">
-          Detail Rekap Mahasiswa
-        </h2>
+          <h2 className="text-2xl font-bold text-gray-800">
+            Detail Rekap Mahasiswa
+          </h2>
+        </div>
 
-        <div>
+        {/* Content - Scrollable */}
+        <div className="flex-1 overflow-y-auto p-6 pt-4">
           {data.length > 0 ? (
             <div>
               {/* Search Bar */}
-              <div className="mb-2 mt-2 flex justify-between space-x-2">
+              <div className="mb-4 flex justify-between space-x-2">
                 <div className="relative w-1/2">
                   <IoSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
@@ -2718,7 +2722,7 @@ const DetailFormListMahasiswa = ({
               </div>
 
               {/* Table */}
-              <div className="space-y-2 pt-2">
+              <div className="space-y-2">
                 {/* Header */}
                 <div className="grid grid-cols-[2fr_3fr_2fr_1fr] gap-4 px-4 py-3 bg-blue-500 rounded-md font-semibold text-zinc-100 text-sm">
                   <div className="truncate whitespace-nowrap">NPM</div>
@@ -2730,16 +2734,16 @@ const DetailFormListMahasiswa = ({
                 </div>
 
                 {/* Content */}
-                <ul className="space-y-2">
+                <div className="space-y-2 max-h-64 overflow-y-auto">
                   {currentStudents.length === 0 ? (
-                    <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+                    <div className="p-4 bg-gray-50 rounded-md border border-gray-200">
                       <p className="text-sm text-gray-500">
                         Belum ada data mahasiswa
                       </p>
                     </div>
                   ) : (
                     currentStudents.map((student) => (
-                      <li
+                      <div
                         key={student.npm}
                         className="bg-white p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow group"
                       >
@@ -2764,21 +2768,23 @@ const DetailFormListMahasiswa = ({
                             </button>
                           </div>
                         </div>
-                      </li>
+                      </div>
                     ))
                   )}
-                </ul>
+                </div>
 
                 {/* Pagination */}
                 {filteredStudents.length > 0 && (
-                  <Pagination
-                    currentPage={currentPageStudents}
-                    totalPages={totalPagesStudents}
-                    paginate={paginateStudents}
-                    indexOfFirstItem={indexOfFirstStudent}
-                    indexOfLastItem={indexOfLastStudent}
-                    data={filteredStudents}
-                  />
+                  <div className="pt-4">
+                    <Pagination
+                      currentPage={currentPageStudents}
+                      totalPages={totalPagesStudents}
+                      paginate={paginateStudents}
+                      indexOfFirstItem={indexOfFirstStudent}
+                      indexOfLastItem={indexOfLastStudent}
+                      data={filteredStudents}
+                    />
+                  </div>
                 )}
               </div>
 
@@ -2792,7 +2798,7 @@ const DetailFormListMahasiswa = ({
               )}
             </div>
           ) : (
-            <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
+            <div className="p-4 bg-gray-50 rounded-md border border-gray-200">
               <p className="text-sm text-gray-500">
                 Data rekap nilai belum tersedia
               </p>
@@ -2800,14 +2806,16 @@ const DetailFormListMahasiswa = ({
           )}
         </div>
 
-        {/* Tombol Tutup */}
-        <div className="flex justify-end mt-6">
-          <button
-            onClick={onClose}
-            className="px-5 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
-          >
-            Tutup
-          </button>
+        {/* Footer - Fixed */}
+        <div className="flex-shrink-0 p-6 pt-4 border-t border-gray-200">
+          <div className="flex justify-end">
+            <button
+              onClick={onClose}
+              className="px-5 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition"
+            >
+              Tutup
+            </button>
+          </div>
         </div>
       </div>
     </div>
