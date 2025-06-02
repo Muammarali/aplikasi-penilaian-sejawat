@@ -79,7 +79,6 @@ const KelolaUsers = () => {
       const hashedPassword = await bcrypt.hash(password, salt);
       return hashedPassword;
     } catch (error) {
-      console.error("Error hashing password:", error);
       throw error;
     }
   };
@@ -91,36 +90,52 @@ const KelolaUsers = () => {
     try {
       let userData = { ...formData };
 
-      // Hash password jika ada perubahan password atau user baru
       if (
         formData.password &&
         (editingUser === null || formData.password !== "")
       ) {
         userData.password = await hashPassword(formData.password);
       } else if (editingUser && !formData.password) {
-        // Jika edit dan password kosong, gunakan password lama
-        userData.password = editingUser.password;
+        // Jika edit dan password kosong, jangan kirim password (biarkan undefined)
+        delete userData.password;
       }
 
       if (editingUser) {
-        // Update user
-        setUsers((prev) =>
-          prev.map((user) =>
-            user.id_user === editingUser.id_user
-              ? { ...userData, id_user: editingUser.id_user }
-              : user
-          )
-        );
+        // Update user - panggil API PUT dengan axios
+        userData.id_user = editingUser.id_user;
+
+        const response = await axios.put("/api/admin/users/ubah", userData);
+
+        if (response.data.success) {
+          // Update state users
+          setUsers((prev) =>
+            prev.map((user) =>
+              user.id_user === editingUser.id_user
+                ? { ...response.data.data }
+                : user
+            )
+          );
+
+          toast.success("Data user berhasil diubah");
+        } else {
+          toast.error(response.data.message || "Gagal mengubah data user");
+          return;
+        }
       } else {
-        // Add new user
-        const newUser = {
-          ...userData,
-          id_user: Date.now(),
-        };
-        setUsers((prev) => [...prev, newUser]);
+        // Add new user - panggil API POST dengan axios
+        const response = await axios.post("/api/admin/users/tambah", userData);
+
+        if (response.data.success) {
+          // Tambah ke state users
+          setUsers((prev) => [...prev, response.data.data]);
+          toast.success("Berhasil menambah user");
+        } else {
+          toast.error(response.data.message || "Gagal menambah user");
+          return;
+        }
       }
 
-      // Reset form
+      // Reset form jika berhasil
       setFormData({
         npm: "",
         nama: "",
@@ -131,8 +146,15 @@ const KelolaUsers = () => {
       setEditingUser(null);
       setShowModal(false);
     } catch (error) {
-      console.error("Error saving user:", error);
-      alert("Terjadi error saat menyimpan data user");
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        toast.error(error.response.data.message || "Server error");
+      } else {
+        toast.error("Terjadi error saat menyimpan data user");
+      }
     } finally {
       setIsLoading(false);
     }
@@ -144,15 +166,43 @@ const KelolaUsers = () => {
       npm: user.npm,
       nama: user.nama,
       email: user.email,
-      password: "", // Kosongkan password untuk keamanan
+      password: "",
       role: user.role,
     });
     setShowModal(true);
   };
 
-  const handleDelete = (userId) => {
-    if (confirm("Apakah Anda yakin ingin menghapus user ini?")) {
-      setUsers((prev) => prev.filter((user) => user.id_user !== userId));
+  const handleDelete = async (userId) => {
+    // Konfirmasi delete
+    if (!confirm("Apakah Anda yakin ingin menghapus user ini?")) {
+      return;
+    }
+
+    try {
+      // Panggil API DELETE dengan axios
+      const response = await axios.delete("/api/admin/users/hapus", {
+        data: { id_user: userId },
+      });
+
+      if (response.data.success) {
+        // Update state users - hapus user dari array
+        setUsers((prev) => prev.filter((user) => user.id_user !== userId));
+
+        // Optional: tampilkan success message
+        toast.success(response.data.message || "Berhasil menghapus user");
+      } else {
+        toast.error(response.data.message || "Gagal menghapus");
+      }
+    } catch (error) {
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Terjadi error saat menghapus user");
+      }
     }
   };
 
@@ -172,48 +222,129 @@ const KelolaUsers = () => {
       // Skip header row (row 1) dan mulai dari row 2
       worksheet.eachRow((row, rowNumber) => {
         if (rowNumber > 1) {
-          const rowData = {
-            npm: row.getCell(1).value?.toString() || "",
-            nama: row.getCell(2).value?.toString() || "",
-            email: row.getCell(3).value?.toString() || "",
-            password: row.getCell(4).value?.toString() || "password123", // default password
-            role: row.getCell(5).value?.toString() || "Mahasiswa",
-          };
+          // Ambil nilai raw dan konversi sesuai tipe data
+          const npmValue = row.getCell(1).value;
+          const namaValue = row.getCell(2).value;
+          const emailValue = row.getCell(3).value;
+          const passwordValue = row.getCell(4).value;
+          const roleValue = row.getCell(5).value;
+
+          // Konversi NPM ke string dulu, lalu akan dikonversi ke int di API
+          const npm = npmValue ? npmValue.toString().trim() : "";
+          const nama = namaValue ? namaValue.toString().trim() : "";
+
+          // Handle email hyperlink object
+          let email = "";
+          if (emailValue) {
+            if (typeof emailValue === "object") {
+              // Check for hyperlink object structure
+              email =
+                emailValue.text ||
+                emailValue.hyperlink ||
+                emailValue.toString();
+            } else {
+              email = emailValue.toString().trim();
+            }
+          }
+
+          const password = passwordValue
+            ? passwordValue.toString().trim()
+            : "password123";
+          const role = roleValue ? roleValue.toString().trim() : "Mahasiswa";
+
+          // Validasi NPM harus angka
+          if (npm && isNaN(parseInt(npm))) {
+            toast.error(
+              `NPM pada baris ${rowNumber} harus berupa angka: ${npm}`
+            );
+            setIsLoading(false);
+            return;
+          }
 
           // Validasi data tidak kosong
-          if (rowData.npm && rowData.nama && rowData.email) {
-            jsonData.push(rowData);
+          if (npm && nama && email) {
+            jsonData.push({
+              npm,
+              nama,
+              email,
+              password,
+              role,
+            });
           }
         }
       });
 
+      if (jsonData.length === 0) {
+        toast.error("Tidak ada data valid yang ditemukan dalam file Excel");
+        return;
+      }
+
       // Hash semua password
       const processedData = await Promise.all(
-        jsonData.map(async (userData, index) => ({
-          id_user: Date.now() + index,
+        jsonData.map(async (userData) => ({
           npm: userData.npm,
           nama: userData.nama,
-          email: userData.email,
+          email: userData.email, // Email sudah diproses di atas
           password: await hashPassword(userData.password),
           role: userData.role,
         }))
       );
 
+      console.log(processedData);
+
       setImportData(processedData);
       setImportPreview(true);
     } catch (error) {
-      console.error("Error reading Excel file:", error);
-      alert("Error membaca file Excel. Pastikan format file sesuai template.");
+      toast.error(
+        "Error membaca file Excel. Pastikan format file sesuai template."
+      );
     } finally {
       setIsLoading(false);
     }
   };
 
-  const confirmImport = () => {
-    setUsers((prev) => [...prev, ...importData]);
-    setImportData([]);
-    setImportPreview(false);
-    setShowImportModal(false);
+  const confirmImport = async () => {
+    if (importData.length === 0) {
+      toast.error("Tidak ada data untuk diimport");
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Panggil API POST dengan array data untuk bulk import
+      const response = await axios.post("/api/admin/users/tambah", importData);
+
+      if (response.data.success) {
+        // Update state users dengan data yang berhasil diimport
+        setUsers((prev) => [...prev, ...response.data.data]);
+        toast.success(`${response.data.count} user berhasil diimport`);
+
+        // Reset import state
+        setImportData([]);
+        setImportPreview(false);
+        setShowImportModal(false);
+
+        // Reset file input
+        const fileInput = document.querySelector('input[type="file"]');
+        if (fileInput) fileInput.value = "";
+      } else {
+        toast.error(response.data.message);
+      }
+    } catch (error) {
+      // Handle axios error response
+      if (
+        error.response &&
+        error.response.data &&
+        error.response.data.message
+      ) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error("Terjadi error saat mengimport data user");
+      }
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const downloadTemplate = async () => {
@@ -318,8 +449,7 @@ const KelolaUsers = () => {
       a.click();
       window.URL.revokeObjectURL(url);
     } catch (error) {
-      console.error("Error exporting data:", error);
-      alert("Error saat export data");
+      toast.error("Error saat export data");
     } finally {
       setIsLoading(false);
     }
@@ -417,7 +547,7 @@ const KelolaUsers = () => {
                 <tr key={user.id_user} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
-                      {user.npm}
+                      {user?.npm || "-"}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
@@ -529,7 +659,7 @@ const KelolaUsers = () => {
                 <input
                   type="text"
                   name="npm"
-                  value={formData.npm}
+                  value={formData?.npm || ""}
                   onChange={handleInputChange}
                   placeholder="Nomor Pokok Mahasiswa / NIP"
                   required
