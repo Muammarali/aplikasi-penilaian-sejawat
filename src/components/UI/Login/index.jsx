@@ -38,21 +38,20 @@ const Login = () => {
         showNotification.dismiss(loadingToastId);
 
         if (!response?.ok) {
-          showNotification.error("Invalid email or password");
+          showNotification.error("Email atau password salah");
           setIsLoading(false);
         } else {
-          showNotification.success("Login successful!");
+          showNotification.success("Berhasil login");
           router.push("/");
         }
       } else {
         showNotification.error(
-          "Email and password must be at least 4 characters"
+          "Email dan password harus lebih dari 4 karakter"
         );
         setIsLoading(false);
       }
     } catch (error) {
-      showNotification.error("An error occurred while logging in");
-      console.error("Error on routes", error);
+      showNotification.error("Error saat login");
       setIsLoading(false);
     }
   };
