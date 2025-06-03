@@ -15,7 +15,19 @@ export async function middleware(req) {
 
   // Redirect ke halaman utama kalau sudah login dan tetap buka login
   if (token && pathname === "/login") {
-    return NextResponse.redirect(new URL("/", req.url));
+    const userRole = token.role;
+
+    if (userRole === "Dosen") {
+      return NextResponse.redirect(new URL("/daftarkelas", req.url));
+    }
+
+    if (userRole === "Mahasiswa") {
+      return NextResponse.redirect(new URL("/", req.url));
+    }
+
+    if (userRole === "Admin") {
+      return NextResponse.redirect(new URL("/admin/users", req.url));
+    }
   }
 
   if (token) {

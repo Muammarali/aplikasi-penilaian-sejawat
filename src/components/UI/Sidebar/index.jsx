@@ -15,7 +15,7 @@ const NAVIGATION_ITEMS = [
     href: "/",
     subpaths: ["/"],
     icon: <RiDashboardLine size={24} className="ml-1" />,
-    roles: ["Admin", "Dosen", "Mahasiswa"],
+    roles: ["Admin", "Mahasiswa"],
   },
   {
     name: "Mata Kuliah",

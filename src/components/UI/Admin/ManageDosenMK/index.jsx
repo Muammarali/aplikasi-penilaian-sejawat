@@ -1,74 +1,44 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
+import axios from "axios";
 import ExcelJS from "exceljs";
 
 const KelolaMataKuliah = () => {
   // Data dummy dosen
-  const [dosenList] = useState([
-    {
-      id: 1,
-      npm: "198501012010011001",
-      nama: "Dr. Ahmad Santoso",
-      email: "ahmad.santoso@univ.ac.id",
-    },
-    {
-      id: 2,
-      npm: "198603052011012002",
-      nama: "Prof. Dr. Siti Aminah",
-      email: "siti.aminah@univ.ac.id",
-    },
-    {
-      id: 3,
-      npm: "198712102012011003",
-      nama: "Dr. Budi Hartono, M.T.",
-      email: "budi.hartono@univ.ac.id",
-    },
-    {
-      id: 4,
-      npm: "199001152013012004",
-      nama: "Dr. Rina Kusuma, S.Kom., M.Kom.",
-      email: "rina.kusuma@univ.ac.id",
-    },
-  ]);
+  const [dosenList, setDosenList] = useState([]);
 
   // Data dummy mata kuliah (without semester and deskripsi)
-  const [mataKuliah, setMataKuliah] = useState([
-    {
-      id: 1,
-      kodeMatkul: "IF101",
-      namaMatkul: "Algoritma dan Pemrograman",
-      sks: 3,
-      tahunAjaran: "2024/2025",
-      dosenPengampu: [
-        { id: 1, npm: "198501012010011001", nama: "Dr. Ahmad Santoso" },
-      ],
-    },
-    {
-      id: 2,
-      kodeMatkul: "IF201",
-      namaMatkul: "Struktur Data",
-      sks: 3,
-      tahunAjaran: "2024/2025",
-      dosenPengampu: [
-        { id: 2, npm: "198603052011012002", nama: "Prof. Dr. Siti Aminah" },
-        { id: 3, npm: "198712102012011003", nama: "Dr. Budi Hartono, M.T." },
-      ],
-    },
-    {
-      id: 3,
-      kodeMatkul: "IF301",
-      namaMatkul: "Basis Data",
-      sks: 4,
-      tahunAjaran: "2024/2025",
-      dosenPengampu: [
-        {
-          id: 4,
-          npm: "199001152013012004",
-          nama: "Dr. Rina Kusuma, S.Kom., M.Kom.",
-        },
-      ],
-    },
-  ]);
+  const [mataKuliah, setMataKuliah] = useState([]);
+
+  const fetchMataKuliah = async () => {
+    try {
+      const response = await axios.get("/api/admin/dosen-matakuliah/fetch");
+      const data = response.data.rows;
+
+      setMataKuliah(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+  ("");
+  const fetchDosen = async () => {
+    try {
+      const response = await axios.get(
+        "/api/admin/dosen-matakuliah/fetch/dosen"
+      );
+      const data = response.data.rows;
+
+      setDosenList(data);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  useEffect(() => {
+    fetchDosen();
+    fetchMataKuliah();
+  }, []);
 
   const [showModal, setShowModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -200,6 +170,7 @@ const KelolaMataKuliah = () => {
   };
 
   const handleEdit = (matkul) => {
+    console.log(matkul);
     setEditingMatkul(matkul);
     setFormData({
       kodeMatkul: matkul.kodeMatkul,
@@ -645,7 +616,7 @@ const KelolaMataKuliah = () => {
                       name="kodeMatkul"
                       value={formData.kodeMatkul}
                       onChange={handleInputChange}
-                      placeholder="e.g., IF101"
+                      placeholder="e.g., AIF233301"
                       required
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
@@ -694,7 +665,7 @@ const KelolaMataKuliah = () => {
                       onChange={handleInputChange}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     >
-                      {tahunAjaranOptions.map((tahun) => (
+                      {uniqueTahunAjaran.map((tahun) => (
                         <option key={tahun} value={tahun}>
                           {tahun}
                         </option>
