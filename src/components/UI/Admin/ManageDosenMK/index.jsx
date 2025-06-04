@@ -4,6 +4,7 @@ import { useSession } from "next-auth/react";
 import axios from "axios";
 import ExcelJS from "exceljs";
 import toast from "react-hot-toast";
+import DetailMataKuliahModal from "../DetailMataKuliahModal";
 
 const KelolaMataKuliah = () => {
   // Data dosen
@@ -92,6 +93,8 @@ const KelolaMataKuliah = () => {
   const [filterKelas, setFilterKelas] = useState("semua");
   const [currentPage, setCurrentPage] = useState(1);
   const [matkulPerPage] = useState(10);
+  const [selectedMataKuliah, setSelectedMataKuliah] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const [formData, setFormData] = useState({
@@ -185,6 +188,16 @@ const KelolaMataKuliah = () => {
     } else {
       setSelectedDosen((prev) => [...prev, dosen]);
     }
+  };
+
+  const handleRowClick = (mk) => {
+    setSelectedMataKuliah(mk);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setSelectedMataKuliah(null);
   };
 
   // Alternative version dengan try-catch yang lebih detail
@@ -802,7 +815,11 @@ const KelolaMataKuliah = () => {
                 }-${Math.random().toString(36).substr(2, 9)}`;
 
                 return (
-                  <tr key={uniqueKey} className="hover:bg-gray-50">
+                  <tr
+                    key={uniqueKey}
+                    className="hover:bg-gray-50 cursor-pointer"
+                    onClick={() => handleRowClick(mk)}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
                         {mk.kodeMatkul || mk.kode_mk}
@@ -874,6 +891,12 @@ const KelolaMataKuliah = () => {
               })}
             </tbody>
           </table>
+
+          <DetailMataKuliahModal
+            isOpen={isModalOpen}
+            onClose={handleCloseModal}
+            mataKuliah={selectedMataKuliah}
+          />
         </div>
 
         {/* Pagination */}
