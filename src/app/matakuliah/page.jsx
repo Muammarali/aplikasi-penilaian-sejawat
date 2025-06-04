@@ -1,13 +1,10 @@
 import React from "react";
 import Layout from "../../components/Layout";
-import MataKuliah from "../../components/UI/MataKuliah";
+import DaftarKelas from "../../components/UI/DaftarKelas";
+import MataKuliahContainer from "../../components/UI/MataKuliahContainer";
 
 const page = () => {
-  return (
-    <Layout>
-      <MataKuliah />
-    </Layout>
-  );
+  return <MataKuliahContainer />;
 };
 
 export default page;

@@ -18,7 +18,7 @@ export async function middleware(req) {
     const userRole = token.role;
 
     if (userRole === "Dosen") {
-      return NextResponse.redirect(new URL("/daftarkelas", req.url));
+      return NextResponse.redirect(new URL("/matakuliah", req.url));
     }
 
     if (userRole === "Mahasiswa") {
@@ -35,8 +35,8 @@ export async function middleware(req) {
 
     // Role-based access
     const roleAccess = {
-      Mahasiswa: ["/", "/matakuliah", "/daftarkelas"],
-      Dosen: ["/", "/matakuliah", "/daftarkelas"],
+      Mahasiswa: ["/", "/matakuliah"],
+      Dosen: ["/", "/matakuliah"],
       Admin: ["/", "/admin/users", "/admin/dosen-matakuliah"],
     };
 
@@ -50,7 +50,6 @@ export async function middleware(req) {
     const existingPaths = [
       "/",
       "/matakuliah",
-      "/daftarkelas",
       "/login",
       "/forbidden",
       "/admin/users",

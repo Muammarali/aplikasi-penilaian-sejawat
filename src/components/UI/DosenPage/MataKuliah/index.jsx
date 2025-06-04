@@ -118,7 +118,7 @@ const DaftarKelasDosen = () => {
                     <button
                       onClick={() =>
                         router.push(
-                          `/daftarkelas/${
+                          `/matakuliah/${
                             replacePercent(daftarkelas?.nama) +
                             "-" +
                             daftarkelas?.kelas +

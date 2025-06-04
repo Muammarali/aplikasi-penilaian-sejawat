@@ -22,13 +22,6 @@ const NAVIGATION_ITEMS = [
     href: "/matakuliah",
     subpaths: ["/matakuliah"],
     icon: <LuBookOpen size={24} className="ml-1" />,
-    roles: ["Mahasiswa"],
-  },
-  {
-    name: "Daftar Kelas",
-    href: "/daftarkelas",
-    subpaths: ["/daftarkelas/new", "/daftarkelas/edit", "/daftarkelas/view"],
-    icon: <BiTask size={24} className="ml-1" />,
     roles: ["Dosen", "Mahasiswa"],
   },
   // Menu khusus Admin

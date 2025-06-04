@@ -242,7 +242,7 @@ const DaftarKelompok = () => {
       });
 
       if (!response.data.success) {
-        router.push("/daftarkelas");
+        router.push("/matakuliah");
         return;
       }
 
@@ -250,7 +250,7 @@ const DaftarKelompok = () => {
       setDataKelompok(data);
     } catch (error) {
       console.error("Error on route", error);
-      router.push("/daftarkelas");
+      router.push("/matakuliah");
     }
   };
 
@@ -429,7 +429,7 @@ const DaftarKelompok = () => {
       setFormPenilaian(data);
     } catch (error) {
       console.error("Error on route", error);
-      router.push("/daftarkelas");
+      router.push("/matakuliah");
     }
   };
 
