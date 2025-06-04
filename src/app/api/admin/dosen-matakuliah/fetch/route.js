@@ -8,6 +8,7 @@ export async function GET() {
         mk.id_mk,
         mk.kode_mk,
         mk.nama AS nama_mata_kuliah,
+        mk.kelas,
         mk.sks,
         CONCAT(ta.nama, ' ', ta.tipe) AS tahun_ajaran,
         COALESCE(
@@ -15,7 +16,8 @@ export async function GET() {
             DISTINCT JSONB_BUILD_OBJECT(
               'id', u.id_user,
               'npm', u.npm,
-              'nama', u.nama
+              'nama', u.nama,
+              'email', u.email
             )
           ) FILTER (WHERE u.id_user IS NOT NULL),
           '[]'
@@ -31,9 +33,9 @@ export async function GET() {
       LEFT JOIN 
         users u ON dm.id_user = u.id_user
       GROUP BY 
-        mk.id_mk, mk.kode_mk, mk.nama, mk.sks, ta.nama, ta.tipe
+        mk.id_mk, mk.kode_mk, mk.nama, mk.kelas, mk.sks, ta.nama, ta.tipe
       ORDER BY 
-        mk.nama;
+        mk.nama ASC, mk.kelas;
     `;
 
     const data = await handlerQuery(query);
@@ -42,6 +44,7 @@ export async function GET() {
       id: item.id_mk,
       kodeMatkul: item.kode_mk,
       namaMatkul: item.nama_mata_kuliah,
+      kelas: item.kelas,
       sks: item.sks,
       tahunAjaran: item.tahun_ajaran,
       dosenPengampu: item.dosen_pengampu,

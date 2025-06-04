@@ -28,7 +28,7 @@ export async function POST(req) {
         fp.nama,
         kp.id_komponen,
         kp.nama_komponen,
-        kp.bobot,  -- 🆕 TAMBAHKAN INI
+        kp.bobot,
         hp.id_dinilai,
         hp.nilai,
         MIN(mk_dinilai.id_kelompok) AS id_kelompok,

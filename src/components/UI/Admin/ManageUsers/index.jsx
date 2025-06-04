@@ -353,7 +353,7 @@ const KelolaUsers = () => {
 
     // Add headers
     worksheet.columns = [
-      { header: "NPM", key: "npm", width: 15 },
+      { header: "NPM / NIK", key: "npm", width: 15 },
       { header: "Nama", key: "nama", width: 30 },
       { header: "Email", key: "email", width: 30 },
       { header: "Password", key: "password", width: 30 },
@@ -410,7 +410,7 @@ const KelolaUsers = () => {
 
       // Add headers
       worksheet.columns = [
-        { header: "NPM", key: "npm", width: 20 },
+        { header: "NPM / NIK", key: "npm", width: 20 },
         { header: "Nama", key: "nama", width: 30 },
         { header: "Email", key: "email", width: 30 },
         { header: "Role", key: "role", width: 15 },
@@ -500,7 +500,7 @@ const KelolaUsers = () => {
             <div className="flex-1">
               <input
                 type="text"
-                placeholder="Cari nama, email, atau NPM..."
+                placeholder="Cari nama, email, atau NPM / NIK..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg"
@@ -526,7 +526,7 @@ const KelolaUsers = () => {
             <thead className="bg-blue-500">
               <tr>
                 <th className="px-6 py-3 text-left text-sm font-bold text-white tracking-wider rounded-l-md">
-                  NPM
+                  NPM / NIK
                 </th>
                 <th className="px-6 py-3 text-left text-sm font-bold text-white tracking-wider">
                   Nama
@@ -654,14 +654,14 @@ const KelolaUsers = () => {
             <form onSubmit={handleSubmit} className="px-6 py-4 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
-                  NPM
+                  NPM / NIK
                 </label>
                 <input
                   type="text"
                   name="npm"
                   value={formData?.npm || ""}
                   onChange={handleInputChange}
-                  placeholder="Nomor Pokok Mahasiswa / NIP"
+                  placeholder="NPM / NIK"
                   required
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg "
                 />
@@ -800,7 +800,7 @@ const KelolaUsers = () => {
                         </thead>
                         <tbody>
                           <tr>
-                            <td className="py-1 px-2">NPM</td>
+                            <td className="py-1 px-2">NPM / NIK</td>
                             <td className="py-1 px-2">Nama</td>
                             <td className="py-1 px-2">Email</td>
                             <td className="py-1 px-2">Password</td>
@@ -871,7 +871,7 @@ const KelolaUsers = () => {
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 border-b">
-                            NPM
+                            NPM / NIK
                           </th>
                           <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 border-b">
                             Nama
