@@ -10,6 +10,7 @@ export async function GET() {
         mk.nama AS nama_mata_kuliah,
         mk.kelas,
         mk.sks,
+        mk.status,
         CONCAT(ta.nama, ' ', ta.tipe) AS tahun_ajaran,
         COALESCE(
           JSON_AGG(
@@ -25,15 +26,13 @@ export async function GET() {
       FROM 
         mata_kuliah mk
       INNER JOIN 
-        tahun_mata_kuliah tm ON mk.id_mk = tm.id_mk
-      INNER JOIN 
-        tahun_ajaran ta ON tm.id_tahun_ajaran = ta.id_tahun_ajaran
+        tahun_ajaran ta ON mk.id_tahun_ajaran = ta.id_tahun_ajaran
       LEFT JOIN 
         dosen_mata_kuliah dm ON mk.id_mk = dm.id_mk
       LEFT JOIN 
         users u ON dm.id_user = u.id_user
       GROUP BY 
-        mk.id_mk, mk.kode_mk, mk.nama, mk.kelas, mk.sks, ta.nama, ta.tipe
+        mk.id_mk, mk.kode_mk, mk.nama, mk.kelas, mk.sks, mk.status, ta.nama, ta.tipe
       ORDER BY 
         mk.nama ASC, mk.kelas;
     `;
@@ -46,6 +45,7 @@ export async function GET() {
       namaMatkul: item.nama_mata_kuliah,
       kelas: item.kelas,
       sks: item.sks,
+      status: item.status, // Tambahan: kolom status
       tahunAjaran: item.tahun_ajaran,
       dosenPengampu: item.dosen_pengampu,
     }));

@@ -28,6 +28,7 @@ const KelolaMataKuliah = () => {
         kelas: mk.kelas || "",
         sks: mk.sks || 0,
         tahunAjaran: mk.tahunAjaran || mk.tahun_ajaran || "",
+        status: mk.status !== undefined ? mk.status : true, // Default active jika tidak ada status
         dosenPengampu: Array.isArray(mk.dosenPengampu)
           ? mk.dosenPengampu
           : Array.isArray(mk.dosen_pengampu)
@@ -91,6 +92,7 @@ const KelolaMataKuliah = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterTahunAjaran, setFilterTahunAjaran] = useState("semua");
   const [filterKelas, setFilterKelas] = useState("semua");
+  const [filterStatus, setFilterStatus] = useState("semua"); // Filter status baru
   const [currentPage, setCurrentPage] = useState(1);
   const [matkulPerPage] = useState(10);
   const [selectedMataKuliah, setSelectedMataKuliah] = useState(null);
@@ -161,7 +163,13 @@ const KelolaMataKuliah = () => {
 
     const matchesKelas = filterKelas === "semua" || mk?.kelas === filterKelas;
 
-    return matchesSearch && matchesTahunAjaran && matchesKelas;
+    // Filter status: semua | aktif | nonaktif
+    const matchesStatus =
+      filterStatus === "semua" ||
+      (filterStatus === "aktif" && mk?.status === true) ||
+      (filterStatus === "nonaktif" && mk?.status === false);
+
+    return matchesSearch && matchesTahunAjaran && matchesKelas && matchesStatus;
   });
 
   // Pagination
@@ -224,6 +232,7 @@ const KelolaMataKuliah = () => {
         sks: parseInt(formData.sks),
         tahunAjaran: formData.tahunAjaran,
         dosenPengampu: selectedDosen,
+        status: true, // Default aktif untuk mata kuliah baru
       };
 
       let response;
@@ -396,9 +405,42 @@ const KelolaMataKuliah = () => {
     }
   }, [currentMataKuliah]);
 
-  const handleDelete = (matkulId) => {
-    if (confirm("Apakah Anda yakin ingin menghapus mata kuliah ini?")) {
-      setMataKuliah((prev) => prev.filter((mk) => mk.id !== matkulId));
+  const handleStatus = async (matkulId) => {
+    if (confirm("Apakah Anda yakin ingin mengubah status mata kuliah ini?")) {
+      try {
+        const response = await axios.patch(
+          "/api/admin/dosen-matakuliah/kelolamk/status",
+          {
+            id: matkulId,
+          }
+        );
+
+        if (response.data.success) {
+          // Update status di state frontend
+          setMataKuliah((prev) =>
+            prev.map((mk) =>
+              mk.id === matkulId || mk.id_mk === matkulId
+                ? { ...mk, status: response.data.data.status }
+                : mk
+            )
+          );
+
+          console.log("Status updated:", response.data);
+          toast.success(response.data.message || "Status berhasil diubah!");
+        } else {
+          throw new Error(response.data.message);
+        }
+      } catch (error) {
+        console.error("Error updating status:", error);
+
+        if (error.response && error.response.data) {
+          toast.error(`Error: ${error.response.data.message}`);
+        } else if (error.message) {
+          toast.error(`Error: ${error.message}`);
+        } else {
+          toast.error("Terjadi error saat mengubah status mata kuliah");
+        }
+      }
     }
   };
 
@@ -472,6 +514,7 @@ const KelolaMataKuliah = () => {
           sks: matkulData.sks,
           tahunAjaran: matkulData.tahunAjaran,
           dosenPengampu: dosenPengampu,
+          status: true, // Default aktif untuk import
         };
       });
 
@@ -479,7 +522,9 @@ const KelolaMataKuliah = () => {
       setImportPreview(true);
     } catch (error) {
       console.error("Error reading Excel file:", error);
-      alert("Error membaca file Excel. Pastikan format file sesuai template.");
+      toast.error(
+        "Error membaca file Excel. Pastikan format file sesuai template."
+      );
     } finally {
       setIsLoading(false);
     }
@@ -504,6 +549,7 @@ const KelolaMataKuliah = () => {
               sks: mkData.sks,
               tahunAjaran: mkData.tahunAjaran,
               dosenPengampu: mkData.dosenPengampu,
+              status: true, // Default aktif
             }
           );
 
@@ -530,7 +576,7 @@ const KelolaMataKuliah = () => {
 
       // Show results
       if (successfulImports.length > 0) {
-        alert(
+        toast.success(
           `Import berhasil: ${successfulImports.length} mata kuliah ditambahkan`
         );
       }
@@ -540,13 +586,13 @@ const KelolaMataKuliah = () => {
         const errorMessages = failedImports
           .map((failed) => `Baris ${failed.row}: ${failed.error}`)
           .join("\n");
-        alert(
+        toast.error(
           `Import gagal untuk ${failedImports.length} data:\n${errorMessages}`
         );
       }
     } catch (error) {
       console.error("Error during import:", error);
-      alert("Terjadi kesalahan saat import data");
+      toast.error("Terjadi kesalahan saat import data");
     } finally {
       setIsLoading(false);
       setImportData([]);
@@ -611,13 +657,6 @@ const KelolaMataKuliah = () => {
       };
     });
 
-    // Add data validation untuk tahun ajaran (opsional)
-    // worksheet.getCell('E2').dataValidation = {
-    //   type: 'list',
-    //   allowBlank: true,
-    //   formulae: ['"2024/2025 Ganjil,2024/2025 Genap,2025/2026 Ganjil,2025/2026 Genap"']
-    // };
-
     // Generate buffer and download
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], {
@@ -646,6 +685,7 @@ const KelolaMataKuliah = () => {
         { header: "Kelas", key: "kelas", width: 10 },
         { header: "SKS", key: "sks", width: 10 },
         { header: "Tahun Ajaran", key: "tahunAjaran", width: 20 },
+        { header: "Status", key: "status", width: 15 }, // Tambah kolom status
         { header: "Dosen Pengampu", key: "dosenPengampu", width: 40 },
         { header: "NIK Dosen", key: "npmDosen", width: 35 },
       ];
@@ -658,6 +698,7 @@ const KelolaMataKuliah = () => {
           kelas: mk.kelas,
           sks: mk.sks,
           tahunAjaran: mk.tahunAjaran || mk.tahun_ajaran,
+          status: mk.status ? "Aktif" : "Nonaktif", // Format status
           dosenPengampu: (mk.dosenPengampu || mk.dosen_pengampu || [])
             .map((d) => d.nama)
             .join(", "),
@@ -693,7 +734,7 @@ const KelolaMataKuliah = () => {
       window.URL.revokeObjectURL(url);
     } catch (error) {
       console.error("Error exporting data:", error);
-      alert("Error saat export data");
+      toast.error("Error saat export data");
     } finally {
       setIsLoading(false);
     }
@@ -752,6 +793,15 @@ const KelolaMataKuliah = () => {
             </div>
             <div className="flex flex-col sm:flex-row gap-2">
               <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              >
+                <option value="semua">Semua Status</option>
+                <option value="aktif">Aktif</option>
+                <option value="nonaktif">Nonaktif</option>
+              </select>
+              <select
                 value={filterKelas}
                 onChange={(e) => setFilterKelas(e.target.value)}
                 className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -800,6 +850,9 @@ const KelolaMataKuliah = () => {
                   Tahun Ajaran
                 </th>
                 <th className="px-6 py-3 text-left text-sm font-bold text-white tracking-wider">
+                  Status
+                </th>
+                <th className="px-6 py-3 text-left text-sm font-bold text-white tracking-wider">
                   Dosen Pengampu
                 </th>
                 <th className="px-6 py-3 text-left text-sm font-bold text-white tracking-wider rounded-r-md">
@@ -818,7 +871,9 @@ const KelolaMataKuliah = () => {
                   <tr
                     key={uniqueKey}
                     className="hover:bg-gray-50 cursor-pointer"
-                    onClick={() => handleRowClick(mk)}
+                    onClick={(e) => {
+                      handleRowClick(mk), e.stopPropagation();
+                    }}
                   >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">
@@ -844,6 +899,17 @@ const KelolaMataKuliah = () => {
                       <div className="text-sm text-gray-600">
                         {mk.tahunAjaran || mk.tahun_ajaran}
                       </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span
+                        className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                          mk.status
+                            ? "bg-green-100 text-green-800"
+                            : "bg-red-100 text-red-800"
+                        }`}
+                      >
+                        {mk.status ? "Aktif" : "Nonaktif"}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="text-sm text-gray-600">
@@ -873,16 +939,25 @@ const KelolaMataKuliah = () => {
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                       <div className="flex space-x-2">
                         <button
-                          onClick={() => handleEdit(mk)}
+                          onClick={(e) => {
+                            handleEdit(mk), e.stopPropagation();
+                          }}
                           className="text-blue-600 hover:text-blue-900"
                         >
                           Ubah
                         </button>
                         <button
-                          onClick={() => handleDelete(mk.id || mk.id_mk)}
-                          className="text-red-600 hover:text-red-900"
+                          onClick={(e) => {
+                            handleStatus(mk.id || mk.id_mk),
+                              e.stopPropagation();
+                          }}
+                          className={`${
+                            mk.status
+                              ? "text-red-600 hover:text-red-900"
+                              : "text-green-600 hover:text-green-900"
+                          }`}
                         >
-                          Nonaktifkan
+                          {mk.status ? "Nonaktifkan" : "Aktifkan"}
                         </button>
                       </div>
                     </td>
@@ -1216,6 +1291,10 @@ const KelolaMataKuliah = () => {
                         • Catatan: Untuk mata kuliah yang sama dengan kelas
                         berbeda, buat baris terpisah
                       </p>
+                      <p>
+                        • Status: Semua mata kuliah yang diimport akan berstatus
+                        aktif secara default
+                      </p>
                     </div>
                   </div>
 
@@ -1283,6 +1362,9 @@ const KelolaMataKuliah = () => {
                             Tahun Ajaran
                           </th>
                           <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 border-b">
+                            Status
+                          </th>
+                          <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 border-b">
                             Dosen
                           </th>
                         </tr>
@@ -1307,6 +1389,11 @@ const KelolaMataKuliah = () => {
                             <td className="px-4 py-2 text-sm">{mk.sks}</td>
                             <td className="px-4 py-2 text-sm">
                               {mk.tahunAjaran}
+                            </td>
+                            <td className="px-4 py-2 text-sm">
+                              <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-800">
+                                Aktif
+                              </span>
                             </td>
                             <td className="px-4 py-2 text-sm">
                               {mk?.dosenPengampu?.length > 0 ? (
@@ -1356,6 +1443,9 @@ const KelolaMataKuliah = () => {
                       </li>
                       <li>
                         • Data akan divalidasi sebelum disimpan ke database
+                      </li>
+                      <li>
+                        • Semua mata kuliah akan berstatus aktif secara default
                       </li>
                     </ul>
                   </div>

@@ -4,13 +4,7 @@ import axios from "axios";
 import ExcelJS from "exceljs";
 import toast from "react-hot-toast";
 
-const DetailMataKuliahModal = ({
-  isOpen,
-  onClose,
-  mataKuliah,
-  onAddMahasiswa,
-  onRemoveMahasiswa,
-}) => {
+const DetailMataKuliahModal = ({ isOpen, onClose, mataKuliah }) => {
   const [activeTab, setActiveTab] = useState("detail");
   const [mahasiswaList, setMahasiswaList] = useState([]);
   const [enrolledMahasiswa, setEnrolledMahasiswa] = useState([]);
@@ -64,18 +58,14 @@ const DetailMataKuliahModal = ({
         setSelectedMahasiswa([]);
 
         // Show success message (you can replace this with your toast implementation)
-        alert(res.data.message);
-
-        if (onAddMahasiswa) {
-          onAddMahasiswa(selectedMahasiswa);
-        }
+        toast.success(res.data.message);
       } else {
         // Show error message
-        alert(res.data.message);
+        toast.error(res.data.message);
       }
     } catch (error) {
       console.error("Error adding mahasiswa:", error);
-      alert("Terjadi kesalahan saat menambahkan mahasiswa.");
+      toast.error("Terjadi kesalahan saat menambahkan mahasiswa.");
     } finally {
       setLoading(false);
     }
@@ -102,18 +92,14 @@ const DetailMataKuliahModal = ({
         await fetchMahasiswaData();
 
         // Show success message
-        alert(res.data.message);
-
-        if (onRemoveMahasiswa) {
-          onRemoveMahasiswa(mahasiswaId);
-        }
+        toast.success(res.data.message);
       } else {
         // Show error message
-        alert(res.data.message);
+        toast.error(res.data.message);
       }
     } catch (error) {
       console.error("Error removing mahasiswa:", error);
-      alert("Terjadi kesalahan saat mengeluarkan mahasiswa.");
+      toast.error("Terjadi kesalahan saat mengeluarkan mahasiswa.");
     } finally {
       setLoading(false);
     }
@@ -172,7 +158,7 @@ const DetailMataKuliahModal = ({
               const headerLower = header.toLowerCase();
               if (
                 headerLower.includes("npm") ||
-                headerLower.includes("nim") ||
+                headerLower.includes("NPM") ||
                 headerLower.includes("student") ||
                 headerLower === "id"
               ) {
@@ -199,7 +185,7 @@ const DetailMataKuliahModal = ({
 
       if (npmList.length === 0) {
         toast.error(
-          "Tidak ditemukan data NPM dalam file Excel. Pastikan ada kolom NPM/NIM dan data tidak kosong."
+          "Tidak ditemukan data NPM dalam file Excel. Pastikan ada kolom NPM dan data tidak kosong."
         );
         return;
       }
@@ -308,7 +294,7 @@ const DetailMataKuliahModal = ({
       instructionsSheet.addRow({ instruksi: "" });
       instructionsSheet.addRow({ instruksi: "Format yang didukung:" });
       instructionsSheet.addRow({
-        instruksi: "- Kolom bisa bernama: NPM, NIM, npm, nim",
+        instruksi: "- Kolom bisa bernama: NPM, npm",
       });
       instructionsSheet.addRow({ instruksi: "- File format: .xlsx" });
 
@@ -504,7 +490,7 @@ const DetailMataKuliahModal = ({
                     <thead className="bg-gray-50">
                       <tr>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                          NIM
+                          NPM
                         </th>
                         <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                           Nama
@@ -582,7 +568,7 @@ const DetailMataKuliahModal = ({
                   </div>
                   <p className="text-xs text-gray-500 mt-2">
                     Format yang didukung: .xlsx, .xls. Pastikan file memiliki
-                    kolom NPM/NIM.
+                    kolom NPM.
                   </p>
                 </div>
 
@@ -642,7 +628,7 @@ const DetailMataKuliahModal = ({
                 <div className="mb-4">
                   <input
                     type="text"
-                    placeholder="Cari mahasiswa berdasarkan nama atau NIM..."
+                    placeholder="Cari mahasiswa berdasarkan nama atau NPM..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"

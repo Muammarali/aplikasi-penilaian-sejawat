@@ -22,7 +22,8 @@ const DaftarKelasDosen = () => {
       const response = await axios.post("/api/dosen/daftarkelas/fetch", {
         id_user: session?.user?.id,
       });
-      const data = response.data.data.rows;
+      const data = response.data.data;
+      console.log(data);
       setDataDaftarKelas(data);
     } catch (error) {
       console.error("Error fetching mata kuliah:", error);
