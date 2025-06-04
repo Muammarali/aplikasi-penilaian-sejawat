@@ -2900,9 +2900,7 @@ const DetailRekapModal = ({ isOpen, onClose, data }) => {
                 <th className="px-4 py-3 min-w-[100px]">NPM</th>
                 <th className="px-4 py-3 min-w-[150px]">Nama</th>
                 {renderKomponenHeaders()}
-                <th className="px-4 py-3 text-center min-w-[80px]">
-                  Rata-rata
-                </th>
+                <th className="px-4 py-3 text-center min-w-[80px]">Total</th>
               </tr>
             </thead>
             <tbody>
