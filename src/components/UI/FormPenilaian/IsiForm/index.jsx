@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import axios from "axios";
+import toast from "react-hot-toast";
 
 const ModalFormPenilaian = ({
   isOpen,
@@ -46,7 +47,7 @@ const ModalFormPenilaian = ({
       const kelompokId = response?.data?.data?.id_kelompok;
       setIdKelompokUser(kelompokId);
     } catch (error) {
-      console.error("Error fetching id_kelompok:", error);
+      toast.error("Anda belum masuk ke dalam kelompok");
     }
   };
 

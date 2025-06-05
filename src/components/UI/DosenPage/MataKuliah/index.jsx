@@ -10,6 +10,20 @@ const DaftarKelasDosen = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
 
+  // Filter states
+  const [filterTahunAjaran, setFilterTahunAjaran] = useState("");
+  const [filterKelas, setFilterKelas] = useState("");
+  const [filterStatus, setFilterStatus] = useState("");
+
+  // Options untuk dropdown filter
+  const [tahunAjaranOptions, setTahunAjaranOptions] = useState([]);
+  const [kelasOptions, setKelasOptions] = useState([]);
+  const [statusOptions] = useState([
+    { value: "", label: "Semua Status" },
+    { value: "aktif", label: "Aktif" },
+    { value: "nonaktif", label: "Nonaktif" },
+  ]);
+
   const router = useRouter();
   const { data: session } = useSession();
 
@@ -25,21 +39,58 @@ const DaftarKelasDosen = () => {
       const data = response.data.data;
       console.log(data);
       setDataDaftarKelas(data);
+
+      // Extract unique values untuk filter options
+      extractFilterOptions(data);
     } catch (error) {
       console.error("Error fetching mata kuliah:", error);
     }
   };
 
-  useEffect(() => {
-    fetchKelas();
-  }, []);
+  const extractFilterOptions = (data) => {
+    // Extract unique tahun ajaran
+    const uniqueTahunAjaran = [
+      ...new Set(data.map((item) => item.tahun_ajaran).filter(Boolean)),
+    ];
+    setTahunAjaranOptions([
+      { value: "", label: "Semua Tahun Ajaran" },
+      ...uniqueTahunAjaran.map((tahun) => ({ value: tahun, label: tahun })),
+    ]);
 
-  // Filtering logic
+    // Extract unique kelas
+    const uniqueKelas = [
+      ...new Set(data.map((item) => item.kelas).filter(Boolean)),
+    ];
+    setKelasOptions([
+      { value: "", label: "Semua Kelas" },
+      ...uniqueKelas.sort().map((kelas) => ({ value: kelas, label: kelas })),
+    ]);
+  };
+
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchKelas();
+    }
+  }, [session]);
+
+  // Enhanced filtering logic
   const filteredDaftarKelas = dataDaftarKelas.filter((daftarkelas) => {
     const matchesSearch =
       daftarkelas?.kode_mk?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       daftarkelas?.nama?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesSearch;
+
+    const matchesTahunAjaran =
+      filterTahunAjaran === "" ||
+      daftarkelas?.tahun_ajaran === filterTahunAjaran;
+
+    const matchesKelas =
+      filterKelas === "" || daftarkelas?.kelas === filterKelas;
+
+    const matchesStatus =
+      filterStatus === "" ||
+      daftarkelas?.status?.toLowerCase() === filterStatus.toLowerCase();
+
+    return matchesSearch && matchesTahunAjaran && matchesKelas && matchesStatus;
   });
 
   // Logic untuk Pagination
@@ -55,86 +106,182 @@ const DaftarKelasDosen = () => {
     setCurrentPage(pageNumber);
   };
 
+  // Reset pagination when filters change
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, filterTahunAjaran, filterKelas, filterStatus]);
+
+  const resetFilters = () => {
+    setSearchTerm("");
+    setFilterTahunAjaran("");
+    setFilterKelas("");
+    setFilterStatus("");
+  };
 
   return (
     <div className="w-full lg:max-w-6xl">
       <div className="min-w-96 space-y-4">
         <div className="text-2xl font-bold">Daftar Mata Kuliah</div>
 
+        {/* Search Bar */}
         <div className="relative flex-grow">
           <input
             type="text"
             placeholder="Cari kode/nama mata kuliah"
+            value={searchTerm}
             className="w-full p-2 pl-3 pr-10 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
             onChange={(e) => setSearchTerm(e.target.value)}
           />
-          {true && (
-            <button
-              // onClick={() => setSearchTerm("")}
-              className="absolute right-3 top-2.5 text-gray-400 hover:text-gray-600"
-            >
-              {/* <AiOutlineClose /> */}
-            </button>
-          )}
+        </div>
+
+        {/* Filter Section */}
+        <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+          <div className="flex flex-wrap gap-4 items-end">
+            {/* Filter Tahun Ajaran */}
+            <div className="flex-1 min-w-48">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Tahun Ajaran
+              </label>
+              <select
+                value={filterTahunAjaran}
+                onChange={(e) => setFilterTahunAjaran(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+              >
+                {tahunAjaranOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filter Kelas */}
+            <div className="flex-1 min-w-32">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Kelas
+              </label>
+              <select
+                value={filterKelas}
+                onChange={(e) => setFilterKelas(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+              >
+                {kelasOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Filter Status */}
+            <div className="flex-1 min-w-40">
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Status
+              </label>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="w-full p-2 border border-gray-300 rounded-md focus:ring-1 focus:ring-blue-500 focus:border-blue-500 focus:outline-none"
+              >
+                {statusOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {/* Reset Button */}
+            <div className="flex-shrink-0">
+              <button
+                onClick={resetFilters}
+                className="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors text-sm"
+              >
+                Reset Filter
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Results Info */}
+        <div className="text-sm text-gray-600">
+          Menampilkan {filteredDaftarKelas.length} dari {dataDaftarKelas.length}{" "}
+          mata kuliah
         </div>
 
         <div className="space-y-2 pt-2">
-          <div className="grid grid-cols-[2fr_3fr_1fr_1fr_1fr_1fr] gap-4 px-4 py-3 bg-blue-500 rounded-md font-semibold text-zinc-100 text-sm">
+          <div className="grid grid-cols-[2fr_3fr_1fr_1fr_1fr_1fr_1fr] gap-4 px-4 py-3 bg-blue-500 rounded-md font-semibold text-zinc-100 text-sm">
             <div className="truncate whitespace-nowrap">Kode Mata Kuliah</div>
             <div className="truncate whitespace-nowrap">Nama</div>
             <div className="truncate whitespace-nowrap">Kelas</div>
             <div className="truncate whitespace-nowrap">Peserta</div>
             <div className="truncate whitespace-nowrap">Kelompok</div>
+            <div className="truncate whitespace-nowrap">Status</div>
             <div className="truncate whitespace-nowrap">Aksi</div>
           </div>
 
           <ul className="space-y-2">
-            {currentDaftarKelas.map((daftarkelas) => (
-              <li
-                key={daftarkelas?.id_mk}
-                className="bg-white p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow group"
-              >
-                <div className="grid grid-cols-[2fr_3fr_0.98fr_0.98fr_0.98fr_1fr] gap-4 items-center">
-                  <div className="text-sm text-gray-800">
-                    {daftarkelas?.kode_mk}
+            {currentDaftarKelas.length > 0 ? (
+              currentDaftarKelas.map((daftarkelas) => (
+                <li
+                  key={daftarkelas?.id_mk}
+                  className="bg-white p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow group"
+                >
+                  <div className="grid grid-cols-[2fr_3fr_0.98fr_0.98fr_0.98fr_0.98fr_1fr] gap-4 items-center">
+                    <div className="text-sm text-gray-800">
+                      {daftarkelas?.kode_mk}
+                    </div>
+                    <div className="text-sm text-gray-800">
+                      {daftarkelas?.nama}
+                    </div>
+                    <div className="text-sm text-gray-800">
+                      {daftarkelas?.kelas}
+                    </div>
+                    <div className="text-sm text-gray-800">
+                      {daftarkelas?.jumlah_peserta}
+                    </div>
+                    <div className="text-sm text-gray-800">
+                      {daftarkelas?.jumlah_kelompok}
+                    </div>
+                    <div className="text-sm">
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          daftarkelas?.status?.toLowerCase() === "aktif"
+                            ? "bg-green-100 text-green-800"
+                            : daftarkelas?.status?.toLowerCase() === "nonaktif"
+                            ? "bg-yellow-100 text-yellow-800"
+                            : "bg-gray-100 text-gray-800"
+                        }`}
+                      >
+                        {daftarkelas?.status || "N/A"}
+                      </span>
+                    </div>
+                    <div>
+                      <button
+                        onClick={() =>
+                          router.push(
+                            `/matakuliah/${
+                              replacePercent(daftarkelas?.nama) +
+                              "-" +
+                              daftarkelas?.kelas +
+                              "-" +
+                              daftarkelas?.id_mk
+                            }`
+                          )
+                        }
+                        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm"
+                      >
+                        Lihat
+                      </button>
+                    </div>
                   </div>
-                  <div className="text-sm text-gray-800">
-                    {daftarkelas?.nama}
-                  </div>
-                  <div className="text-sm text-gray-800">
-                    {daftarkelas?.kelas}
-                  </div>
-                  <div className="text-sm text-gray-800">
-                    {daftarkelas?.jumlah_peserta}
-                  </div>
-                  <div className="text-sm text-gray-800">
-                    {daftarkelas?.jumlah_kelompok}
-                  </div>
-                  <div>
-                    {/* Ganti dengan aksi yang kamu inginkan, contoh: */}
-                    <button
-                      onClick={() =>
-                        router.push(
-                          `/matakuliah/${
-                            replacePercent(daftarkelas?.nama) +
-                            "-" +
-                            daftarkelas?.kelas +
-                            "-" +
-                            daftarkelas?.id_mk
-                          }`
-                        )
-                      }
-                      className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm"
-                    >
-                      Lihat
-                    </button>
-                  </div>
-                </div>
+                </li>
+              ))
+            ) : (
+              <li className="bg-white p-8 border border-gray-200 rounded-lg text-center text-gray-500">
+                Tidak ada mata kuliah yang sesuai dengan filter yang dipilih
               </li>
-            ))}
+            )}
           </ul>
 
           {/* Pagination Component */}

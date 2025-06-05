@@ -12,12 +12,20 @@ export async function POST(req) {
           mk.kode_mk,
           mk.nama,
           mk.kelas,
+          CONCAT(ta.nama, ' - ', ta.tipe) AS tahun_ajaran,
+          CASE 
+              WHEN mk.status = true THEN 'Aktif'
+              WHEN mk.status = false THEN 'Nonaktif'
+              ELSE 'Tidak Diketahui'
+          END AS status,
           COALESCE(jp.jumlah_peserta, 0) AS jumlah_peserta,
           COALESCE(jk.jumlah_kelompok, 0) AS jumlah_kelompok
       FROM 
           dosen_mata_kuliah dmt
       JOIN 
           mata_kuliah mk ON dmt.id_mk = mk.id_mk
+      LEFT JOIN 
+          tahun_ajaran ta ON mk.id_tahun_ajaran = ta.id_tahun_ajaran
       LEFT JOIN (
           SELECT 
               dk.id_mk,
@@ -40,10 +48,9 @@ export async function POST(req) {
       ) jk ON mk.id_mk = jk.id_mk
       WHERE
         dmt.id_user = $1
-        AND mk.status = true
         AND (dmt.status = true OR dmt.status IS NULL)
       ORDER BY 
-        mk.nama, mk.kelas;
+        ta.nama DESC, ta.tipe, mk.nama, mk.kelas;
     `;
 
     const data = await handlerQuery(query, [id_user]);
