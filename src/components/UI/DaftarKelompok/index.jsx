@@ -1906,6 +1906,7 @@ const DaftarKelompok = () => {
         }}
         onSubmit={handleEditSubmit}
         initialData={selectedForm}
+        reFetch={fetchFormPenilaian}
       />
 
       <DetailFormListMahasiswa

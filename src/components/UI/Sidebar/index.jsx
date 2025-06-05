@@ -42,13 +42,6 @@ const NAVIGATION_ITEMS = [
     icon: <HiAcademicCap size={24} className="ml-1" />,
     roles: ["Admin"],
   },
-  {
-    name: "Pengaturan Sistem",
-    href: "/admin/settings",
-    subpaths: ["/admin/settings/general", "/admin/settings/academic"],
-    icon: <LuSettings size={24} className="ml-1" />,
-    roles: ["Admin"],
-  },
 ];
 
 const Sidebar = ({ isOpen, toggleSidebar, isCollapsed = false }) => {
