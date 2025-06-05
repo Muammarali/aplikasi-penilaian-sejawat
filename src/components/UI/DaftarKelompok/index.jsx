@@ -1900,6 +1900,7 @@ const DaftarKelompok = () => {
         formData={formDataDetail}
         session={session}
         isKetuaIsiFormJenis3={isKetuaIsiFormJenis3}
+        reFetch={fetchDataStudentRekap}
       />
 
       <EditPeerEvaluationModal

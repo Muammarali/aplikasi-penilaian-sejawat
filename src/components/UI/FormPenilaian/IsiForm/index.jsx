@@ -12,6 +12,7 @@ const ModalFormPenilaian = ({
   dataForm = {},
   formData = {},
   session,
+  reFetch,
 }) => {
   const [nilaiAnggotaAnggota, setNilaiAnggotaAnggota] = useState([]);
   const [nilaiAnggotaPM, setNilaiAnggotaPM] = useState([]);
@@ -302,6 +303,30 @@ const ModalFormPenilaian = ({
       const id_penilai = session?.user?.id;
       const id_form = formData?.form_details?.id_form;
 
+      // ===== HELPER: Function untuk menghindari duplikasi =====
+      const addToHasilPenilaian = (data) => {
+        const key = `${data.id_penilai}-${data.id_dinilai}-${data.id_form}-${data.id_komponen}`;
+
+        // Cek apakah kombinasi ini sudah ada
+        const existingIndex = hasilPenilaian.findIndex(
+          (item) =>
+            item.id_penilai === data.id_penilai &&
+            item.id_dinilai === data.id_dinilai &&
+            item.id_form === data.id_form &&
+            item.id_komponen === data.id_komponen
+        );
+
+        if (existingIndex !== -1) {
+          // Update nilai yang sudah ada (nilai terbaru akan digunakan)
+          hasilPenilaian[existingIndex].nilai = data.nilai;
+          console.log(`Updated existing assessment for key: ${key}`);
+        } else {
+          // Tambah data baru
+          hasilPenilaian.push(data);
+          console.log(`Added new assessment for key: ${key}`);
+        }
+      };
+
       // Proses nilai anggota-anggota
       if (id_jenis === 1 || id_jenis === 2) {
         dataAnggota.forEach((anggota, idx) => {
@@ -310,7 +335,7 @@ const ModalFormPenilaian = ({
               nilaiAnggotaAnggota[idx] &&
               nilaiAnggotaAnggota[idx][komp.id_komponen] !== ""
             ) {
-              hasilPenilaian.push({
+              addToHasilPenilaian({
                 id_penilai,
                 id_dinilai: anggota.id_user,
                 nilai: parseInt(nilaiAnggotaAnggota[idx][komp.id_komponen]),
@@ -330,7 +355,7 @@ const ModalFormPenilaian = ({
               nilaiAnggotaPM[idx] &&
               nilaiAnggotaPM[idx][komp.id_komponen] !== ""
             ) {
-              hasilPenilaian.push({
+              addToHasilPenilaian({
                 id_penilai,
                 id_dinilai: pm.id_user,
                 nilai: parseInt(nilaiAnggotaPM[idx][komp.id_komponen]),
@@ -350,7 +375,7 @@ const ModalFormPenilaian = ({
               nilaiKetuaAnggota[idx] &&
               nilaiKetuaAnggota[idx][komp.id_komponen] !== ""
             ) {
-              hasilPenilaian.push({
+              addToHasilPenilaian({
                 id_penilai,
                 id_dinilai: anggota.id_user,
                 nilai: parseInt(nilaiKetuaAnggota[idx][komp.id_komponen]),
@@ -370,7 +395,7 @@ const ModalFormPenilaian = ({
               nilaiDosenKetua[idx] &&
               nilaiDosenKetua[idx][komp.id_komponen] !== ""
             ) {
-              hasilPenilaian.push({
+              addToHasilPenilaian({
                 id_penilai,
                 id_dinilai: ketua.id_user,
                 nilai: parseInt(nilaiDosenKetua[idx][komp.id_komponen]),
@@ -382,7 +407,9 @@ const ModalFormPenilaian = ({
         });
       }
 
-      // console.log("Data to submit:", hasilPenilaian);
+      // ===== DEBUG: Log data yang akan dikirim =====
+      console.log("Final data to submit:", hasilPenilaian);
+      console.log("Total assessments:", hasilPenilaian.length);
 
       // Kirim data ke API
       const response = await axios.post("/api/formpenilaian/nilai", {
@@ -390,15 +417,34 @@ const ModalFormPenilaian = ({
         id_form: id_form,
       });
 
-      // console.log("Response:", response.data);
+      console.log("Response:", response.data);
 
+      // Show success message with stats
+      if (response.data.stats) {
+        const { inserted, updated } = response.data.stats;
+        let message = "Penilaian berhasil disimpan!";
+        if (inserted > 0 && updated > 0) {
+          message += ` ${inserted} nilai baru ditambahkan, ${updated} nilai diperbarui.`;
+        } else if (inserted > 0) {
+          message += ` ${inserted} nilai baru ditambahkan.`;
+        } else if (updated > 0) {
+          message += ` ${updated} nilai diperbarui.`;
+        }
+
+        // Show success toast or alert
+        toast.success(message); // Ganti dengan toast notification jika ada
+      }
+
+      // Reset form
       setNilaiAnggotaAnggota([]);
       setNilaiAnggotaPM([]);
       setNilaiKetuaAnggota([]);
       setNilaiDosenKetua([]);
       setValidasiError(false);
+      reFetch();
       onClose();
     } catch (error) {
+      console.error("Submit error:", error);
       setSubmitError(
         "Terjadi kesalahan saat menyimpan data. Silakan coba lagi."
       );

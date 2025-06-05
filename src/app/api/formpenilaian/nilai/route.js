@@ -55,43 +55,93 @@ export async function POST(req) {
       }
     }
 
-    try {
-      // Batch insert values using a single prepared statement
-      const insertQuery = `
-        INSERT INTO hasil_penilaian
-        (id_penilai, id_dinilai, nilai, id_form, id_komponen)
-        VALUES
-        ($1, $2, $3, $4, $5);
-      `;
+    let insertedCount = 0;
+    let updatedCount = 0;
 
-      // Execute the query for each assessment result
+    try {
+      // Process each assessment result
       for (const nilai of hasilPenilaian) {
-        await handlerQuery(insertQuery, [
+        // Check if record already exists
+        const checkQuery = `
+          SELECT COUNT(*) as count
+          FROM hasil_penilaian 
+          WHERE id_penilai = $1 
+            AND id_dinilai = $2 
+            AND id_form = $3 
+            AND id_komponen = $4
+        `;
+
+        const existingRecord = await handlerQuery(checkQuery, [
           nilai.id_penilai,
           nilai.id_dinilai,
-          nilai.nilai,
           nilai.id_form,
           nilai.id_komponen,
         ]);
+
+        const recordExists = parseInt(existingRecord.rows[0].count) > 0;
+
+        if (recordExists) {
+          // Update existing record
+          const updateQuery = `
+            UPDATE hasil_penilaian 
+            SET nilai = $1
+            WHERE id_penilai = $2 
+              AND id_dinilai = $3 
+              AND id_form = $4 
+              AND id_komponen = $5
+          `;
+
+          const updateResult = await handlerQuery(updateQuery, [
+            nilai.nilai,
+            nilai.id_penilai,
+            nilai.id_dinilai,
+            nilai.id_form,
+            nilai.id_komponen,
+          ]);
+
+          if (updateResult.rowCount > 0) {
+            updatedCount++;
+            console.log(
+              `Updated: penilai=${nilai.id_penilai}, dinilai=${nilai.id_dinilai}, komponen=${nilai.id_komponen}, nilai=${nilai.nilai}`
+            );
+          }
+        } else {
+          // Insert new record
+          const insertQuery = `
+            INSERT INTO hasil_penilaian
+            (id_penilai, id_dinilai, nilai, id_form, id_komponen)
+            VALUES ($1, $2, $3, $4, $5)
+          `;
+
+          const insertResult = await handlerQuery(insertQuery, [
+            nilai.id_penilai,
+            nilai.id_dinilai,
+            nilai.nilai,
+            nilai.id_form,
+            nilai.id_komponen,
+          ]);
+
+          if (insertResult.rowCount > 0) {
+            insertedCount++;
+            console.log(
+              `Inserted: penilai=${nilai.id_penilai}, dinilai=${nilai.id_dinilai}, komponen=${nilai.id_komponen}, nilai=${nilai.nilai}`
+            );
+          }
+        }
       }
-
-      //   // Check if we need to update the form status
-      //   const formId = hasilPenilaian[0].id_form;
-      //   const updateStatusQuery = `
-      //     UPDATE form_penilaian
-      //     SET status = 'Selesai'
-      //     WHERE id_form = $1
-      //   `;
-
-      //   await handlerQuery(updateStatusQuery, [formId]);
 
       return NextResponse.json({
         success: true,
-        message: "Assessment data submitted successfully",
-        count: hasilPenilaian.length,
+        message: `Assessment data processed successfully. ${insertedCount} new entries added, ${updatedCount} entries updated.`,
+        stats: {
+          total: hasilPenilaian.length,
+          inserted: insertedCount,
+          updated: updatedCount,
+        },
       });
-    } catch (error) {
-      throw error;
+    } catch (dbError) {
+      console.error("Database operation error:", dbError);
+      throw dbError;
     }
   } catch (error) {
     console.error("Error submitting assessment data:", error);
