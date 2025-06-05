@@ -373,32 +373,36 @@ const DaftarKelompok = () => {
 
   const handleEditSubmit = async (formData) => {
     try {
+      // ===== FIX: Bersihkan payload agar tidak duplikat =====
       const payload = {
         id_form: formData.id_form,
         nama_form: formData.nama_form,
         id_jenis: parseInt(formData.jenis_form),
         formData: {
-          anggota_ke_anggota: formData.komponen_anggota_ke_anggota,
-          anggota_ke_ketua: formData.komponen_anggota_ke_ketua,
-          ketua_ke_anggota: formData.komponen_ketua_ke_anggota,
-          dosen_ke_ketua: formData.komponen_dosen_ke_ketua,
+          anggota_ke_anggota: formData.komponen_anggota_ke_anggota || [],
+          anggota_ke_ketua: formData.komponen_anggota_ke_ketua || [],
+          dosen_ke_ketua: formData.komponen_dosen_ke_ketua || [],
         },
       };
 
-      const response = await axios.put("/api/formpenilaian/ubah", {
-        id_form: formData.id_form,
-        nama_form: formData.nama_form,
-        id_jenis: parseInt(formData.jenis_form),
-        formData: payload,
-      });
+      // ===== DEBUG: Log payload untuk memastikan data benar =====
+      console.log(
+        "Payload yang akan dikirim:",
+        JSON.stringify(payload, null, 2)
+      );
+
+      const response = await axios.put("/api/formpenilaian/ubah", payload);
 
       if (response.data.success) {
         toast.success("Form berhasil diubah!");
-        fetchFormPenilaian();
+        fetchFormPenilaian(); // Refresh data
       } else {
-        toast.error("Terjadi kesalahan saat mengubah form");
+        toast.error(
+          response.data.message || "Terjadi kesalahan saat mengubah form"
+        );
       }
     } catch (error) {
+      console.error("Error saat mengubah form:", error);
       toast.error("Terjadi kesalahan saat mengubah form");
     }
   };

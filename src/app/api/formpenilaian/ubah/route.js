@@ -29,7 +29,6 @@ export async function PUT(req) {
     }
 
     // Jika jenis 3, hapus semua komponen existing dan return
-    // (Karena untuk jenis 3, dosen hanya membuat komponen "Dosen ke Ketua" saat create form)
     if (id_jenis == 3) {
       await handlerQuery(`DELETE FROM komponen_penilaian WHERE id_form = $1`, [
         id_form,
@@ -81,6 +80,85 @@ export async function PUT(req) {
         [id_form, "Anggota ke Ketua", "Ketua ke Anggota", "Dosen ke Ketua"]
       );
       deletedCount += deleteResult.rowCount;
+    }
+
+    // ===== FIX: Dapatkan semua ID komponen yang masih ada di form data =====
+    const existingKomponenIds = new Set();
+
+    // Kumpulkan semua ID komponen yang masih ada
+    const collectExistingIds = (komponenList) => {
+      if (komponenList && Array.isArray(komponenList)) {
+        komponenList.forEach((komponen) => {
+          if (komponen.id_komponen) {
+            existingKomponenIds.add(komponen.id_komponen);
+          }
+        });
+      }
+    };
+
+    // Collect IDs from all relevant component types
+    collectExistingIds(formData.anggota_ke_anggota);
+    if (id_jenis == 1) {
+      collectExistingIds(formData.anggota_ke_ketua);
+    }
+
+    // ===== FIX: Hapus komponen yang tidak ada lagi di form data =====
+    if (existingKomponenIds.size > 0) {
+      const idsArray = Array.from(existingKomponenIds);
+      const placeholders = idsArray
+        .map((_, index) => `$${index + 2}`)
+        .join(",");
+
+      const deleteOrphanedQuery = `
+        DELETE FROM komponen_penilaian 
+        WHERE id_form = $1 
+        AND id_komponen NOT IN (${placeholders})
+        AND tipe_penilaian IN ($${idsArray.length + 2}, $${idsArray.length + 3})
+      `;
+
+      const deleteParams = [id_form, ...idsArray, "Anggota ke Anggota"];
+      if (id_jenis == 1) {
+        deleteParams.push("Anggota ke Ketua");
+      } else {
+        // Untuk jenis 2, hanya Anggota ke Anggota
+        deleteParams[deleteParams.length - 1] = "Anggota ke Anggota";
+        const deleteOrphanedQueryJenis2 = `
+          DELETE FROM komponen_penilaian 
+          WHERE id_form = $1 
+          AND id_komponen NOT IN (${placeholders})
+          AND tipe_penilaian = $${idsArray.length + 2}
+        `;
+        const deleteOrphanedResult = await handlerQuery(
+          deleteOrphanedQueryJenis2,
+          [id_form, ...idsArray, "Anggota ke Anggota"]
+        );
+        deletedCount += deleteOrphanedResult.rowCount;
+      }
+
+      if (id_jenis == 1) {
+        const deleteOrphanedResult = await handlerQuery(
+          deleteOrphanedQuery,
+          deleteParams
+        );
+        deletedCount += deleteOrphanedResult.rowCount;
+      }
+    } else {
+      // Jika tidak ada komponen yang tersisa, hapus semua komponen yang relevan
+      const deleteAllQuery =
+        id_jenis == 1
+          ? `DELETE FROM komponen_penilaian WHERE id_form = $1 AND tipe_penilaian IN ($2, $3)`
+          : `DELETE FROM komponen_penilaian WHERE id_form = $1 AND tipe_penilaian = $2`;
+
+      const deleteAllParams =
+        id_jenis == 1
+          ? [id_form, "Anggota ke Anggota", "Anggota ke Ketua"]
+          : [id_form, "Anggota ke Anggota"];
+
+      const deleteAllResult = await handlerQuery(
+        deleteAllQuery,
+        deleteAllParams
+      );
+      deletedCount += deleteAllResult.rowCount;
     }
 
     // Update existing komponen & insert baru
