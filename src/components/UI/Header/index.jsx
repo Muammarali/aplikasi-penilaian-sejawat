@@ -88,13 +88,6 @@ const Header = ({ toggleSidebar, toggleCollapse, isCollapsed = true }) => {
             </button>
           </div>
 
-          {/* Title */}
-          {/* <div className="flex-1 flex justify-center lg:justify-start">
-            <h1 className="text-xl font-semibold text-gray-800">
-              {getPageTitle()}
-            </h1>
-          </div> */}
-
           {/* User profile dropdown */}
           <div className="ml-4 flex items-center md:ml-6">
             <div className="relative" ref={dropdownRef}>

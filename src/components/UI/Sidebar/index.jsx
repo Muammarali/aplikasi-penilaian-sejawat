@@ -35,7 +35,7 @@ const NAVIGATION_ITEMS = [
     name: "Kelola Pengguna",
     href: "/admin/users",
     subpaths: ["/admin/users/new", "/admin/users/edit", "/admin/users/view"],
-    icon: <LuUsers size={20} />,
+    icon: <LuUsers size={22} />,
     roles: ["Admin"],
   },
   {
@@ -45,7 +45,7 @@ const NAVIGATION_ITEMS = [
       "/admin/dosen-matakuliah/assign",
       "/admin/dosen-matakuliah/view",
     ],
-    icon: <HiAcademicCap size={20} />,
+    icon: <HiAcademicCap size={22} />,
     roles: ["Admin"],
   },
 ];
