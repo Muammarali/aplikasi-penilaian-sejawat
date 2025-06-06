@@ -15,42 +15,84 @@ const Login = () => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [errors, setErrors] = useState({
+    password: "",
+    general: "",
+  });
   const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Clear errors when user types
+  const handleEmailChange = (e) => {
+    setEmail(e.target.value);
+    if (errors.password || errors.general) {
+      setErrors((prev) => ({ ...prev, password: "", general: "" }));
+    }
+  };
+
+  const handlePasswordChange = (e) => {
+    setPassword(e.target.value);
+    if (errors.password || errors.general) {
+      setErrors((prev) => ({ ...prev, password: "", general: "" }));
+    }
+  };
+
+  const validateForm = () => {
+    let errorMessage = "";
+
+    if (email.length < 4) {
+      errorMessage = "Email harus lebih dari 4 karakter";
+    } else if (password.length < 4) {
+      errorMessage = "Password harus lebih dari 4 karakter";
+    }
+
+    setErrors({ password: errorMessage, general: "" });
+    return !errorMessage;
+  };
+
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
 
+    // Clear previous errors
+    setErrors({ password: "", general: "" });
+
+    // Validate form
+    if (!validateForm()) {
+      return;
+    }
+
     try {
       setIsLoading(true);
-      if (email.length >= 4 && password.length >= 4) {
-        const loadingToastId = showNotification.loading("Logging in...");
+      const loadingToastId = showNotification.loading("Logging in...");
 
-        const response = await signIn("credentials", {
-          email: email,
-          password: password,
-          redirect: false,
+      const response = await signIn("credentials", {
+        email: email,
+        password: password,
+        redirect: false,
+      });
+
+      showNotification.dismiss(loadingToastId);
+
+      if (!response?.ok) {
+        // Set error message only for password field when login fails
+        setErrors({
+          password: "Email atau password salah",
+          general: "",
         });
-
-        showNotification.dismiss(loadingToastId);
-
-        if (!response?.ok) {
-          showNotification.error("Email atau password salah");
-          setIsLoading(false);
-        } else {
-          showNotification.success("Berhasil login");
-          router.push("/");
-        }
-      } else {
-        showNotification.error(
-          "Email dan password harus lebih dari 4 karakter"
-        );
+        showNotification.error("Email atau password salah");
         setIsLoading(false);
+      } else {
+        showNotification.success("Berhasil login");
+        router.push("/");
       }
     } catch (error) {
+      setErrors({
+        password: "",
+        general: "Error saat login. Silakan coba lagi.",
+      });
       showNotification.error("Error saat login");
       setIsLoading(false);
     }
@@ -90,13 +132,24 @@ const Login = () => {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* General Error Message */}
+            {errors.general && (
+              <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded-md text-sm">
+                {errors.general}
+              </div>
+            )}
+
             <div className="space-y-2">
               <label htmlFor="email" className="text-sm font-medium pl-1">
                 Email
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <MdOutlineAlternateEmail className="text-blue-400 text-lg" />
+                  <MdOutlineAlternateEmail
+                    className={`text-lg ${
+                      errors.password ? "text-red-400" : "text-blue-400"
+                    }`}
+                  />
                 </div>
                 <input
                   autoComplete="off"
@@ -104,8 +157,12 @@ const Login = () => {
                   id="email"
                   placeholder="Enter your email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full rounded-md border border-gray-200 p-2.5 pl-10 shadow-sm text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  onChange={handleEmailChange}
+                  className={`w-full rounded-md border p-2.5 pl-10 shadow-sm text-sm focus:ring-1 outline-none ${
+                    errors.password
+                      ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                      : "border-gray-200 focus:ring-blue-500 focus:border-blue-500"
+                  }`}
                   style={{ minHeight: "40px" }}
                 />
               </div>
@@ -117,7 +174,11 @@ const Login = () => {
               </label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none">
-                  <CgLock className="text-blue-400 text-lg" />
+                  <CgLock
+                    className={`text-lg ${
+                      errors.password ? "text-red-400" : "text-blue-400"
+                    }`}
+                  />
                 </div>
                 <input
                   autoComplete="off"
@@ -125,8 +186,12 @@ const Login = () => {
                   id="password"
                   placeholder="Enter your password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="w-full rounded-md border border-gray-200 p-2.5 pl-10 pr-10 shadow-sm text-sm focus:ring-1 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                  onChange={handlePasswordChange}
+                  className={`w-full rounded-md border p-2.5 pl-10 pr-10 shadow-sm text-sm focus:ring-1 outline-none ${
+                    errors.password
+                      ? "border-red-300 focus:ring-red-500 focus:border-red-500"
+                      : "border-gray-200 focus:ring-blue-500 focus:border-blue-500"
+                  }`}
                   style={{ minHeight: "40px" }}
                 />
                 <div
@@ -134,12 +199,25 @@ const Login = () => {
                   onClick={togglePasswordVisibility}
                 >
                   {showPassword ? (
-                    <FiEye className="text-lg text-blue-400" />
+                    <FiEye
+                      className={`text-lg ${
+                        errors.password ? "text-red-400" : "text-blue-400"
+                      }`}
+                    />
                   ) : (
-                    <FiEyeOff className="text-gray-400 text-lg hover:text-blue-400" />
+                    <FiEyeOff
+                      className={`text-lg hover:text-blue-400 ${
+                        errors.password ? "text-red-400" : "text-gray-400"
+                      }`}
+                    />
                   )}
                 </div>
               </div>
+              {errors.password && (
+                <p className="text-red-500 text-xs mt-1 pl-1">
+                  {errors.password}
+                </p>
+              )}
             </div>
 
             <button

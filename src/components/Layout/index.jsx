@@ -23,62 +23,45 @@ const Layout = ({ children }) => {
 
   return (
     mounted && (
-      <div className="flex flex-col min-h-screen">
-        {/* Header */}
-        <Header toggleSidebar={toggleSidebar} />
+      <div className="flex min-h-screen bg-gray-50">
+        {/* Sidebar */}
+        <Sidebar
+          isOpen={sidebarOpen}
+          toggleSidebar={toggleSidebar}
+          isCollapsed={isCollapsed}
+          setIsCollapsed={setIsCollapsed}
+        />
 
         {/* Overlay untuk mobile saat sidebar terbuka */}
         {sidebarOpen && (
           <div
-            className="fixed inset-0 bg-transparent bg-opacity-50 z-20"
+            className="fixed inset-0 z-20"
+            style={{ backgroundColor: "rgba(75, 85, 99, 0.4)" }}
             onClick={() => setSidebarOpen(false)}
           />
         )}
 
-        {/* Ketika screen mobile sidebar muncul dari atas */}
+        {/* Main Content Area */}
         <div
-          className={`fixed top-0 left-0 right-0 z-30 bg-white shadow-lg transform transition-transform ease-in-out duration-300 lg:hidden ${
-            sidebarOpen ? "translate-y-0" : "-translate-y-full"
+          className={`flex flex-col flex-1 transition-all duration-300 ease-in-out ${
+            // Margin left untuk desktop sidebar
+            isCollapsed
+              ? "lg:ml-16" // w-16 = 4rem = 64px
+              : "lg:ml-64" // w-64 = 16rem = 256px
           }`}
         >
-          <div className="flex items-center justify-between h-16 px-4 border-b border-gray-200">
-            <div className="text-xl font-semibold text-blue-500">
-              Penilaian Sejawat
-            </div>
-            <button
-              type="button"
-              className="ml-4 text-gray-500 focus:outline-none focus:text-gray-700"
-              onClick={toggleSidebar}
-            >
-              <svg
-                className="h-6 w-6"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M6 18L18 6M6 6l12 12"
-                />
-              </svg>
-            </button>
-          </div>
-        </div>
-
-        <div className="flex flex-1">
-          {/* Bagian sidebar */}
-          <Sidebar
-            isOpen={sidebarOpen}
+          {/* Header - Fixed di bagian atas */}
+          <Header
             toggleSidebar={toggleSidebar}
+            toggleCollapse={toggleCollapse}
             isCollapsed={isCollapsed}
           />
 
-          {/* Main content akan ditampilkan di bagian ini */}
-          <main className="flex p-6 w-full justify-center">
-            <LoadingLayout>{children}</LoadingLayout>
+          {/* Main Content */}
+          <main className="flex-1 p-6 overflow-y-auto">
+            <div className="w-full max-w-7xl mx-auto">
+              <LoadingLayout>{children}</LoadingLayout>
+            </div>
           </main>
         </div>
       </div>

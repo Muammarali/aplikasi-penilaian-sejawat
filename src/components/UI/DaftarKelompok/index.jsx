@@ -47,6 +47,7 @@ const DaftarKelompok = () => {
   const [selectedKelompok, setSelectedKelompok] = useState(null);
   const [anggotaKelompok, setAnggotaKelompok] = useState([]);
   const [dataAnggota, setDataAnggota] = useState([]);
+  const [isAutoCreating, setIsAutoCreating] = useState(false);
   const [dataPM, setDataPM] = useState([]);
   const [dataKetua, setDataKetua] = useState([]);
   const [peranUser, setPeranUser] = useState("");
@@ -1252,6 +1253,7 @@ const DaftarKelompok = () => {
   };
 
   const handleAutoCreate = async () => {
+    setIsAutoCreating(true);
     setError("");
     try {
       const { nama_matkul, kelas, id_mk } = parseMatkulParam(params.matkul);
@@ -1274,6 +1276,8 @@ const DaftarKelompok = () => {
       }
     } catch (error) {
       toast.error("Terjadi kesalahan saat membuat kelompok otomatis");
+    } finally {
+      setIsAutoCreating(false);
     }
   };
 
@@ -1540,6 +1544,7 @@ const DaftarKelompok = () => {
 
       if (response.data.success) {
         toast.success("Berhasil menjadi ketua!");
+        fetchPeranUserKelompok();
         fetchAnggotaKelompok(kelompokId); // refresh data
       } else {
         toast.success(response.data.message || "Gagal menjadi ketua");
@@ -1851,6 +1856,7 @@ const DaftarKelompok = () => {
         handleSubmit={handleSubmit}
         handleAutoCreate={handleAutoCreate}
         isActive={dataKelompok.length}
+        isAutoCreating={isAutoCreating}
       />
 
       <ModalDaftarMahasiswa
@@ -1957,6 +1963,7 @@ const TambahKelompokModal = ({
   handleSubmit,
   handleAutoCreate,
   isActive,
+  isAutoCreating = false, // Tambahkan prop untuk loading state auto create
 }) => {
   if (!isOpen) return null;
 
@@ -2028,9 +2035,14 @@ const TambahKelompokModal = ({
               <button
                 type="button"
                 onClick={handleAutoCreate}
-                className="px-4 py-2 bg-gray-200 text-gray-800 rounded-md hover:bg-gray-300"
+                disabled={isAutoCreating}
+                className={`px-4 py-2 rounded-md transition-all ${
+                  isAutoCreating
+                    ? "bg-gray-400 text-white cursor-not-allowed"
+                    : "bg-gray-200 text-gray-800 hover:bg-gray-300"
+                }`}
               >
-                Buat Otomatis
+                {isAutoCreating ? "Loading..." : "Buat Otomatis"}
               </button>
             ) : (
               <button

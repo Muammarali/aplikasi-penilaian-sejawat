@@ -602,18 +602,53 @@ const ModalFormPenilaian = ({
                 </h4>
               </div>
 
-              <div className="flex flex-col gap-2 mb-3 text-sm text-gray-600 bg-gray-50 p-3 rounded">
-                {komponenAnggotaAnggota.map((komp, idx) => (
-                  <div key={idx}>
-                    {komp.nama_komponen}: {komp.deskripsi} (Bobot: {komp.bobot}
-                    %)
-                  </div>
-                ))}
+              <div className="mb-4 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="font-semibold text-blue-800 mb-3 flex items-center">
+                  <svg
+                    className="w-5 h-5 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  Deskripsi Komponen
+                </div>
+
+                <div className="space-y-3">
+                  {komponenAnggotaAnggota.map((komp, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-white border border-blue-100 rounded-md p-3 shadow-sm"
+                    >
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-800 text-sm mb-1">
+                            {komp.nama_komponen}
+                          </div>
+                          <div className="text-sm text-gray-600 leading-relaxed">
+                            {komp.deskripsi}
+                          </div>
+                        </div>
+                        <div className="flex-shrink-0">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                            Bobot: {komp.bobot}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="overflow-x-auto rounded-lg border border-gray-200">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-100">
+                  <thead className="bg-blue-50">
                     <tr>
                       <th className="px-3 py-2 text-left text-gray-600 font-medium border-b">
                         NPM
@@ -740,17 +775,53 @@ const ModalFormPenilaian = ({
               <h4 className="font-medium text-lg">Penilaian Anggota-PM</h4>
             </div>
 
-            <div className="flex flex-col gap-2 mb-3 text-sm text-gray-600 bg-gray-50 p-3 rounded">
-              {komponenAnggotaPM.map((komp, idx) => (
-                <div key={idx}>
-                  {komp.nama_komponen}: {komp.deskripsi} (Bobot: {komp.bobot}%)
-                </div>
-              ))}
+            <div className="mb-4 bg-green-50 border border-green-200 rounded-lg p-4">
+              <div className="font-semibold text-green-800 mb-3 flex items-center">
+                <svg
+                  className="w-5 h-5 mr-2"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
+                </svg>
+                Deskripsi Komponen
+              </div>
+
+              <div className="space-y-3">
+                {komponenAnggotaPM.map((komp, idx) => (
+                  <div
+                    key={idx}
+                    className="bg-white border border-green-100 rounded-md p-3 shadow-sm"
+                  >
+                    <div className="flex justify-between items-start gap-3">
+                      <div className="flex-1">
+                        <div className="font-medium text-gray-800 text-sm mb-1">
+                          {komp.nama_komponen}
+                        </div>
+                        <div className="text-sm text-gray-600 leading-relaxed">
+                          {komp.deskripsi}
+                        </div>
+                      </div>
+                      <div className="flex-shrink-0">
+                        <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                          Bobot: {komp.bobot}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="overflow-x-auto rounded-lg border border-gray-200">
               <table className="w-full text-sm">
-                <thead className="bg-gray-100">
+                <thead className="bg-green-50">
                   <tr>
                     <th className="px-3 py-2 text-left text-gray-600 font-medium border-b">
                       NPM
@@ -874,18 +945,53 @@ const ModalFormPenilaian = ({
                 <h4 className="font-medium text-lg">Penilaian Ketua-Anggota</h4>
               </div>
 
-              <div className="flex flex-col gap-2 mb-3 text-sm text-gray-600 bg-gray-50 p-3 rounded">
-                {komponenKetuaAnggota.map((komp, idx) => (
-                  <div key={idx}>
-                    {komp.nama_komponen}: {komp.deskripsi} (Bobot: {komp.bobot}
-                    %)
-                  </div>
-                ))}
+              <div className="mb-4 bg-purple-50 border border-purple-200 rounded-lg p-4">
+                <div className="font-semibold text-purple-800 mb-3 flex items-center">
+                  <svg
+                    className="w-5 h-5 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  Deskripsi Komponen
+                </div>
+
+                <div className="space-y-3">
+                  {komponenKetuaAnggota.map((komp, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-white border border-purple-100 rounded-md p-3 shadow-sm"
+                    >
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-800 text-sm mb-1">
+                            {komp.nama_komponen}
+                          </div>
+                          <div className="text-sm text-gray-600 leading-relaxed">
+                            {komp.deskripsi}
+                          </div>
+                        </div>
+                        <div className="flex-shrink-0">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                            Bobot: {komp.bobot}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="overflow-x-auto rounded-lg border border-gray-200">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-100">
+                  <thead className="bg-purple-50">
                     <tr>
                       <th className="px-3 py-2 text-left text-gray-600 font-medium border-b">
                         NPM
@@ -1014,18 +1120,53 @@ const ModalFormPenilaian = ({
                 <h4 className="font-medium text-lg">Penilaian Dosen-Ketua</h4>
               </div>
 
-              <div className="flex flex-col gap-2 mb-3 text-sm text-gray-600 bg-gray-50 p-3 rounded">
-                {komponenDosenKetua.map((komp, idx) => (
-                  <div key={idx}>
-                    {komp.nama_komponen}: {komp.deskripsi} (Bobot: {komp.bobot}
-                    %)
-                  </div>
-                ))}
+              <div className="mb-4 bg-orange-50 border border-orange-200 rounded-lg p-4">
+                <div className="font-semibold text-orange-800 mb-3 flex items-center">
+                  <svg
+                    className="w-5 h-5 mr-2"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                    />
+                  </svg>
+                  Deskripsi Komponen
+                </div>
+
+                <div className="space-y-3">
+                  {komponenDosenKetua.map((komp, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-white border border-orange-100 rounded-md p-3 shadow-sm"
+                    >
+                      <div className="flex justify-between items-start gap-3">
+                        <div className="flex-1">
+                          <div className="font-medium text-gray-800 text-sm mb-1">
+                            {komp.nama_komponen}
+                          </div>
+                          <div className="text-sm text-gray-600 leading-relaxed">
+                            {komp.deskripsi}
+                          </div>
+                        </div>
+                        <div className="flex-shrink-0">
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
+                            Bobot: {komp.bobot}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
 
               <div className="overflow-x-auto rounded-lg border border-gray-200">
                 <table className="w-full text-sm">
-                  <thead className="bg-gray-100">
+                  <thead className="bg-orange-50">
                     <tr>
                       <th className="px-3 py-2 text-left text-gray-600 font-medium border-b">
                         NPM

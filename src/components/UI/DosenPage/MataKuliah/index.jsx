@@ -9,6 +9,7 @@ const DaftarKelasDosen = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage] = useState(10);
+  const [loadingButton, setLoadingButton] = useState(null); // State untuk loading button
 
   // Filter states
   const [filterTahunAjaran, setFilterTahunAjaran] = useState("");
@@ -116,6 +117,21 @@ const DaftarKelasDosen = () => {
     setFilterTahunAjaran("");
     setFilterKelas("");
     setFilterStatus("");
+  };
+
+  // Handler untuk tombol Lihat dengan loading state
+  const handleLihatClick = (daftarkelas) => {
+    setLoadingButton(daftarkelas.id_mk); // Set loading untuk tombol spesifik ini
+
+    const url = `/matakuliah/${
+      replacePercent(daftarkelas?.nama) +
+      "-" +
+      daftarkelas?.kelas +
+      "-" +
+      daftarkelas?.id_mk
+    }`;
+
+    router.push(url);
   };
 
   return (
@@ -258,20 +274,17 @@ const DaftarKelasDosen = () => {
                     </div>
                     <div>
                       <button
-                        onClick={() =>
-                          router.push(
-                            `/matakuliah/${
-                              replacePercent(daftarkelas?.nama) +
-                              "-" +
-                              daftarkelas?.kelas +
-                              "-" +
-                              daftarkelas?.id_mk
-                            }`
-                          )
-                        }
-                        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm"
+                        onClick={() => handleLihatClick(daftarkelas)}
+                        disabled={loadingButton === daftarkelas?.id_mk}
+                        className={`px-4 py-2 rounded-md transition-all text-sm ${
+                          loadingButton === daftarkelas?.id_mk
+                            ? "bg-gray-400 text-white cursor-not-allowed"
+                            : "bg-blue-500 text-white hover:bg-blue-600"
+                        }`}
                       >
-                        Lihat
+                        {loadingButton === daftarkelas?.id_mk
+                          ? "Loading..."
+                          : "Lihat"}
                       </button>
                     </div>
                   </div>

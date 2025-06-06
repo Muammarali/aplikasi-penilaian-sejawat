@@ -74,7 +74,7 @@ const Header = ({ toggleSidebar, toggleCollapse, isCollapsed = true }) => {
   };
 
   return (
-    <header className="bg-white shadow-sm z-10">
+    <header className="bg-white shadow-md sticky top-0 z-10">
       <div className="px-2 sm:px-4 lg:px-6">
         <div className="flex justify-between h-16 items-center">
           <div className="flex items-center">
@@ -89,11 +89,11 @@ const Header = ({ toggleSidebar, toggleCollapse, isCollapsed = true }) => {
           </div>
 
           {/* Title */}
-          <div className="flex-1 flex justify-center lg:justify-start">
+          {/* <div className="flex-1 flex justify-center lg:justify-start">
             <h1 className="text-xl font-semibold text-gray-800">
               {getPageTitle()}
             </h1>
-          </div>
+          </div> */}
 
           {/* User profile dropdown */}
           <div className="ml-4 flex items-center md:ml-6">
