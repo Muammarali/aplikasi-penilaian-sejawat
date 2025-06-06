@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Penilaian Sejawat UNPAR",
+  title: "Aplikasi Penilaian Sejawat",
   description: "Aplikasi Penilaian Sejawat UNPAR",
 };
 
