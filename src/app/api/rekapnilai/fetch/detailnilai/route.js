@@ -88,8 +88,8 @@ export async function POST(req) {
           nama_penilai: row.nama_penilai,
           npm: row.npm,
           komponen: {},
-          total_nilai_weighted: 0, // 🆕 Ganti dengan weighted total
-          total_bobot: 0, // 🆕 Total bobot untuk validasi
+          total_nilai_weighted: 0,
+          total_bobot: 0,
         };
       }
 
@@ -98,8 +98,8 @@ export async function POST(req) {
       const bobot = parseFloat(row.bobot || 0);
 
       groupedData[penilaiKey].komponen[row.nama_komponen] = nilai;
-      groupedData[penilaiKey].total_nilai_weighted += nilai * (bobot / 100); // 🆕 Weighted calculation
-      groupedData[penilaiKey].total_bobot += bobot; // 🆕 Track total bobot
+      groupedData[penilaiKey].total_nilai_weighted += nilai * (bobot / 100);
+      groupedData[penilaiKey].total_bobot += bobot;
     });
 
     // Convert Map ke Array dan sort
@@ -108,7 +108,6 @@ export async function POST(req) {
 
     // Convert grouped data ke format array dan hitung weighted average
     const penilaiArray = Object.values(groupedData).map((penilai) => {
-      // 🆕 Gunakan weighted total sebagai hasil (sudah dalam skala 0-100)
       const hasil_weighted = penilai.total_nilai_weighted;
 
       // Buat objek dengan komponen dinamis
@@ -116,9 +115,9 @@ export async function POST(req) {
         id_penilai: penilai.id_penilai,
         nama: penilai.nama_penilai,
         npm: penilai.npm,
-        hasil: parseFloat(hasil_weighted.toFixed(2)), // 🆕 Hasil weighted
+        hasil: parseFloat(hasil_weighted.toFixed(2)),
         komponenDetail: penilai.komponen,
-        total_bobot: penilai.total_bobot, // 🆕 Untuk debugging/validasi
+        total_bobot: penilai.total_bobot,
       };
 
       // Tambahkan setiap komponen sebagai properti terpisah
@@ -130,7 +129,7 @@ export async function POST(req) {
       return penilaiData;
     });
 
-    // 🆕 Hitung hasil akhir (rata-rata weighted dari semua penilai)
+    // Hitung hasil akhir (rata-rata weighted dari semua penilai)
     const totalHasil = penilaiArray.reduce(
       (sum, penilai) => sum + penilai.hasil,
       0
@@ -148,10 +147,10 @@ export async function POST(req) {
       nama: namaDinilai,
       form_name: formName,
       penilai: penilaiArray,
-      hasil_akhir: parseFloat(hasilAkhir), // 🆕 Ini sekarang hasil weighted yang benar
+      hasil_akhir: parseFloat(hasilAkhir),
       total_penilai: penilaiArray.length,
-      komponen_list: komponenList, // Daftar nama komponen untuk header tabel
-      komponen_bobot: komponenBobot, // 🆕 Bobot setiap komponen untuk ditampilkan
+      komponen_list: komponenList,
+      komponen_bobot: komponenBobot,
       jumlah_komponen: komponenList.length,
       nama_kelompok: namaKelompok,
     };

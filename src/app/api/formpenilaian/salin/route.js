@@ -90,7 +90,7 @@ export async function POST(req) {
         new_form_id: newFormId,
         new_form_name: newFormName,
         copied_components: insertedKomponenCount,
-        id_mk: originalForm.id_mk, // kirim juga kalau mau
+        id_mk: originalForm.id_mk,
       },
     });
   } catch (error) {

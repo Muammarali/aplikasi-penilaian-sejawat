@@ -71,6 +71,10 @@ const DaftarKelompok = () => {
     total_komponen: 0,
   });
 
+  const [isActive, setIsActive] = useState(0);
+  const [autoCreateMode, setAutoCreateMode] = useState("capacity");
+  const [isAutoCreatingByCount, setIsAutoCreatingByCount] = useState(false);
+  const [jumlahKelompok, setJumlahKelompok] = useState("");
   const [formJenis3StatusMap, setFormJenis3StatusMap] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
@@ -248,6 +252,7 @@ const DaftarKelompok = () => {
       }
 
       const data = response.data.rows;
+      setIsActive(data.length > 0 ? 1 : 0);
       setDataKelompok(data);
     } catch (error) {
       console.error("Error on route", error);
@@ -1038,114 +1043,6 @@ const DaftarKelompok = () => {
               />
             )}
           </div>
-          // <div className="bg-white">
-          //   {dataStudentsRekap.length > 0 ? (
-          //     <div>
-          //       {/* Search Bar */}
-          //       <div className="mb-2 mt-2 flex justify-between space-x-2">
-          //         <div className="relative w-1/2">
-          //           <IoSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          //           <input
-          //             type="text"
-          //             placeholder="Cari mahasiswa"
-          //             value={searchTerm}
-          //             onChange={(e) => setSearchTerm(e.target.value)}
-          //             className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md"
-          //           />
-          //         </div>
-          //         <button className="flex items-center gap-1 w-fit p-2 text-white text-sm bg-green-600 hover:bg-green-700 text-nowrap text-center rounded-md transition-colors">
-          //           <PiMicrosoftExcelLogoFill
-          //             size={24}
-          //             className="text-white text-lg"
-          //           />
-          //           Unduh Excel
-          //         </button>
-          //       </div>
-
-          //       {/* Table */}
-          //       <div className="space-y-2 pt-2">
-          //         {/* Header */}
-          //         <div className="grid grid-cols-[2fr_3fr_2fr_1fr] gap-4 px-4 py-3 bg-blue-500 rounded-md font-semibold text-zinc-100 text-sm">
-          //           <div className="truncate whitespace-nowrap">NPM</div>
-          //           <div className="truncate whitespace-nowrap">Nama</div>
-          //           <div className="truncate whitespace-nowrap">
-          //             Hasil Penilaian
-          //           </div>
-          //           <div className="truncate whitespace-nowrap">Detail</div>
-          //         </div>
-
-          //         {/* Content */}
-          //         <ul className="space-y-2">
-          //           {currentStudents.length === 0 ? (
-          //             <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
-          //               <p className="text-sm text-gray-500">
-          //                 Belum ada data mahasiswa
-          //               </p>
-          //             </div>
-          //           ) : (
-          //             currentStudents.map((student, index) => (
-          //               <li
-          //                 key={index}
-          //                 className="bg-white p-4 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow group"
-          //               >
-          //                 <div className="grid grid-cols-[2fr_3fr_2fr_1fr] gap-4 items-center">
-          //                   <div className="text-sm text-gray-800">
-          //                     {student.npm}
-          //                   </div>
-          //                   <div className="text-sm text-gray-800">
-          //                     {student.nama}
-          //                   </div>
-          //                   <div className="text-sm text-gray-800">
-          //                     <span className="inline-flex items-center px-3 py-1 rounded-md text-sm font-medium bg-blue-100 text-blue-800">
-          //                       {!student.nilai_per_form[11]
-          //                         ? 0
-          //                         : student.nilai_per_form[11]}
-          //                     </span>
-          //                   </div>
-          //                   <div>
-          //                     <button
-          //                       className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-all text-sm"
-          //                       onClick={() => handleDetailRekap(student)}
-          //                     >
-          //                       Detail
-          //                     </button>
-          //                   </div>
-          //                 </div>
-          //               </li>
-          //             ))
-          //           )}
-          //         </ul>
-
-          //         {filteredStudents.length > 0 && (
-          //           <Pagination
-          //             currentPage={currentPageStudents}
-          //             totalPages={totalPagesStudents}
-          //             paginate={paginateStudents}
-          //             indexOfFirstItem={indexOfFirstStudent}
-          //             indexOfLastItem={indexOfLastStudent}
-          //             data={filteredStudents}
-          //           />
-          //         )}
-          //       </div>
-
-          //       {/* Empty Search State */}
-          //       {filteredStudents.length === 0 && searchTerm && (
-          //         <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
-          //           <p className="text-sm text-gray-500 text-center">
-          //             Tidak ada data yang ditemukan untuk pencarian "
-          //             {searchTerm}"
-          //           </p>
-          //         </div>
-          //       )}
-          //     </div>
-          //   ) : (
-          //     <div className="mt-4 p-4 bg-gray-50 rounded-md border border-gray-200">
-          //       <p className="text-sm text-gray-500">
-          //         Data rekap nilai belum tersedia
-          //       </p>
-          //     </div>
-          //   )}
-          // </div>
         );
       default:
         return null;
@@ -1278,6 +1175,49 @@ const DaftarKelompok = () => {
       toast.error("Terjadi kesalahan saat membuat kelompok otomatis");
     } finally {
       setIsAutoCreating(false);
+    }
+  };
+
+  const handleAutoCreateByCount = async () => {
+    setIsAutoCreatingByCount(true);
+    setError("");
+    try {
+      const { nama_matkul, kelas, id_mk } = parseMatkulParam(params.matkul);
+
+      // Validasi input jumlah kelompok
+      if (!jumlahKelompok || jumlahKelompok < 1) {
+        setError("Jumlah kelompok harus diisi dan minimal 1");
+        setIsAutoCreatingByCount(false);
+        return;
+      }
+
+      const response = await axios.post(
+        "/api/daftarkelompok/tambahotomatisbycount",
+        {
+          id_mk,
+          kelas,
+          nama_matkul,
+          id_user: session?.user?.id,
+          jumlah_kelompok: parseInt(jumlahKelompok),
+        }
+      );
+
+      if (response.data.success) {
+        toast.success(`Berhasil membuat ${jumlahKelompok} kelompok otomatis`);
+        setIsModalOpen(false);
+        setJumlahKelompok(""); // Reset input
+        setAutoCreateMode("capacity"); // Reset mode
+        fetchKelompok();
+      } else {
+        toast.error(response.data.message || "Gagal membuat kelompok otomatis");
+        setError(response.data.message || "Gagal membuat kelompok otomatis");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      toast.error("Terjadi kesalahan saat membuat kelompok otomatis");
+      setError("Terjadi kesalahan saat membuat kelompok otomatis");
+    } finally {
+      setIsAutoCreatingByCount(false);
     }
   };
 
@@ -1848,15 +1788,30 @@ const DaftarKelompok = () => {
 
       <TambahKelompokModal
         isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
+        onClose={() => {
+          setIsModalOpen(false);
+          setJumlahKelompok("");
+          setAutoCreateMode("capacity");
+          setError("");
+          setFormData({
+            nama_kelompok: "",
+            kapasitas: "4",
+          });
+        }}
         formData={formData}
         error={error}
         isSubmitting={isSubmitting}
         handleChange={handleChange}
         handleSubmit={handleSubmit}
         handleAutoCreate={handleAutoCreate}
-        isActive={dataKelompok.length}
+        handleAutoCreateByCount={handleAutoCreateByCount}
+        isActive={isActive}
         isAutoCreating={isAutoCreating}
+        isAutoCreatingByCount={isAutoCreatingByCount}
+        autoCreateMode={autoCreateMode}
+        setAutoCreateMode={setAutoCreateMode}
+        jumlahKelompok={jumlahKelompok}
+        setJumlahKelompok={setJumlahKelompok}
       />
 
       <ModalDaftarMahasiswa
@@ -1962,8 +1917,14 @@ const TambahKelompokModal = ({
   handleChange,
   handleSubmit,
   handleAutoCreate,
+  handleAutoCreateByCount, // Handler baru untuk auto create berdasarkan jumlah kelompok
   isActive,
-  isAutoCreating = false, // Tambahkan prop untuk loading state auto create
+  isAutoCreating = false,
+  isAutoCreatingByCount = false, // State loading untuk auto create berdasarkan jumlah
+  autoCreateMode = "capacity", // "capacity" atau "count"
+  setAutoCreateMode, // Function untuk mengubah mode
+  jumlahKelompok = "", // State untuk input jumlah kelompok
+  setJumlahKelompok, // Function untuk mengubah jumlah kelompok
 }) => {
   if (!isOpen) return null;
 
@@ -2030,19 +1991,82 @@ const TambahKelompokModal = ({
             />
           </div>
 
+          {/* Mode selector untuk auto create */}
+          {isActive == 0 && (
+            <div className="mb-4">
+              <label className="block text-gray-700 text-sm font-medium mb-2">
+                Mode Buat Otomatis
+              </label>
+              <div className="flex gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={() => setAutoCreateMode("capacity")}
+                  className={`px-3 py-2 text-sm rounded-md transition-all ${
+                    autoCreateMode === "capacity"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+                >
+                  Berdasarkan Kapasitas
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setAutoCreateMode("count")}
+                  className={`px-3 py-2 text-sm rounded-md transition-all ${
+                    autoCreateMode === "count"
+                      ? "bg-blue-500 text-white"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+                >
+                  Berdasarkan Jumlah Kelompok
+                </button>
+              </div>
+
+              {/* Input jumlah kelompok jika mode count */}
+              {autoCreateMode === "count" && (
+                <div className="mb-3">
+                  <label className="block text-gray-700 text-sm font-medium mb-1">
+                    Jumlah Kelompok <span className="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    value={jumlahKelompok}
+                    onChange={(e) => setJumlahKelompok(e.target.value)}
+                    min="1"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    placeholder="Masukkan jumlah kelompok"
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
           <div className="flex justify-between space-x-2">
             {isActive == 0 ? (
               <button
                 type="button"
-                onClick={handleAutoCreate}
-                disabled={isAutoCreating}
+                onClick={
+                  autoCreateMode === "capacity"
+                    ? handleAutoCreate
+                    : handleAutoCreateByCount
+                }
+                disabled={
+                  (autoCreateMode === "capacity" && isAutoCreating) ||
+                  (autoCreateMode === "count" && isAutoCreatingByCount) ||
+                  (autoCreateMode === "count" && !jumlahKelompok)
+                }
                 className={`px-4 py-2 rounded-md transition-all ${
-                  isAutoCreating
+                  (autoCreateMode === "capacity" && isAutoCreating) ||
+                  (autoCreateMode === "count" && isAutoCreatingByCount) ||
+                  (autoCreateMode === "count" && !jumlahKelompok)
                     ? "bg-gray-400 text-white cursor-not-allowed"
                     : "bg-gray-200 text-gray-800 hover:bg-gray-300"
                 }`}
               >
-                {isAutoCreating ? "Loading..." : "Buat Otomatis"}
+                {(autoCreateMode === "capacity" && isAutoCreating) ||
+                (autoCreateMode === "count" && isAutoCreatingByCount)
+                  ? "Loading..."
+                  : "Buat Otomatis"}
               </button>
             ) : (
               <button
@@ -2074,8 +2098,14 @@ const TambahKelompokModal = ({
 
         <div className="flex flex-col gap-1 mt-4">
           <h1 className="italic text-sm text-gray-700">
-            *) Buat Otomatis yaitu membuat kelompok dengan membagi jumlah
-            mahasiswa untuk masing-masing kelompok terdiri dari 4 mahasiswa
+            *) Buat Otomatis berdasarkan kapasitas: membuat kelompok dengan
+            membagi jumlah mahasiswa berdasarkan kapasitas yang ditentukan
+            (misal 4 mahasiswa per kelompok)
+          </h1>
+          <h1 className="italic text-sm text-gray-700">
+            *) Buat Otomatis berdasarkan jumlah kelompok: membuat sejumlah
+            kelompok tertentu dengan membagi mahasiswa secara merata (misal 3
+            kelompok dari 20 mahasiswa)
           </h1>
           <h1 className="italic text-sm text-gray-700">
             *) Ketika mata kuliah memiliki kelompok, maka tidak dapat membuat

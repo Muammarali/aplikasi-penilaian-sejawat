@@ -82,7 +82,6 @@ export async function PUT(req) {
       deletedCount += deleteResult.rowCount;
     }
 
-    // ===== FIX: Dapatkan semua ID komponen yang masih ada di form data =====
     const existingKomponenIds = new Set();
 
     // Kumpulkan semua ID komponen yang masih ada
@@ -102,7 +101,6 @@ export async function PUT(req) {
       collectExistingIds(formData.anggota_ke_ketua);
     }
 
-    // ===== FIX: Hapus komponen yang tidak ada lagi di form data =====
     if (existingKomponenIds.size > 0) {
       const idsArray = Array.from(existingKomponenIds);
       const placeholders = idsArray
@@ -143,7 +141,6 @@ export async function PUT(req) {
         deletedCount += deleteOrphanedResult.rowCount;
       }
     } else {
-      // Jika tidak ada komponen yang tersisa, hapus semua komponen yang relevan
       const deleteAllQuery =
         id_jenis == 1
           ? `DELETE FROM komponen_penilaian WHERE id_form = $1 AND tipe_penilaian IN ($2, $3)`

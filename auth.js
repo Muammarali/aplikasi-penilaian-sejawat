@@ -21,11 +21,9 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           const value = [credentials.email];
           const data = await handlerQuery(query, value);
           const user = data.rows[0];
-          //   console.log(data);
 
           // If no user found, return null
           if (!user) {
-            // console.log("User not found");
             return null;
           }
 
@@ -33,7 +31,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             return null;
           }
 
-          // Cast credentials.password explicitly to string to satisfy TypeScript
           const password = String(credentials.password);
 
           // Compare password hash using bcrypt
@@ -43,8 +40,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             // console.log("Password doesn't match");
             return null;
           }
-
-          //   console.log("Credentials: " + credentials);
 
           // Return user object without the password
           const { password: _password, ...userWithoutPassword } = user;

@@ -19,16 +19,10 @@ export const authOptions = {
         const value = [credentials.email];
         const data = await handlerQuery(query, value);
         const user = data.rows[0];
-
-        // console.log(user);
-        // console.log("credentials", credentials);
-
         const passwordCorrect = await bcrypt.compare(
           credentials?.password,
           user?.password
         );
-
-        // console.log(passwordCorrect);
 
         if (passwordCorrect) {
           return {
@@ -40,7 +34,6 @@ export const authOptions = {
           };
         }
 
-        // console.log("credentials", credentials);
         return null;
       },
     }),
