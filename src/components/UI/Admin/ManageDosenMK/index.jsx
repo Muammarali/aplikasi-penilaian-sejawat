@@ -57,11 +57,6 @@ const KelolaMataKuliah = () => {
         return acc;
       }, []);
 
-      console.log("Fetched and cleaned mata kuliah data:", uniqueData);
-      console.log(
-        "Removed duplicates:",
-        cleanedData.length - uniqueData.length
-      );
       setMataKuliah(uniqueData);
     } catch (error) {
       console.error("Error fetching mata kuliah:", error);

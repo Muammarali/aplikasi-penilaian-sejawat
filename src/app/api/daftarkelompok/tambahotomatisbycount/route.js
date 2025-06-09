@@ -59,19 +59,11 @@ export async function POST(req) {
       });
     }
 
-    console.log("Total mahasiswa:", totalMahasiswa);
-    console.log("Jumlah kelompok yang diminta:", jumlah_kelompok);
-
     // Hitung kapasitas untuk setiap kelompok
     const baseCapacity = Math.floor(totalMahasiswa / jumlah_kelompok);
     const remainder = totalMahasiswa % jumlah_kelompok;
-
-    console.log("Base capacity per kelompok:", baseCapacity);
-    console.log("Sisa mahasiswa:", remainder);
-
     const createdGroups = [];
 
-    // Buat kelompok dalam database
     for (let i = 1; i <= jumlah_kelompok; i++) {
       const namaKelompok = `Kelompok ${i}`;
 
@@ -98,8 +90,6 @@ export async function POST(req) {
         ...result.rows[0],
         kapasitas_calculated: kapasitasKelompok,
       });
-
-      console.log(`Kelompok ${i} dibuat dengan kapasitas ${kapasitasKelompok}`);
     }
 
     // Buat pesan detail tentang pembagian

@@ -101,9 +101,6 @@ export async function POST(req) {
 
           if (updateResult.rowCount > 0) {
             updatedCount++;
-            console.log(
-              `Updated: penilai=${nilai.id_penilai}, dinilai=${nilai.id_dinilai}, komponen=${nilai.id_komponen}, nilai=${nilai.nilai}`
-            );
           }
         } else {
           // Insert new record
@@ -123,9 +120,6 @@ export async function POST(req) {
 
           if (insertResult.rowCount > 0) {
             insertedCount++;
-            console.log(
-              `Inserted: penilai=${nilai.id_penilai}, dinilai=${nilai.id_dinilai}, komponen=${nilai.id_komponen}, nilai=${nilai.nilai}`
-            );
           }
         }
       }

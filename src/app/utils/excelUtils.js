@@ -15,8 +15,6 @@ export const fetchStudentsDetailedGradesData = async (id_mk) => {
       throw new Error(response.data.message || "Failed to fetch data");
     }
 
-    console.log(response.data);
-
     return response.data;
   } catch (error) {
     console.error("Error fetching detailed data:", error);
